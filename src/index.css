@@ -1,0 +1,277 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base - Dark Mode Default */
+    --background: 220 20% 6%;
+    --foreground: 0 0% 95%;
+
+    --card: 220 18% 10%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 220 18% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    /* Ruby Red Primary */
+    --primary: 358 82% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 358 82% 45%;
+
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 220 12% 20%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 358 82% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 15%;
+    --ring: 358 82% 55%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 220 20% 8%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 358 82% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 358 82% 55%;
+
+    /* Custom Ruby Design Tokens */
+    --ruby: 358 82% 55%;
+    --ruby-dark: 358 82% 35%;
+    --ruby-light: 358 72% 65%;
+    --ruby-glow: 358 100% 60%;
+    
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+
+    /* Glass Effect */
+    --glass-bg: 220 18% 10% / 0.8;
+    --glass-border: 0 0% 100% / 0.1;
+    
+    /* Gradients */
+    --gradient-ruby: linear-gradient(135deg, hsl(358, 82%, 55%) 0%, hsl(358, 82%, 35%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(220, 20%, 8%) 0%, hsl(220, 20%, 4%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(220, 18%, 12%) 0%, hsl(220, 18%, 8%) 100%);
+    
+    /* Shadows */
+    --shadow-ruby: 0 4px 30px hsl(358, 82%, 55%, 0.3);
+    --shadow-card: 0 4px 20px hsl(0, 0%, 0%, 0.4);
+    --shadow-glow: 0 0 40px hsl(358, 82%, 55%, 0.2);
+  }
+
+  .dark {
+    /* Already dark mode by default */
+  }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 358 82% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 94%;
+    --secondary-foreground: 220 20% 10%;
+    --muted: 220 10% 92%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 358 82% 50%;
+    --accent-foreground: 0 0% 100%;
+    --border: 220 10% 88%;
+    --input: 220 10% 90%;
+    --ring: 358 82% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: linear-gradient(180deg, hsl(220, 20%, 6%) 0%, hsl(220, 22%, 4%) 100%);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer utilities {
+  /* Glass morphism */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  .glass-card {
+    background: linear-gradient(145deg, hsl(220, 18%, 12%, 0.9) 0%, hsl(220, 18%, 8%, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(0, 0%, 100%, 0.05);
+  }
+
+  /* Ruby glow effects */
+  .ruby-glow {
+    box-shadow: 0 0 40px hsl(358, 82%, 55%, 0.3);
+  }
+
+  .ruby-glow-strong {
+    box-shadow: 0 0 60px hsl(358, 82%, 55%, 0.5);
+  }
+
+  .ruby-gradient {
+    background: linear-gradient(135deg, hsl(358, 82%, 55%) 0%, hsl(358, 82%, 35%) 100%);
+  }
+
+  .ruby-text-gradient {
+    background: linear-gradient(135deg, hsl(358, 82%, 60%) 0%, hsl(358, 82%, 45%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px hsl(0, 0%, 0%, 0.4);
+  }
+
+  /* Countdown timer styling */
+  .countdown-box {
+    background: hsl(0, 0%, 0%, 0.4);
+    border: 1px solid hsl(0, 0%, 100%, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    min-width: 3.5rem;
+  }
+
+  .countdown-number {
+    font-family: 'Space Grotesk', monospace;
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .countdown-label {
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    opacity: 0.6;
+    letter-spacing: 0.05em;
+  }
+
+  /* Animations */
+  @keyframes pulse-ruby {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(358, 82%, 55%, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(358, 82%, 55%, 0.5);
+    }
+  }
+
+  .animate-pulse-ruby {
+    animation: pulse-ruby 2s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(220, 18%, 10%) 0%,
+      hsl(220, 18%, 20%) 50%,
+      hsl(220, 18%, 10%) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Form input styling */
+  .input-ruby {
+    @apply bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200;
+  }
+
+  /* Trial banner */
+  .trial-banner {
+    background: linear-gradient(90deg, hsl(358, 82%, 55%, 0.15) 0%, hsl(38, 92%, 50%, 0.15) 100%);
+    border: 1px solid hsl(358, 82%, 55%, 0.3);
+  }
+
+  /* Subscription card dynamic backgrounds */
+  .sub-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sub-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, var(--card-bg-color, hsl(358, 82%, 55%)), transparent 70%);
+    opacity: 0.15;
+    z-index: 0;
+  }
+
+  .sub-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, var(--card-bg-color, hsl(358, 82%, 55%)) 0%, transparent 50%);
+    opacity: 0.05;
+    z-index: 0;
+  }
+
+  .sub-card > * {
+    position: relative;
+    z-index: 1;
+  }
+}
