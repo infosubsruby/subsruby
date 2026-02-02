@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Navbar } from "@/components/layout/Navbar";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { FlipCard } from "@/components/subscription/FlipCard";
@@ -16,13 +17,14 @@ import { convertCurrency, getCurrencySymbol } from "@/lib/currency";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, isUnlimited } = useAuth();
-  const { t } = useLanguage();
+  const { user, isLoading: authLoading } = useAuth();
+  const { isPro, loading: subStatusLoading } = useSubscription();
+  const { t: rawT } = useLanguage();
+  const t = rawT as any;
   const { 
     subscriptions, 
     isLoading: subsLoading, 
     canAddSubscription,
-    maxTrialSubscriptions,
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
@@ -48,7 +50,7 @@ const Dashboard = () => {
   const currencySymbol = getCurrencySymbol(activeCurrency);
 
   // Calculate total monthly cost with currency conversion
-  const totalMonthlyCost = useMemo(() => {
+  const monthlySpend = useMemo(() => {
     return subscriptions.reduce((total, sub) => {
       const rawPrice = Number(sub.price ?? 0);
       // Normalize yearly to monthly
@@ -59,14 +61,15 @@ const Dashboard = () => {
     }, 0);
   }, [subscriptions, activeCurrency]);
 
-  const totalYearlyCost = totalMonthlyCost * 12;
+  const yearlySpend = monthlySpend * 12;
 
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (authLoading || subsLoading) {
+  // 1. Loading Check
+  if (authLoading || subsLoading || subStatusLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -74,6 +77,23 @@ const Dashboard = () => {
     );
   }
 
+  // 2. Pro Check (Blocking)
+  if (!isPro) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen p-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">Bu alan sadece Premium Üyelere Özeldir 👑</h1>
+        <p className="mb-6">Devam etmek için lütfen paketinizi yükseltin.</p>
+        <Button 
+          onClick={() => navigate('/upgrade')} 
+          className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800"
+        >
+          Yükselt
+        </Button>
+      </div>
+    );
+  }
+
+  // 3. Original Dashboard Content (Only for Pro users)
   return (
     <div className="min-h-screen pb-20">
       <Navbar />
@@ -104,83 +124,87 @@ const Dashboard = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
-                <p className="font-display text-2xl font-bold">{subscriptions.length}</p>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-success" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
-                  {/* Currency Selector */}
-                  <Select 
-                    value={displayCurrency || "auto"} 
-                    onValueChange={(v) => setDisplayCurrency(v === "auto" ? null : v)}
-                  >
-                    <SelectTrigger className="h-6 w-auto gap-1 border-0 bg-transparent p-0 text-xs text-muted-foreground hover:text-foreground focus:ring-0">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border">
-                      <SelectItem value="auto">{t.dashboard.auto} ({autoDetectedCurrency})</SelectItem>
-                      {currencies.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-primary" />
                 </div>
-                <p className="font-display text-2xl font-bold">
-                  {currencySymbol}{totalMonthlyCost.toFixed(2)}
-                </p>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
+                  <h3 className="text-2xl font-bold">
+                    {currencySymbol}{monthlySpend.toFixed(2)}
+                  </h3>
+                </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-warning" />
+            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CreditCard className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
+                  <h3 className="text-2xl font-bold">
+                    {currencySymbol}{yearlySpend.toFixed(2)}
+                  </h3>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
-                <p className="font-display text-2xl font-bold">
-                  {currencySymbol}{totalYearlyCost.toFixed(2)}
-                </p>
+            </div>
+
+            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
+                  <h3 className="text-2xl font-bold">{subscriptions.length}</h3>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Subscriptions Grid with Flip Cards */}
+          <div className="flex justify-end mb-6">
+            <Select
+              value={displayCurrency || "auto"}
+              onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto ({autoDetectedCurrency})</SelectItem>
+                {currencies.map((currency) => (
+                  <SelectItem key={currency.value} value={currency.value}>
+                    {currency.value} ({currency.symbol})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {subscriptions.length === 0 ? (
-            <div className="glass-card rounded-xl p-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
-                <CreditCard className="w-8 h-8 text-muted-foreground" />
+            <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="font-display text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
-              <p className="text-muted-foreground mb-6">
+              <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
                 {t.dashboard.noSubscriptionsDesc}
               </p>
               <Button 
                 onClick={() => setIsModalOpen(true)}
-                className="ruby-gradient border-0 shadow-ruby gap-2"
+                className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
               >
-                <Plus className="w-4 h-4" />
                 {t.dashboard.addFirstSubscription}
               </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {subscriptions.map((subscription) => (
-                <FlipCard 
-                  key={subscription.id} 
+                <FlipCard
+                  key={subscription.id}
                   subscription={subscription}
                   onUpdate={updateSubscription}
                   onDelete={deleteSubscription}
@@ -188,32 +212,14 @@ const Dashboard = () => {
               ))}
             </div>
           )}
-
-          {/* Trial limit notice - only show for non-unlimited users */}
-          {!isUnlimited && !canAddSubscription() && (
-            <div className="mt-8 p-4 rounded-lg bg-warning/10 border border-warning/30 text-center">
-              <p className="text-warning font-medium">
-                {t.dashboard.trialLimit} ({maxTrialSubscriptions}). 
-                <Button 
-                  variant="link" 
-                  className="text-primary p-0 ml-1 h-auto"
-                  onClick={() => navigate("/upgrade")}
-                >
-                  {t.dashboard.getLifetime}
-                </Button>
-              </p>
-            </div>
-          )}
         </div>
       </main>
 
-      {/* Add Subscription Modal */}
-      <AddSubscriptionModal 
-        open={isModalOpen} 
-        onOpenChange={setIsModalOpen} 
+      <AddSubscriptionModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
       />
-
-      {/* Feedback Button */}
+      
       <FeedbackButton />
     </div>
   );
