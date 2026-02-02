@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useSubscription } from "./useSubscription";
 import { subscriptionsKeys } from "./subscriptions/keys";
 import type { CreateSubscriptionData, Subscription } from "./subscriptions/types";
 import { fetchSubscriptions, insertSubscription, patchSubscription, removeSubscription } from "./subscriptions/api";
@@ -11,6 +12,7 @@ export type { CreateSubscriptionData, Subscription };
 
 export const useSubscriptions = () => {
   const { user, isTrialActive, isUnlimited } = useAuth();
+  const { isPro } = useSubscription();
   const queryClient = useQueryClient();
 
   const MAX_TRIAL_SUBSCRIPTIONS = 3;
@@ -80,12 +82,11 @@ export const useSubscriptions = () => {
   }, [user, queryClient, listKey]);
 
   const canAddSubscription = (): boolean => {
-    // Unlimited users (admins or lifetime access) have no limits
-    if (isUnlimited) return true;
-    // Trial users are limited
-    if (isTrialActive) return subscriptions.length < MAX_TRIAL_SUBSCRIPTIONS;
-    // Non-trial, non-unlimited users also have no limits (shouldn't happen but fallback)
-    return true;
+    // Unlimited users (admins or lifetime access) or Pro users have no limits
+    if (isUnlimited || isPro) return true;
+    
+    // All other users are limited
+    return subscriptions.length < MAX_TRIAL_SUBSCRIPTIONS;
   };
 
   const createMutation = useMutation({
@@ -174,7 +175,7 @@ export const useSubscriptions = () => {
       return { success: false };
     }
     if (!canAddSubscription()) {
-      toast.error(`Free trial allows maximum ${MAX_TRIAL_SUBSCRIPTIONS} subscriptions. Upgrade to add more!`);
+      toast.error(`Ücretsiz planda maksimum ${MAX_TRIAL_SUBSCRIPTIONS} abonelik ekleyebilirsiniz. Sınırsız erişim için Pro'ya geçin.`);
       return { success: false };
     }
 
