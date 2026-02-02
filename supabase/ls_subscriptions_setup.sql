@@ -3,7 +3,7 @@
 -- ============================================
 
 -- Not: Mevcut 'subscriptions' tablosu kullanıcıların kendi eklediği abonelikleri (Netflix vb.) tuttuğu için
--- bu tablonun adını 'user_subscriptions' veya 'app_subscriptions' olarak belirledik.
+-- bu tablonun adını 'user_subscriptions' olarak belirledik.
 -- Bu tablo, kullanıcının PRO üyelik durumunu takip eder.
 
 CREATE TABLE IF NOT EXISTS public.user_subscriptions (
@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS public.user_subscriptions (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   
   -- Lemon Squeezy IDs
-  lemon_squeezy_customer_id TEXT,
-  lemon_squeezy_subscription_id TEXT UNIQUE,
-  lemon_squeezy_variant_id TEXT,
+  customer_id TEXT,
+  subscription_id TEXT, -- Lifetime (tek seferlik) ödemelerde NULL olabilir
+  variant_id TEXT,
   
   -- Abonelik Durumu
   status TEXT NOT NULL, -- 'active', 'past_due', 'unpaid', 'cancelled', 'expired', 'on_trial'
@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS public.user_subscriptions (
   renews_at TIMESTAMP WITH TIME ZONE,
   ends_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+
+  -- Her kullanıcının sadece 1 aktif abonelik/durum kaydı olsun
+  CONSTRAINT user_subscriptions_user_id_key UNIQUE (user_id)
 );
 
 -- RLS Politikaları (Güvenlik)
@@ -43,4 +46,4 @@ USING (auth.role() = 'service_role');
 
 -- İndeksler (Performans için)
 CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON public.user_subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_subscriptions_ls_customer_id ON public.user_subscriptions(lemon_squeezy_customer_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_ls_customer_id ON public.user_subscriptions(customer_id);
