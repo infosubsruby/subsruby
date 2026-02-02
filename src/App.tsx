@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import Finance from "./pages/Finance";
 import Settings from "./pages/Settings";
 import Upgrade from "./pages/Upgrade";
+import Success from "./pages/Success";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import NotFound from "./pages/NotFound";
