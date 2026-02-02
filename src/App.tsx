@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { SettingsProvider } from "@/hooks/useSettings";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useSubscription } from "@/hooks/useSubscription";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -20,10 +21,34 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import NotFound from "./pages/NotFound";
 
+// Debug bileşeni: Ekranın sol üstünde durumu zorla gösterir
+const SubscriptionDebug = () => {
+  const { isPro, loading } = useSubscription();
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '10px',
+      left: '10px',
+      zIndex: 9999,
+      backgroundColor: isPro ? 'green' : 'red',
+      color: 'white',
+      padding: '20px',
+      fontSize: '20px',
+      fontWeight: 'bold',
+      borderRadius: '10px',
+      boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+    }}>
+      DURUM: {loading ? "YÜKLENİYOR..." : (isPro ? "✅ PRO ÜYE" : "❌ ÜCRETSİZ")}
+    </div>
+  );
+};
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <SubscriptionDebug />
     <LanguageProvider>
       <SettingsProvider>
         <AuthProvider>
