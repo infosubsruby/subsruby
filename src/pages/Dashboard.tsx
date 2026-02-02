@@ -29,8 +29,6 @@ const Dashboard = () => {
     deleteSubscription,
   } = useSubscriptions();
 
-  console.log("Dashboard Rendered. isPro:", isPro, "Loading:", subStatusLoading);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
 
@@ -71,11 +69,29 @@ const Dashboard = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // 1. Loading Check
+  // 1. Loading Check (Wait for everything to load)
   if (authLoading || subsLoading || subStatusLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  // 2. Pro Check (Blocking)
+  if (!isPro) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-gray-50">
+        <h1 className="text-3xl font-bold mb-4">👑 Premium Özellik</h1>
+        <p className="text-gray-600 mb-8 max-w-md">
+          Bu panele erişmek için Premium üyeliğe sahip olmanız gerekmektedir.
+        </p>
+        <button 
+          onClick={() => window.location.href = '/upgrade'} 
+          className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800 transition-all font-medium" 
+        >
+          Hemen Yükselt
+        </button>
       </div>
     );
   }
@@ -88,10 +104,6 @@ const Dashboard = () => {
       <main className="pt-24 px-4">
         <div className="container mx-auto max-w-6xl">
           <TrialBanner />
-
-          <div className={`p-4 mb-4 rounded-lg text-white font-bold text-center ${isPro ? 'bg-green-600' : 'bg-red-500'}`}> 
-            ABONELİK DURUMU: {subStatusLoading ? "YÜKLENİYOR..." : (isPro ? "✅ PRO PLAN (Aktif)" : "❌ ÜCRETSİZ PLAN")} 
-          </div>
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
