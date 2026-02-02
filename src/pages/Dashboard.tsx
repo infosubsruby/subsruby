@@ -28,6 +28,9 @@ const Dashboard = () => {
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
+
+  console.log("Dashboard Rendered. isPro:", isPro, "Loading:", subStatusLoading);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
 
@@ -77,22 +80,6 @@ const Dashboard = () => {
     );
   }
 
-  // 2. Pro Check (Blocking)
-  if (!isPro) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen p-4 text-center">
-        <h1 className="text-2xl font-bold mb-4">Bu alan sadece Premium Üyelere Özeldir 👑</h1>
-        <p className="mb-6">Devam etmek için lütfen paketinizi yükseltin.</p>
-        <Button 
-          onClick={() => navigate('/upgrade')} 
-          className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800"
-        >
-          Yükselt
-        </Button>
-      </div>
-    );
-  }
-
   // 3. Original Dashboard Content (Only for Pro users)
   return (
     <div className="min-h-screen pb-20">
@@ -101,6 +88,10 @@ const Dashboard = () => {
       <main className="pt-24 px-4">
         <div className="container mx-auto max-w-6xl">
           <TrialBanner />
+
+          <div className={`p-4 mb-4 rounded-lg text-white font-bold text-center ${isPro ? 'bg-green-600' : 'bg-red-500'}`}> 
+            ABONELİK DURUMU: {subStatusLoading ? "YÜKLENİYOR..." : (isPro ? "✅ PRO PLAN (Aktif)" : "❌ ÜCRETSİZ PLAN")} 
+          </div>
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
