@@ -1,18 +1,75 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
-import { Check, Diamond, Shield, Zap, HeadphonesIcon, Infinity, ArrowLeft } from "lucide-react";
+import { Check, Diamond, Shield, Zap, HeadphonesIcon, Infinity, ArrowLeft, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-const PAYMENT_LINK = "#";
+// Lemon Squeezy Product Configuration
+const CHECKOUT_URL = "https://losruby.lemonsqueezy.com/checkout/buy/e4258038-8074-43b1-8ba3-6b767044ea04";
+const VARIANT_ID = "1267332"; // Used for API/Webhook verification if needed
 
 const Upgrade = () => {
   const navigate = useNavigate();
   const { user, isUnlimited } = useAuth();
   const { t } = useLanguage();
+  const [loading, setLoading] = useState(false);
 
-  // Payment link is handled directly via anchor tag for maximum compatibility
+  useEffect(() => {
+    // Lemon Squeezy Overlay event listener
+    if (window.LemonSqueezy) {
+      window.LemonSqueezy.Setup({
+        eventHandler: (event) => {
+          if (event.event === "Checkout.Success") {
+            toast.success("Payment successful! Welcome to Pro.");
+            // Refresh auth or redirect
+            window.location.reload();
+          }
+        },
+      });
+    }
+  }, []);
+
+  const handleCheckout = async () => {
+    try {
+      setLoading(true);
+      
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (!currentUser) {
+        toast.error("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      if (CHECKOUT_URL.includes("YOUR_VARIANT_ID")) {
+        toast.error("Lütfen geliştiriciye bildirin: Ödeme linki tanımlanmamış.");
+        console.error("Lemon Squeezy Checkout URL ayarlanmamış!");
+        return;
+      }
+
+      // Kullanıcı ID'sini custom data olarak ekliyoruz
+      const checkoutUrlWithUser = `${CHECKOUT_URL}?checkout[custom][user_id]=${currentUser.id}`;
+
+      console.log("Opening checkout for user:", currentUser.id);
+
+      // Overlay modunda açmayı dene
+      if (window.LemonSqueezy) {
+        window.LemonSqueezy.Url.Open(checkoutUrlWithUser);
+      } else {
+        // Script yüklenmediyse yeni sekmede aç
+        window.open(checkoutUrlWithUser, "_blank");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // If user already has lifetime access, show a different message
   if (isUnlimited) {
@@ -99,15 +156,18 @@ const Upgrade = () => {
 
               {/* CTA Button */}
               <div className="p-6 pt-0">
-                <a 
-                  href={PAYMENT_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong text-lg py-6 gap-2 transition-all inline-flex items-center justify-center rounded-md font-medium text-white"
+                <Button 
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong text-lg py-6 gap-2 transition-all inline-flex items-center justify-center rounded-md font-medium text-white h-auto"
                 >
-                  <Shield className="w-5 h-5" />
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Shield className="w-5 h-5" />
+                  )}
                   {t.upgrade?.ctaButton || "Upgrade to Pro"}
-                </a>
+                </Button>
                 
                 {/* Trust Badges */}
                 <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
