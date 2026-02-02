@@ -75,6 +75,14 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/success"
+                  element={
+                    <ProtectedRoute>
+                      <Success />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/payment-success"
                   element={
                     <ProtectedRoute>
