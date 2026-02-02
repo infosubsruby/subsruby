@@ -485,7 +485,7 @@ export const translations = {
         currencies: "Todas las monedas soportadas",
         export: "Exportación y respaldo de datos",
       },
-      ctaButton: "Pagar de forma segura con Stripe",
+      ctaButton: "Pago Seguro",
       securePayment: "Pago Seguro",
       moneyBack: "Garantía de devolución de 30 días",
       backToDashboard: "Volver al Panel",

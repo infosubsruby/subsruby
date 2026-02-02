@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Check, Diamond, Shield, Zap, HeadphonesIcon, Infinity, ArrowLeft } from "lucide-react";
 
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_00w28tfjo5BGf95ehQbEA00";
+const PAYMENT_LINK = "#";
 
 const Upgrade = () => {
   const navigate = useNavigate();
@@ -100,13 +100,13 @@ const Upgrade = () => {
               {/* CTA Button */}
               <div className="p-6 pt-0">
                 <a 
-                  href={`${STRIPE_PAYMENT_LINK}${user?.email ? `?prefilled_email=${encodeURIComponent(user.email)}` : ''}`}
+                  href={PAYMENT_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong text-lg py-6 gap-2 transition-all inline-flex items-center justify-center rounded-md font-medium text-white"
                 >
                   <Shield className="w-5 h-5" />
-                  {t.upgrade?.ctaButton || "Pay Securely with Stripe"}
+                  {t.upgrade?.ctaButton || "Upgrade to Pro"}
                 </a>
                 
                 {/* Trust Badges */}
