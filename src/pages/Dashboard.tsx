@@ -85,11 +85,6 @@ const Dashboard = () => {
       
       <main className="pt-24 px-4">
         <div className="container mx-auto max-w-6xl">
-          {/* Status Banner */}
-          <div className={`p-4 mb-6 rounded-lg text-white font-bold text-center ${isPro ? 'bg-green-600' : 'bg-gray-800'}`}> 
-            {isPro ? "✅ PREMIUM PANEL AKTİF" : "ℹ️ ÜCRETSİZ PLAN (Sınırlı Özellikler)"} 
-          </div>
-
           <TrialBanner />
 
           {/* Header */}
