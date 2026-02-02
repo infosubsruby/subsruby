@@ -85,47 +85,6 @@ const Dashboard = () => {
       
       <main className="pt-24 px-4">
         <div className="container mx-auto max-w-6xl">
-          
-          {/* Abonelik Durum Kartı */}
-          <div className="mb-8">
-            {isPro ? (
-              // PRO KULLANICILAR İÇİN GÖRÜNÜM
-              <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                      👑 Premium Panel Aktif
-                    </h2>
-                    <p className="opacity-90 mt-1">
-                      Tüm özelliklere sınırsız erişiminiz var.
-                    </p>
-                  </div>
-                  <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm">
-                    Plan: PRO
-                  </div>
-                </div>
-              </div>
-            ) : (
-              // ÜCRETSİZ KULLANICILAR İÇİN GÖRÜNÜM
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800">Ücretsiz Plan</h2>
-                    <p className="text-gray-500 mt-1">
-                      Daha fazla özellik için paketinizi yükseltin.
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => window.location.href = '/upgrade'} 
-                    className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition"
-                  >
-                    Yükselt
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
           <TrialBanner />
 
           {/* Header */}
