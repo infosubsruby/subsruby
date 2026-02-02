@@ -31,11 +31,12 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
 
-  const FREE_PLAN_LIMIT = 5;
+  const FREE_PLAN_LIMIT = 3;
+  const canAddSubscription = isPro || subscriptions.length < FREE_PLAN_LIMIT;
 
   const handleAddSubscription = () => {
-    if (!isPro && subscriptions.length >= FREE_PLAN_LIMIT) {
-      alert(`Ücretsiz planda maksimum ${FREE_PLAN_LIMIT} abonelik ekleyebilirsiniz. Sınırsız erişim için yükseltin.`);
+    if (!canAddSubscription) {
+      alert(`Ücretsiz planda maksimum ${FREE_PLAN_LIMIT} abonelik ekleyebilirsiniz. Sınırsız erişim için Pro'ya geçin.`);
       return;
     }
     setIsModalOpen(true);
@@ -94,7 +95,7 @@ const Dashboard = () => {
       
       <main className="pt-24 px-4">
         <div className="container mx-auto max-w-6xl">
-          <TrialBanner />
+          {!isPro && <TrialBanner />}
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -106,9 +107,8 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center gap-3">
               <Button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleAddSubscription}
                 className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
-                disabled={!canAddSubscription()}
               >
                 <Plus className="w-5 h-5" />
                 {t.dashboard.addSubscription}
