@@ -24,13 +24,22 @@ const Dashboard = () => {
   const { 
     subscriptions, 
     isLoading: subsLoading, 
-    canAddSubscription,
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
+
+  const FREE_PLAN_LIMIT = 5;
+
+  const handleAddSubscription = () => {
+    if (!isPro && subscriptions.length >= FREE_PLAN_LIMIT) {
+      alert(`Ücretsiz planda maksimum ${FREE_PLAN_LIMIT} abonelik ekleyebilirsiniz. Sınırsız erişim için yükseltin.`);
+      return;
+    }
+    setIsModalOpen(true);
+  };
 
   // Determine the most used currency (auto-detect)
   const currencyCounts = useMemo(() => {
@@ -179,7 +188,7 @@ const Dashboard = () => {
                 {t.dashboard.noSubscriptionsDesc}
               </p>
               <Button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleAddSubscription}
                 className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
               >
                 {t.dashboard.addFirstSubscription}
