@@ -19,14 +19,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 
 interface FlipCardProps {
   subscription: Subscription;
   onUpdate: (id: number, payload: Partial<CreateSubscriptionData>) => Promise<{ success: boolean }>;
   onDelete: (id: number) => Promise<{ success: boolean }>;
+  displayCurrency?: string | null;
+  exchangeRates?: Record<string, number>;
 }
 
-export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) => {
+export const FlipCard = ({ subscription, onUpdate, onDelete, displayCurrency, exchangeRates = {} }: FlipCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -47,9 +50,15 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
   );
   const IconComponent = preset?.icon || CreditCard;
   
-  // Get currency symbol
-  const currencyInfo = currencies.find((c) => c.value === subscription.currency);
-  const symbol = currencyInfo?.symbol || "$";
+  // Calculate displayed price and symbol based on displayCurrency
+  const targetCurrency = displayCurrency || subscription.currency;
+  const displayedPrice = convertWithDynamicRates(
+    subscription.price, 
+    subscription.currency, 
+    targetCurrency, 
+    exchangeRates
+  );
+  const displayedSymbol = getCurrencySymbol(targetCurrency);
 
   // Get the management URL - use stored URL, preset URL, or generate fallback
   const getManageUrl = (): string => {
@@ -154,7 +163,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-display font-bold text-foreground">
-                    {symbol}{subscription.price.toFixed(2)}
+                    {displayedSymbol}{displayedPrice.toFixed(2)}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide">
                     / {subscription.billing_cycle === "yearly" ? "year" : "month"}

@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Navbar } from "@/components/layout/Navbar";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { FlipCard } from "@/components/subscription/FlipCard";
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Wallet, CreditCard, TrendingUp, Loader2 } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
-import { convertCurrency, getCurrencySymbol } from "@/lib/currency";
+import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -28,8 +29,23 @@ const Dashboard = () => {
     deleteSubscription,
   } = useSubscriptions();
 
+  // Fetch dynamic exchange rates
+  const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
+
+  // Convert rates array to Record<string, number> for easier lookup
+  const exchangeRates = useMemo(() => {
+    if (!exchangeRatesList) return {};
+    return exchangeRatesList.reduce((acc, curr) => {
+      acc[curr.currency_code] = Number(curr.rate);
+      return acc;
+    }, {} as Record<string, number>);
+  }, [exchangeRatesList]);
+
+  // Debug: Check rates in console
+  console.log("Active Exchange Rates:", exchangeRates);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
+  const [displayCurrency, setDisplayCurrency] = useState<string | null>("TRY");
 
   const FREE_PLAN_LIMIT = 3;
   const canAddSubscription = isPro || subscriptions.length < FREE_PLAN_LIMIT;
@@ -66,11 +82,18 @@ const Dashboard = () => {
       const rawPrice = Number(sub.price ?? 0);
       // Normalize yearly to monthly
       const monthlyPrice = sub.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
-      // Convert to display currency
-      const convertedPrice = convertCurrency(monthlyPrice, sub.currency, activeCurrency);
+      
+      // Convert to display currency using dynamic rates
+      const convertedPrice = convertWithDynamicRates(
+        monthlyPrice, 
+        sub.currency, 
+        activeCurrency, 
+        exchangeRates
+      );
+      
       return total + convertedPrice;
     }, 0);
-  }, [subscriptions, activeCurrency]);
+  }, [subscriptions, activeCurrency, exchangeRates]);
 
   const yearlySpend = monthlySpend * 12;
 
@@ -106,6 +129,22 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <Select
+                value={displayCurrency || "auto"}
+                onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
+              >
+                <SelectTrigger className="w-[140px] bg-background border-input hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto ({autoDetectedCurrency})</SelectItem>
+                  {currencies.map((currency) => (
+                    <SelectItem key={currency.value} value={currency.value}>
+                      {currency.value} ({currency.symbol})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button 
                 onClick={handleAddSubscription}
                 className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
@@ -159,24 +198,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="flex justify-end mb-6">
-            <Select
-              value={displayCurrency || "auto"}
-              onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto ({autoDetectedCurrency})</SelectItem>
-                {currencies.map((currency) => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.value} ({currency.symbol})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Selector moved to header */}
 
           {subscriptions.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
@@ -202,6 +224,8 @@ const Dashboard = () => {
                   subscription={subscription}
                   onUpdate={updateSubscription}
                   onDelete={deleteSubscription}
+                  displayCurrency={displayCurrency}
+                  exchangeRates={exchangeRates}
                 />
               ))}
             </div>

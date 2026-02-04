@@ -17,6 +17,36 @@ export const EXCHANGE_RATES: Record<string, number> = {
 export type CurrencyCode = keyof typeof EXCHANGE_RATES;
 
 /**
+ * Convert an amount from one currency to another using dynamic rates
+ * Assumes rates are all relative to the SAME base (e.g. EUR)
+ * Formula: (amount / rateFrom) * rateTo
+ */
+export const convertWithDynamicRates = (
+  amount: number,
+  from: string,
+  to: string,
+  rates: Record<string, number>
+): number => {
+  if (from === to) return amount;
+  
+  // Treat 'EUR' as 1 if not present in rates (since it's the base)
+  const fromRate = from === 'EUR' ? 1 : rates[from];
+  const toRate = to === 'EUR' ? 1 : rates[to];
+  
+  // If rates are missing, fallback to static rates or 1:1 if really unknown
+  if (!fromRate || !toRate) {
+    // Try static rates if dynamic ones fail
+    if (EXCHANGE_RATES[from] && EXCHANGE_RATES[to]) {
+      return convertCurrency(amount, from, to);
+    }
+    return amount;
+  }
+  
+  // Convert from source currency to Base (EUR), then to target currency
+  return (amount / fromRate) * toRate;
+};
+
+/**
  * Convert an amount from one currency to another
  */
 export const convertCurrency = (

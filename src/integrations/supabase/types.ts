@@ -38,6 +38,27 @@ export type Database = {
         }
         Relationships: []
       }
+      exchange_rates: {
+        Row: {
+          currency_code: string
+          rate: number
+          base_currency: string | null
+          last_updated: string | null
+        }
+        Insert: {
+          currency_code: string
+          rate: number
+          base_currency?: string | null
+          last_updated?: string | null
+        }
+        Update: {
+          currency_code?: string
+          rate?: number
+          base_currency?: string | null
+          last_updated?: string | null
+        }
+        Relationships: []
+      }
       feedbacks: {
         Row: {
           admin_response: string | null
