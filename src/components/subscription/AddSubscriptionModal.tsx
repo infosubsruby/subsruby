@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BillingDayPicker } from "./BillingDayPicker";
 import { CommunitySuggestionBadge } from "./CommunitySuggestionBadge";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   subscriptionPresets, 
   currencies, 
@@ -22,6 +23,7 @@ import {
 import { useSubscriptions, type CreateSubscriptionData } from "@/hooks/useSubscriptions";
 import { useCommunityData } from "@/hooks/useCommunityData";
 import { calculateNextPaymentDate, calculateStartDate } from "@/lib/dateUtils";
+import { getCurrencySymbol } from "@/lib/currency";
 import { Search, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +55,12 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
   const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [cardColor, setCardColor] = useState("#E50914");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Smart Fill State
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchingPlans, setIsSearchingPlans] = useState(false);
+  const isUserTypingRef = useRef(false);
 
   // Track which fields were auto-filled by community data
   const [priceSuggestedByCommunity, setPriceSuggestedByCommunity] = useState(false);
@@ -100,9 +108,56 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
         clearCommunityData();
         setPriceSuggestedByCommunity(false);
         setUrlSuggestedByCommunity(false);
+        setSuggestions([]);
+        setShowSuggestions(false);
+        isUserTypingRef.current = false;
       }, 200);
     }
   }, [open, clearCommunityData]);
+
+  // Plan Search Effect
+  useEffect(() => {
+    if (!isCustom || !name || name.length < 2 || !isUserTypingRef.current) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingPlans(true);
+      try {
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .ilike('name', `%${name}%`)
+          .limit(5);
+        
+        if (data && data.length > 0) {
+          setSuggestions(data);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch (err) {
+        console.error("Error searching plans:", err);
+      } finally {
+        setIsSearchingPlans(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [name, isCustom]);
+
+  const handleSelectPlan = (plan: any) => {
+    isUserTypingRef.current = false;
+    setName(plan.name);
+    setPrice(plan.price);
+    if (currencies.some(c => c.value === plan.currency)) {
+      setCurrency(plan.currency);
+    }
+    setShowSuggestions(false);
+  };
 
   // Fetch community data when name or currency changes (for custom subscriptions)
   const handleFetchCommunityData = useCallback(async (serviceName: string, selectedCurrency: Currency) => {
@@ -346,17 +401,47 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
           <form onSubmit={handleSubmit} className="p-6 pt-2 space-y-5">
             {/* Name (only editable for custom) */}
             {isCustom && (
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label>Subscription Name</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onBlur={handleNameBlur}
-                  placeholder="Enter service name"
-                  className="input-ruby"
-                  autoFocus
-                />
-                {isCommunityLoading && (
+                <div className="relative">
+                  <Input
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      isUserTypingRef.current = true;
+                    }}
+                    onBlur={() => {
+                      // Small delay to allow click on suggestion
+                      setTimeout(() => setShowSuggestions(false), 200);
+                      handleNameBlur();
+                    }}
+                    placeholder="Enter service name"
+                    className="input-ruby"
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  {/* Suggestions Overlay */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-md overflow-hidden animate-in fade-in-0 zoom-in-95">
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {suggestions.map((plan, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between"
+                            onClick={() => handleSelectPlan(plan)}
+                          >
+                            <span className="font-medium">{plan.name}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {getCurrencySymbol(plan.currency)}{plan.price}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {isCommunityLoading && !showSuggestions && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     Searching community data...

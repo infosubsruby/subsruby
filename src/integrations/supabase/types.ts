@@ -176,6 +176,30 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          currency: string
+          id: number
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          id?: number
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: number
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
