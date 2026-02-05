@@ -59,6 +59,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete, displayCurrency, ex
     exchangeRates
   );
   const displayedSymbol = getCurrencySymbol(targetCurrency);
+  const symbol = getCurrencySymbol(subscription.currency);
 
   // Get the management URL - use stored URL, preset URL, or generate fallback
   const getManageUrl = (): string => {
