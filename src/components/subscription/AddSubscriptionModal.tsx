@@ -82,148 +82,84 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
     );
   }, [searchQuery, featuredServices]);
 
-  // Available plans for selected preset
-  const availablePlans = useMemo(() => {
-    if (!selectedPreset) return [];
-    return getPlansForPreset(selectedPreset);
-  }, [selectedPreset]);
+  // Available plans from Supabase for selected preset/name
+  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
+  const [isFetchingPlans, setIsFetchingPlans] = useState(false);
 
-  // Reset modal state when closed
+  // Fetch plans from Supabase when name or currency changes
   useEffect(() => {
-    if (!open) {
-      setTimeout(() => {
-        setStep("select");
-        setSearchQuery("");
-        setSelectedPreset(null);
-        setIsCustom(false);
-        setName("");
-        setWebsiteUrl("");
-        setPrice("");
-        setCurrency("USD");
-        setBillingCycle("monthly");
-        setBillingDay(new Date().getDate());
-        setBillingMonth(new Date().getMonth() + 1);
-        setSelectedPlan("");
-        setCardColor("#E50914");
-        clearCommunityData();
-        setPriceSuggestedByCommunity(false);
-        setUrlSuggestedByCommunity(false);
-        setSuggestions([]);
-        setShowSuggestions(false);
-        isUserTypingRef.current = false;
-      }, 200);
-    }
-  }, [open, clearCommunityData]);
-
-  // Plan Search Effect
-  useEffect(() => {
-    if (!isCustom || !name || name.length < 2 || !isUserTypingRef.current) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsSearchingPlans(true);
+    const fetchPlans = async () => {
+      if (!name) return;
+      
+      setIsFetchingPlans(true);
       try {
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('*')
-          .ilike('name', `%${name}%`)
-          .eq('currency', currency)
-          .limit(5);
+          .ilike('name', `${name}%`) // Match service name prefix
+          .eq('currency', currency);
+
+        if (error) throw error;
         
-        if (data && data.length > 0) {
-          setSuggestions(data);
-          setShowSuggestions(true);
-        } else {
-          setSuggestions([]);
-          setShowSuggestions(false);
+        // Filter and process plans
+        const relevantPlans = (data || []).filter(plan => {
+          // Double check if the plan name starts with the service name (case insensitive)
+          return plan.name.toLowerCase().includes(name.toLowerCase());
+        });
+        
+        setAvailablePlans(relevantPlans);
+        
+        // If we switched currency and current selected plan doesn't exist in new currency, reset selection
+        if (selectedPlan) {
+          const planExists = relevantPlans.some(p => p.name === selectedPlan);
+          if (!planExists) {
+            setSelectedPlan("");
+            if (relevantPlans.length > 0 && !isCustom) {
+               // Optional: auto-select first plan if not custom
+            } else if (relevantPlans.length === 0) {
+               // If no plans found for this currency, clear price if it was auto-set
+               if (!isCustom) setPrice("");
+            }
+          }
         }
       } catch (err) {
-        console.error("Error searching plans:", err);
+        console.error("Error fetching plans:", err);
+        setAvailablePlans([]);
       } finally {
-        setIsSearchingPlans(false);
+        setIsFetchingPlans(false);
       }
-    }, 300);
+    };
 
-    return () => clearTimeout(timer);
-  }, [name, isCustom, currency]);
+    fetchPlans();
+  }, [name, currency, selectedPlan, isCustom]);
 
-  const handleSelectPlan = (plan: any) => {
-    isUserTypingRef.current = false;
-    setName(plan.name);
-    setPrice(plan.price);
-    if (currencies.some(c => c.value === plan.currency)) {
-      setCurrency(plan.currency);
-    }
-    setShowSuggestions(false);
-  };
-
-  // Fetch community data when name or currency changes (for custom subscriptions)
-  const handleFetchCommunityData = useCallback(async (serviceName: string, selectedCurrency: Currency) => {
-    if (!serviceName.trim() || serviceName.length < 2) {
-      clearCommunityData();
-      return;
-    }
-
-    // Don't fetch if it's a known preset - use preset data instead
-    const existingPreset = findPreset(serviceName);
-    if (existingPreset) {
-      clearCommunityData();
-      return;
-    }
-
-    const data = await fetchCommunityData(serviceName, selectedCurrency);
-    
-    if (data) {
-      // Auto-fill price if we have a suggestion and price is empty
-      if (data.suggestedPrice !== null && price === "") {
-        setPrice(data.suggestedPrice);
-        setPriceSuggestedByCommunity(true);
-      }
-      
-      // Auto-fill URL if we have a suggestion and URL is empty
-      if (data.suggestedUrl && !websiteUrl) {
-        setWebsiteUrl(data.suggestedUrl);
-        setUrlSuggestedByCommunity(true);
+  // Update price when plan changes
+  useEffect(() => {
+    if (selectedPlan && availablePlans.length > 0) {
+      const plan = availablePlans.find(p => p.name === selectedPlan);
+      if (plan) {
+        setPrice(plan.price);
       }
     }
-  }, [fetchCommunityData, clearCommunityData, price, websiteUrl]);
+  }, [selectedPlan, availablePlans]);
 
-  // Handle name blur event (for custom subscriptions)
+  // Handle name blur event
   const handleNameBlur = useCallback(() => {
-    if (isCustom && name.trim()) {
-      handleFetchCommunityData(name, currency);
-    }
-  }, [isCustom, name, currency, handleFetchCommunityData]);
+    // No-op
+  }, []);
 
   // Handle currency change
   const handleCurrencyChange = useCallback((newCurrency: Currency) => {
     setCurrency(newCurrency);
-    
-    // Reset community suggestions when currency changes
-    setPriceSuggestedByCommunity(false);
-    
-    // If custom subscription, fetch new community data for the new currency
-    if (isCustom && name.trim()) {
-      // Clear price if it was community suggested (to allow new suggestion)
-      if (priceSuggestedByCommunity) {
-        setPrice("");
-      }
-      handleFetchCommunityData(name, newCurrency);
-    }
-  }, [isCustom, name, priceSuggestedByCommunity, handleFetchCommunityData]);
+  }, []);
 
-  // Clear community suggestion flag when user manually edits
+  // Handle price change
   const handlePriceChange = useCallback((value: string) => {
     setPrice(value ? Number(value) : "");
-    setPriceSuggestedByCommunity(false);
   }, []);
 
   const handleUrlChange = useCallback((value: string) => {
     setWebsiteUrl(value);
-    setUrlSuggestedByCommunity(false);
   }, []);
 
   // Handle service selection
@@ -233,11 +169,9 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
     setName(preset.name);
     setWebsiteUrl(preset.url);
     setCardColor(preset.color);
-    setSelectedPlan(preset.defaultPlan);
-    setPrice(getPlanPrice(preset, preset.defaultPlan, currency));
-    clearCommunityData();
-    setPriceSuggestedByCommunity(false);
-    setUrlSuggestedByCommunity(false);
+    // Reset plan and price, they will be fetched/set by the useEffects
+    setSelectedPlan("");
+    setPrice(""); 
     setStep("configure");
   };
 
@@ -250,18 +184,18 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
     setCardColor("#6366F1");
     setPrice("");
     setSelectedPlan("");
-    clearCommunityData();
-    setPriceSuggestedByCommunity(false);
-    setUrlSuggestedByCommunity(false);
     setStep("configure");
   };
 
-  // Update price when currency or plan changes for preset
-  useEffect(() => {
-    if (selectedPreset && selectedPlan) {
-      setPrice(getPlanPrice(selectedPreset, selectedPlan, currency));
+  // Handle selecting a plan from suggestions (if we keep suggestions overlay)
+  const handleSelectPlan = (plan: any) => {
+    setName(plan.name);
+    setPrice(plan.price);
+    if (currencies.some(c => c.value === plan.currency)) {
+      setCurrency(plan.currency);
     }
-  }, [currency, selectedPlan, selectedPreset]);
+    setShowSuggestions(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -421,38 +355,12 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
                     autoFocus
                     autoComplete="off"
                   />
-                  {/* Suggestions Overlay */}
-                  {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-md overflow-hidden animate-in fade-in-0 zoom-in-95">
-                      <div className="max-h-[200px] overflow-y-auto">
-                        {suggestions.map((plan, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between"
-                            onClick={() => handleSelectPlan(plan)}
-                          >
-                            <span className="font-medium">{plan.name}</span>
-                            <span className="text-muted-foreground text-xs">
-                              {getCurrencySymbol(plan.currency)}{plan.price}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
-                {isCommunityLoading && !showSuggestions && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Searching community data...
-                  </p>
-                )}
               </div>
             )}
 
-            {/* Plan Selector for presets */}
-            {selectedPreset && availablePlans.length > 0 && (
+            {/* Plan Selector */}
+            {availablePlans.length > 0 && (
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select value={selectedPlan} onValueChange={setSelectedPlan}>
@@ -460,14 +368,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
                     <SelectValue placeholder="Select a plan" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    {availablePlans.map((plan) => {
-                      const planPrice = getPlanPrice(selectedPreset, plan, currency);
-                      return (
-                        <SelectItem key={plan} value={plan}>
-                          {formatPlanName(plan)} ({currencySymbol}{planPrice.toFixed(2)})
-                        </SelectItem>
-                      );
-                    })}
+                    {availablePlans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.name}>
+                        {plan.name} ({currencySymbol}{plan.price.toFixed(2)})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
