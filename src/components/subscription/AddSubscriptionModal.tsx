@@ -130,6 +130,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
           .from('subscription_plans')
           .select('*')
           .ilike('name', `%${name}%`)
+          .eq('currency', currency)
           .limit(5);
         
         if (data && data.length > 0) {
@@ -147,7 +148,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [name, isCustom]);
+  }, [name, isCustom, currency]);
 
   const handleSelectPlan = (plan: any) => {
     isUserTypingRef.current = false;
