@@ -89,7 +89,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
   // Fetch plans from Supabase when name or currency changes
   useEffect(() => {
     const fetchPlans = async () => {
-      if (!name) return;
+      if (!name) {
+        setAvailablePlans([]);
+        return;
+      }
       
       setIsFetchingPlans(true);
       try {
@@ -109,19 +112,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
         
         setAvailablePlans(relevantPlans);
         
-        // If we switched currency and current selected plan doesn't exist in new currency, reset selection
-        if (selectedPlan) {
-          const planExists = relevantPlans.some(p => p.name === selectedPlan);
-          if (!planExists) {
-            setSelectedPlan("");
-            if (relevantPlans.length > 0 && !isCustom) {
-               // Optional: auto-select first plan if not custom
-            } else if (relevantPlans.length === 0) {
-               // If no plans found for this currency, clear price if it was auto-set
-               if (!isCustom) setPrice("");
-            }
-          }
-        }
       } catch (err) {
         console.error("Error fetching plans:", err);
         setAvailablePlans([]);
@@ -131,7 +121,24 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
     };
 
     fetchPlans();
-  }, [name, currency, selectedPlan, isCustom]);
+  }, [name, currency]);
+
+  // Auto-select first plan when availablePlans changes
+  useEffect(() => {
+    if (availablePlans.length > 0) {
+      // If no plan is selected, or the currently selected plan is not in the new list (e.g. currency changed)
+      const currentPlanExists = availablePlans.some(p => p.name === selectedPlan);
+      
+      if (!selectedPlan || !currentPlanExists) {
+        const firstPlan = availablePlans[0];
+        setSelectedPlan(firstPlan.name);
+      }
+    } else {
+       if (!isCustom && selectedPlan) {
+         setSelectedPlan("");
+       }
+    }
+  }, [availablePlans, isCustom, selectedPlan]);
 
   // Update price when plan changes
   useEffect(() => {
@@ -360,12 +367,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
             )}
 
             {/* Plan Selector */}
-            {availablePlans.length > 0 && (
+            {(availablePlans.length > 0 || isFetchingPlans) && (
               <div className="space-y-2">
                 <Label>Plan</Label>
-                <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                <Select 
+                  value={selectedPlan} 
+                  onValueChange={setSelectedPlan}
+                  disabled={isFetchingPlans}
+                >
                   <SelectTrigger className="input-ruby">
-                    <SelectValue placeholder="Select a plan" />
+                    <SelectValue placeholder={isFetchingPlans ? "Loading plans..." : "Select a plan"} />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
                     {availablePlans.map((plan) => (
