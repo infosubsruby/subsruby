@@ -1,151 +1,168 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Real Regional Pricing Data (Estimates as of 2024/2025)
-const REGIONAL_PLANS = [
-  // --- NETFLIX ---
-  { name: 'Netflix - Basic', price: 119.99, currency: 'TRY' },
-  { name: 'Netflix - Standard', price: 176.99, currency: 'TRY' },
-  { name: 'Netflix - Premium', price: 229.99, currency: 'TRY' },
-  { name: 'Netflix - Basic', price: 9.99, currency: 'USD' },
-  { name: 'Netflix - Standard', price: 15.49, currency: 'USD' },
-  { name: 'Netflix - Premium', price: 22.99, currency: 'USD' },
+const videoPlans = [
+  // NETFLIX (US, TR, GBP, EUR, BRL)
+  { "service_name": "Netflix", "plan_name": "Standard with Ads", "price": 6.99, "currency": "USD" },
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 15.49, "currency": "USD" },
+  { "service_name": "Netflix", "plan_name": "Premium", "price": 22.99, "currency": "USD" },
+  { "service_name": "Netflix", "plan_name": "Temel", "price": 149.99, "currency": "TRY" },
+  { "service_name": "Netflix", "plan_name": "Standart", "price": 229.99, "currency": "TRY" },
+  { "service_name": "Netflix", "plan_name": "Özel", "price": 299.99, "currency": "TRY" },
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 10.99, "currency": "GBP" },
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 13.99, "currency": "EUR" },
+  { "service_name": "Netflix", "plan_name": "Padrão", "price": 44.90, "currency": "BRL" },
 
-  // --- SPOTIFY ---
-  { name: 'Spotify - Individual', price: 59.99, currency: 'TRY' },
-  { name: 'Spotify - Duo', price: 79.99, currency: 'TRY' },
-  { name: 'Spotify - Family', price: 99.99, currency: 'TRY' },
-  { name: 'Spotify - Student', price: 32.99, currency: 'TRY' },
-  { name: 'Spotify - Individual', price: 11.99, currency: 'USD' },
-  { name: 'Spotify - Duo', price: 16.99, currency: 'USD' },
-  { name: 'Spotify - Family', price: 19.99, currency: 'USD' },
-  { name: 'Spotify - Student', price: 5.99, currency: 'USD' },
+  // YOUTUBE (US, TR, GBP, EUR, AUD, JPY)
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 13.99, "currency": "USD" },
+  { "service_name": "YouTube", "plan_name": "Family", "price": 22.99, "currency": "USD" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 57.99, "currency": "TRY" },
+  { "service_name": "YouTube", "plan_name": "Aile", "price": 115.99, "currency": "TRY" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "GBP" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "EUR" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 1280, "currency": "JPY" },
 
-  // --- YOUTUBE PREMIUM ---
-  { name: 'YouTube Premium - Individual', price: 57.99, currency: 'TRY' },
-  { name: 'YouTube Premium - Family', price: 115.99, currency: 'TRY' },
-  { name: 'YouTube Premium - Student', price: 37.99, currency: 'TRY' },
-  { name: 'YouTube Premium - Individual', price: 13.99, currency: 'USD' },
-  { name: 'YouTube Premium - Family', price: 22.99, currency: 'USD' },
-  { name: 'YouTube Premium - Student', price: 7.99, currency: 'USD' },
+  // DISNEY+ (US, TR, GBP, EUR, BRL)
+  { "service_name": "Disney+", "plan_name": "Basic (Ads)", "price": 9.99, "currency": "USD" },
+  { "service_name": "Disney+", "plan_name": "Premium", "price": 15.99, "currency": "USD" },
+  { "service_name": "Disney+", "plan_name": "Standart", "price": 134.99, "currency": "TRY" },
+  { "service_name": "Disney+", "plan_name": "Standard", "price": 7.99, "currency": "GBP" },
+  { "service_name": "Disney+", "plan_name": "Standard", "price": 8.99, "currency": "EUR" },
+  { "service_name": "Disney+", "plan_name": "Padrão", "price": 27.90, "currency": "BRL" },
 
-  // --- DISNEY+ ---
-  { name: 'Disney+ - Standard', price: 134.99, currency: 'TRY' },
-  { name: 'Disney+ - Premium', price: 164.99, currency: 'TRY' }, // Hypothetical tiered pricing
-  { name: 'Disney+ - Basic (With Ads)', price: 7.99, currency: 'USD' },
-  { name: 'Disney+ - Premium (No Ads)', price: 13.99, currency: 'USD' },
-
-  // --- APPLE MUSIC ---
-  { name: 'Apple Music - Individual', price: 39.99, currency: 'TRY' },
-  { name: 'Apple Music - Family', price: 59.99, currency: 'TRY' },
-  { name: 'Apple Music - Student', price: 19.99, currency: 'TRY' },
-  { name: 'Apple Music - Individual', price: 10.99, currency: 'USD' },
-  { name: 'Apple Music - Family', price: 16.99, currency: 'USD' },
-  { name: 'Apple Music - Student', price: 5.99, currency: 'USD' },
-
-  // --- AMAZON PRIME ---
-  { name: 'Amazon Prime', price: 39.00, currency: 'TRY' },
-  { name: 'Amazon Prime', price: 14.99, currency: 'USD' },
-
-  // --- BLU TV (Local) ---
-  { name: 'BluTV - Monthly', price: 99.90, currency: 'TRY' }, // Recent hike
-  { name: 'BluTV - Yearly', price: 588.00, currency: 'TRY' },
-
-  // --- EXXEN (Local) ---
-  { name: 'Exxen - Reklamlı', price: 99.90, currency: 'TRY' },
-  { name: 'Exxen - Reklamsız', price: 139.90, currency: 'TRY' },
-  { name: 'ExxenSpor - Reklamlı', price: 229.90, currency: 'TRY' },
-  { name: 'ExxenSpor - Reklamsız', price: 269.90, currency: 'TRY' },
+  // AMAZON PRIME (US, TR, GBP, EUR, BRL, INR, JPY)
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 14.99, "currency": "USD" },
+  { "service_name": "Amazon Prime", "plan_name": "Aylık", "price": 39.00, "currency": "TRY" },
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 8.99, "currency": "GBP" },
+  { "service_name": "Amazon Prime", "plan_name": "Mensal", "price": 19.90, "currency": "BRL" },
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 299, "currency": "INR" },
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 600, "currency": "JPY" }
 ]
 
-Deno.serve(async (req) => {
+const otherPlans = [
+  // SPOTIFY (US, TR, GBP, EUR, MXN, BRL, AUD)
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 11.99, "currency": "USD" },
+  { "service_name": "Spotify", "plan_name": "Duo", "price": 16.99, "currency": "USD" },
+  { "service_name": "Spotify", "plan_name": "Family", "price": 19.99, "currency": "USD" },
+  { "service_name": "Spotify", "plan_name": "Bireysel", "price": 59.99, "currency": "TRY" },
+  { "service_name": "Spotify", "plan_name": "Öğrenci", "price": 32.99, "currency": "TRY" },
+  { "service_name": "Spotify", "plan_name": "Aile", "price": 99.99, "currency": "TRY" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 11.99, "currency": "GBP" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 10.99, "currency": "EUR" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 139.00, "currency": "MXN" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 23.90, "currency": "BRL" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 15.99, "currency": "AUD" },
+
+  // APPLE MUSIC
+  { "service_name": "Apple Music", "plan_name": "Individual", "price": 10.99, "currency": "USD" },
+  { "service_name": "Apple Music", "plan_name": "Individual", "price": 10.99, "currency": "GBP" },
+  { "service_name": "Apple Music", "plan_name": "Bireysel", "price": 39.99, "currency": "TRY" },
+
+  // ADOBE CREATIVE CLOUD
+  { "service_name": "Adobe Creative Cloud", "plan_name": "All Apps", "price": 59.99, "currency": "USD" },
+  { "service_name": "Adobe Creative Cloud", "plan_name": "All Apps", "price": 51.98, "currency": "GBP" },
+
+  // CANVA
+  { "service_name": "Canva", "plan_name": "Pro", "price": 15.00, "currency": "USD" },
+  { "service_name": "Canva", "plan_name": "Pro", "price": 13.00, "currency": "GBP" },
+  { "service_name": "Canva", "plan_name": "Pro", "price": 99.99, "currency": "TRY" },
+
+  // X PREMIUM
+  { "service_name": "X Premium", "plan_name": "Basic", "price": 3.00, "currency": "USD" },
+  { "service_name": "X Premium", "plan_name": "Premium", "price": 8.00, "currency": "USD" },
+  { "service_name": "X Premium", "plan_name": "Premium", "price": 150.00, "currency": "TRY" },
+
+  // PROTON VPN
+  { "service_name": "Proton VPN", "plan_name": "Plus", "price": 9.99, "currency": "USD" },
+  { "service_name": "Proton VPN", "plan_name": "Plus", "price": 9.99, "currency": "EUR" }
+]
+
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const results = []
-    const errors = []
+    const allPlans = [...videoPlans, ...otherPlans]
+    const results = { success: 0, failed: 0, errors: [] }
 
-    for (const plan of REGIONAL_PLANS) {
-      // Logic: Check if a plan with this NAME and CURRENCY already exists
-      const { data: existingPlans } = await supabaseClient
+    for (const plan of allPlans) {
+      const fullName = `${plan.service_name} - ${plan.plan_name}`
+
+      // Check if plan exists
+      const { data: existingPlans, error: searchError } = await supabase
         .from('subscription_plans')
         .select('id')
-        .eq('name', plan.name)
+        .eq('name', fullName)
         .eq('currency', plan.currency)
-        .limit(1)
+        .maybeSingle()
 
-      let operationResult;
+      if (searchError) {
+        console.error(`Error searching ${fullName}:`, searchError)
+        results.failed++
+        results.errors.push({ plan: fullName, currency: plan.currency, error: searchError.message })
+        continue
+      }
 
-      if (existingPlans && existingPlans.length > 0) {
-        // UPDATE existing record
-        const { data, error } = await supabaseClient
+      if (existingPlans) {
+        // Update
+        const { error: updateError } = await supabase
           .from('subscription_plans')
-          .update({ 
-            price: plan.price,
-            // updated_at: new Date().toISOString()
-          })
-          .eq('id', existingPlans[0].id)
-          .select()
-        
-        if (error) {
-          errors.push({ plan: `${plan.name} (${plan.currency})`, error })
+          .update({ price: plan.price })
+          .eq('id', existingPlans.id)
+
+        if (updateError) {
+          console.error(`Error updating ${fullName}:`, updateError)
+          results.failed++
+          results.errors.push({ plan: fullName, currency: plan.currency, error: updateError.message })
         } else {
-          results.push({ action: 'updated', plan: `${plan.name} (${plan.currency})` })
+          results.success++
         }
       } else {
-        // INSERT new record
-        const { data, error } = await supabaseClient
+        // Insert
+        const { error: insertError } = await supabase
           .from('subscription_plans')
           .insert({
-            name: plan.name,
+            name: fullName,
             price: plan.price,
             currency: plan.currency
           })
-          .select()
 
-        if (error) {
-          errors.push({ plan: `${plan.name} (${plan.currency})`, error })
+        if (insertError) {
+          console.error(`Error inserting ${fullName}:`, insertError)
+          results.failed++
+          results.errors.push({ plan: fullName, currency: plan.currency, error: insertError.message })
         } else {
-          results.push({ action: 'inserted', plan: `${plan.name} (${plan.currency})` })
+          results.success++
         }
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        message: 'Regional pricing sync completed', 
-        stats: {
-          total_processed: REGIONAL_PLANS.length,
-          success: results.length,
-          failed: errors.length
-        },
-        details: results 
-      }),
+      JSON.stringify(results),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     )
+
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    )
   }
 })
