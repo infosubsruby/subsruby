@@ -7,79 +7,76 @@ const corsHeaders = {
 }
 
 const videoPlans = [
-  // NETFLIX (US, TR, GBP, EUR, BRL)
-  { "service_name": "Netflix", "plan_name": "Standard with Ads", "price": 6.99, "currency": "USD" },
+  // --- NETFLIX (Tüm Kurlar) ---
   { "service_name": "Netflix", "plan_name": "Standard", "price": 15.49, "currency": "USD" },
-  { "service_name": "Netflix", "plan_name": "Premium", "price": 22.99, "currency": "USD" },
-  { "service_name": "Netflix", "plan_name": "Temel", "price": 149.99, "currency": "TRY" },
   { "service_name": "Netflix", "plan_name": "Standart", "price": 229.99, "currency": "TRY" },
-  { "service_name": "Netflix", "plan_name": "Özel", "price": 299.99, "currency": "TRY" },
-  { "service_name": "Netflix", "plan_name": "Standard", "price": 10.99, "currency": "GBP" },
   { "service_name": "Netflix", "plan_name": "Standard", "price": 13.99, "currency": "EUR" },
-  { "service_name": "Netflix", "plan_name": "Padrão", "price": 44.90, "currency": "BRL" },
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 10.99, "currency": "GBP" },
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 16.49, "currency": "CAD" }, // Kanada
+  { "service_name": "Netflix", "plan_name": "Estándar", "price": 219.00, "currency": "MXN" }, // Meksika
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 16.99, "currency": "AUD" }, // Avustralya
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 1490, "currency": "JPY" }, // Japonya
+  { "service_name": "Netflix", "plan_name": "Standard", "price": 499, "currency": "INR" },  // Hindistan
+  { "service_name": "Netflix", "plan_name": "Padrão", "price": 44.90, "currency": "BRL" },  // Brezilya
 
-  // YOUTUBE (US, TR, GBP, EUR, AUD, JPY)
+  // --- YOUTUBE PREMIUM (Tüm Kurlar) ---
   { "service_name": "YouTube", "plan_name": "Premium", "price": 13.99, "currency": "USD" },
-  { "service_name": "YouTube", "plan_name": "Family", "price": 22.99, "currency": "USD" },
   { "service_name": "YouTube", "plan_name": "Premium", "price": 57.99, "currency": "TRY" },
-  { "service_name": "YouTube", "plan_name": "Aile", "price": 115.99, "currency": "TRY" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "GBP" },
   { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "EUR" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "GBP" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "CAD" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 139.00, "currency": "MXN" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 16.99, "currency": "AUD" },
   { "service_name": "YouTube", "plan_name": "Premium", "price": 1280, "currency": "JPY" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 129.00, "currency": "INR" },
+  { "service_name": "YouTube", "plan_name": "Premium", "price": 24.90, "currency": "BRL" },
 
-  // DISNEY+ (US, TR, GBP, EUR, BRL)
-  { "service_name": "Disney+", "plan_name": "Basic (Ads)", "price": 9.99, "currency": "USD" },
-  { "service_name": "Disney+", "plan_name": "Premium", "price": 15.99, "currency": "USD" },
+  // --- DISNEY+ (Seçili Kurlar) ---
+  { "service_name": "Disney+", "plan_name": "Premium", "price": 13.99, "currency": "USD" },
   { "service_name": "Disney+", "plan_name": "Standart", "price": 134.99, "currency": "TRY" },
-  { "service_name": "Disney+", "plan_name": "Standard", "price": 7.99, "currency": "GBP" },
   { "service_name": "Disney+", "plan_name": "Standard", "price": 8.99, "currency": "EUR" },
-  { "service_name": "Disney+", "plan_name": "Padrão", "price": 27.90, "currency": "BRL" },
+  { "service_name": "Disney+", "plan_name": "Standard", "price": 7.99, "currency": "GBP" },
+  { "service_name": "Disney+", "plan_name": "Standard", "price": 11.99, "currency": "CAD" },
+  { "service_name": "Disney+", "plan_name": "Standard", "price": 13.99, "currency": "AUD" },
 
-  // AMAZON PRIME (US, TR, GBP, EUR, BRL, INR, JPY)
+  // --- AMAZON PRIME (Tüm Kurlar) ---
   { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 14.99, "currency": "USD" },
   { "service_name": "Amazon Prime", "plan_name": "Aylık", "price": 39.00, "currency": "TRY" },
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 8.99, "currency": "EUR" }, // DE/FR Ort.
   { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 8.99, "currency": "GBP" },
-  { "service_name": "Amazon Prime", "plan_name": "Mensal", "price": 19.90, "currency": "BRL" },
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 9.99, "currency": "CAD" },
+  { "service_name": "Amazon Prime", "plan_name": "Mensual", "price": 99.00, "currency": "MXN" },
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 9.99, "currency": "AUD" },
+  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 600, "currency": "JPY" },
   { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 299, "currency": "INR" },
-  { "service_name": "Amazon Prime", "plan_name": "Monthly", "price": 600, "currency": "JPY" }
+  { "service_name": "Amazon Prime", "plan_name": "Mensal", "price": 19.90, "currency": "BRL" }
 ]
 
 const otherPlans = [
-  // SPOTIFY (US, TR, GBP, EUR, MXN, BRL, AUD)
+  // --- SPOTIFY (Tüm Kurlar) ---
   { "service_name": "Spotify", "plan_name": "Individual", "price": 11.99, "currency": "USD" },
-  { "service_name": "Spotify", "plan_name": "Duo", "price": 16.99, "currency": "USD" },
-  { "service_name": "Spotify", "plan_name": "Family", "price": 19.99, "currency": "USD" },
   { "service_name": "Spotify", "plan_name": "Bireysel", "price": 59.99, "currency": "TRY" },
-  { "service_name": "Spotify", "plan_name": "Öğrenci", "price": 32.99, "currency": "TRY" },
-  { "service_name": "Spotify", "plan_name": "Aile", "price": 99.99, "currency": "TRY" },
-  { "service_name": "Spotify", "plan_name": "Individual", "price": 11.99, "currency": "GBP" },
   { "service_name": "Spotify", "plan_name": "Individual", "price": 10.99, "currency": "EUR" },
-  { "service_name": "Spotify", "plan_name": "Individual", "price": 139.00, "currency": "MXN" },
-  { "service_name": "Spotify", "plan_name": "Individual", "price": 23.90, "currency": "BRL" },
-  { "service_name": "Spotify", "plan_name": "Individual", "price": 15.99, "currency": "AUD" },
-
-  // APPLE MUSIC
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 11.99, "currency": "GBP" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 10.99, "currency": "CAD" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 129.00, "currency": "MXN" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 13.99, "currency": "AUD" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 980, "currency": "JPY" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 119.00, "currency": "INR" },
+  { "service_name": "Spotify", "plan_name": "Individual", "price": 21.90, "currency": "BRL" },
+  // --- APPLE MUSIC ---
   { "service_name": "Apple Music", "plan_name": "Individual", "price": 10.99, "currency": "USD" },
-  { "service_name": "Apple Music", "plan_name": "Individual", "price": 10.99, "currency": "GBP" },
   { "service_name": "Apple Music", "plan_name": "Bireysel", "price": 39.99, "currency": "TRY" },
-
-  // ADOBE CREATIVE CLOUD
-  { "service_name": "Adobe Creative Cloud", "plan_name": "All Apps", "price": 59.99, "currency": "USD" },
-  { "service_name": "Adobe Creative Cloud", "plan_name": "All Apps", "price": 51.98, "currency": "GBP" },
-
-  // CANVA
+  { "service_name": "Apple Music", "plan_name": "Individual", "price": 10.99, "currency": "GBP" },
+  { "service_name": "Apple Music", "plan_name": "Individual", "price": 10.99, "currency": "EUR" },
+  { "service_name": "Apple Music", "plan_name": "Individual", "price": 10.99, "currency": "CAD" },
+  { "service_name": "Apple Music", "plan_name": "Individual", "price": 99.00, "currency": "INR" },
+  // --- CANVA / ADOBE / X ---
   { "service_name": "Canva", "plan_name": "Pro", "price": 15.00, "currency": "USD" },
-  { "service_name": "Canva", "plan_name": "Pro", "price": 13.00, "currency": "GBP" },
   { "service_name": "Canva", "plan_name": "Pro", "price": 99.99, "currency": "TRY" },
-
-  // X PREMIUM
+  { "service_name": "Adobe Creative Cloud", "plan_name": "All Apps", "price": 59.99, "currency": "USD" },
   { "service_name": "X Premium", "plan_name": "Basic", "price": 3.00, "currency": "USD" },
-  { "service_name": "X Premium", "plan_name": "Premium", "price": 8.00, "currency": "USD" },
-  { "service_name": "X Premium", "plan_name": "Premium", "price": 150.00, "currency": "TRY" },
-
-  // PROTON VPN
-  { "service_name": "Proton VPN", "plan_name": "Plus", "price": 9.99, "currency": "USD" },
-  { "service_name": "Proton VPN", "plan_name": "Plus", "price": 9.99, "currency": "EUR" }
+  { "service_name": "X Premium", "plan_name": "Premium", "price": 150.00, "currency": "TRY" }
 ]
 
 serve(async (req) => {
