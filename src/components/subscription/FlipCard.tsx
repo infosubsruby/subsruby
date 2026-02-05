@@ -25,11 +25,9 @@ interface FlipCardProps {
   subscription: Subscription;
   onUpdate: (id: number, payload: Partial<CreateSubscriptionData>) => Promise<{ success: boolean }>;
   onDelete: (id: number) => Promise<{ success: boolean }>;
-  displayCurrency?: string | null;
-  exchangeRates?: Record<string, number>;
 }
 
-export const FlipCard = ({ subscription, onUpdate, onDelete, displayCurrency, exchangeRates = {} }: FlipCardProps) => {
+export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -50,15 +48,6 @@ export const FlipCard = ({ subscription, onUpdate, onDelete, displayCurrency, ex
   );
   const IconComponent = preset?.icon || CreditCard;
   
-  // Calculate displayed price and symbol based on displayCurrency
-  const targetCurrency = displayCurrency || subscription.currency;
-  const displayedPrice = convertWithDynamicRates(
-    subscription.price, 
-    subscription.currency, 
-    targetCurrency, 
-    exchangeRates
-  );
-  const displayedSymbol = getCurrencySymbol(targetCurrency);
   const symbol = getCurrencySymbol(subscription.currency);
 
   // Get the management URL - use stored URL, preset URL, or generate fallback
@@ -164,7 +153,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete, displayCurrency, ex
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-display font-bold text-foreground">
-                    {displayedSymbol}{displayedPrice.toFixed(2)}
+                    {symbol}{subscription.price.toFixed(2)}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide">
                     / {subscription.billing_cycle === "yearly" ? "year" : "month"}

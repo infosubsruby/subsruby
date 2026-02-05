@@ -224,8 +224,6 @@ const Dashboard = () => {
                   subscription={subscription}
                   onUpdate={updateSubscription}
                   onDelete={deleteSubscription}
-                  displayCurrency={displayCurrency}
-                  exchangeRates={exchangeRates}
                 />
               ))}
             </div>
