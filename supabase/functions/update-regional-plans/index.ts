@@ -20,16 +20,16 @@ const videoPlans = [
   { "service_name": "Netflix", "plan_name": "Padrão", "price": 44.90, "currency": "BRL" },  // Brezilya
 
   // --- YOUTUBE PREMIUM (Tüm Kurlar) ---
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 13.99, "currency": "USD" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 57.99, "currency": "TRY" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "EUR" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "GBP" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 12.99, "currency": "CAD" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 139.00, "currency": "MXN" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 16.99, "currency": "AUD" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 1280, "currency": "JPY" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 129.00, "currency": "INR" },
-  { "service_name": "YouTube", "plan_name": "Premium", "price": 24.90, "currency": "BRL" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 13.99, "currency": "USD" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 57.99, "currency": "TRY" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 12.99, "currency": "EUR" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 12.99, "currency": "GBP" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 12.99, "currency": "CAD" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 139.00, "currency": "MXN" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 16.99, "currency": "AUD" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 1280, "currency": "JPY" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 129.00, "currency": "INR" },
+  { "service_name": "YouTube Premium", "plan_name": "Premium", "price": 24.90, "currency": "BRL" },
 
   // --- DISNEY+ (Seçili Kurlar) ---
   { "service_name": "Disney+", "plan_name": "Premium", "price": 13.99, "currency": "USD" },
@@ -94,20 +94,19 @@ serve(async (req) => {
     const results = { success: 0, failed: 0, errors: [] }
 
     for (const plan of allPlans) {
-      const fullName = `${plan.service_name} - ${plan.plan_name}`
-
       // Check if plan exists
       const { data: existingPlans, error: searchError } = await supabase
         .from('subscription_plans')
         .select('id')
-        .eq('name', fullName)
+        .eq('service_name', plan.service_name)
+        .eq('plan_name', plan.plan_name)
         .eq('currency', plan.currency)
         .maybeSingle()
 
       if (searchError) {
-        console.error(`Error searching ${fullName}:`, searchError)
+        console.error(`Error searching ${plan.service_name} - ${plan.plan_name}:`, searchError)
         results.failed++
-        results.errors.push({ plan: fullName, currency: plan.currency, error: searchError.message })
+        results.errors.push({ plan: `${plan.service_name} - ${plan.plan_name}`, currency: plan.currency, error: searchError.message })
         continue
       }
 
@@ -119,9 +118,9 @@ serve(async (req) => {
           .eq('id', existingPlans.id)
 
         if (updateError) {
-          console.error(`Error updating ${fullName}:`, updateError)
+          console.error(`Error updating ${plan.service_name} - ${plan.plan_name}:`, updateError)
           results.failed++
-          results.errors.push({ plan: fullName, currency: plan.currency, error: updateError.message })
+          results.errors.push({ plan: `${plan.service_name} - ${plan.plan_name}`, currency: plan.currency, error: updateError.message })
         } else {
           results.success++
         }
@@ -130,15 +129,16 @@ serve(async (req) => {
         const { error: insertError } = await supabase
           .from('subscription_plans')
           .insert({
-            name: fullName,
+            service_name: plan.service_name,
+            plan_name: plan.plan_name,
             price: plan.price,
             currency: plan.currency
           })
 
         if (insertError) {
-          console.error(`Error inserting ${fullName}:`, insertError)
+          console.error(`Error inserting ${plan.service_name} - ${plan.plan_name}:`, insertError)
           results.failed++
-          results.errors.push({ plan: fullName, currency: plan.currency, error: insertError.message })
+          results.errors.push({ plan: `${plan.service_name} - ${plan.plan_name}`, currency: plan.currency, error: insertError.message })
         } else {
           results.success++
         }

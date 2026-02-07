@@ -77,8 +77,22 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     plans.find(p => p.id.toString() === selectedPlanId), 
   [plans, selectedPlanId]);
 
-  const activePrice = selectedPlan ? selectedPlan.price : customPrice;
-  const activeCurrency = selectedPlan ? (selectedPlan.currency as Currency) : customCurrency;
+  // Price logic: If plans exist, price comes from plan (or 0 if none selected).
+  // If no plans (custom), price comes from customPrice.
+  const activePrice = useMemo(() => {
+    if (plans.length > 0) {
+      return selectedPlan ? selectedPlan.price : 0;
+    }
+    return customPrice;
+  }, [plans.length, selectedPlan, customPrice]);
+
+  // Currency logic: Similar to price
+  const activeCurrency = useMemo(() => {
+    if (plans.length > 0) {
+      return selectedPlan ? (selectedPlan.currency as Currency) : "USD";
+    }
+    return customCurrency;
+  }, [plans.length, selectedPlan, customCurrency]);
 
   // Track which fields were auto-filled by community data (kept for UI compatibility)
   const [priceSuggestedByCommunity, setPriceSuggestedByCommunity] = useState(false);
@@ -362,22 +376,43 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             </div>
 
-            {plans.length > 0 && (
+            {(!isCustom && serviceName) && (
               <div className="space-y-2">
-                <Label>Plan</Label>
-                <Select 
-                  value={selectedPlanId} 
-                  onValueChange={(val) => setSelectedPlanId(val)}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
-                  <SelectContent>
-                    {plans.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Plan <span className="text-red-500">*</span></Label>
+                {plans.length > 0 ? (
+                  <>
+                    <Select 
+                      value={selectedPlanId} 
+                      onValueChange={(val) => setSelectedPlanId(val)}
+                    >
+                      <SelectTrigger className={!selectedPlanId ? "border-red-300" : ""}>
+                        <SelectValue placeholder="Select a plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {plans.map((p) => (
+                          <SelectItem key={p.id} value={p.id.toString()}>
+                            {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!selectedPlanId && (
+                      <p className="text-xs text-red-500">Please select a plan to continue</p>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground border rounded-md p-3 bg-muted/50 flex flex-col gap-2">
+                    <p>No plans found for this currency.</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleCustomSubscription}
+                      className="w-full"
+                    >
+                      Switch to Custom Mode
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -396,29 +431,33 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                   <Input
                     type="number"
                     step="0.01"
-                    value={activePrice}
+                    value={activePrice === 0 ? "" : activePrice}
                     onChange={(e) => {
-                      setSelectedPlanId(""); // Switch to custom mode on manual edit
-                      setCustomPrice(e.target.value);
+                      if (plans.length === 0 && isCustom) {
+                        setCustomPrice(e.target.value);
+                      }
                     }}
                     className={cn(
                       "pl-8 input-ruby",
-                      priceSuggestedByCommunity && "ring-1 ring-primary/50"
+                      priceSuggestedByCommunity && "ring-1 ring-primary/50",
+                      (plans.length > 0 || (!isCustom && !!serviceName)) && "bg-muted text-muted-foreground cursor-not-allowed"
                     )}
                     placeholder="0.00"
-                    readOnly={!!selectedPlanId} // Read-only if a plan is selected? Or allow override?
-                    // User said: "price = selectedPlan.price olarak hesapla".
-                    // Usually this implies strict binding. If they want to edit, they should probably clear plan.
-                    // But if I make it readOnly, they MUST deselect plan to edit.
-                    // My onChange clears selectedPlanId, so removing readOnly allows editing which triggers custom mode.
-                    // Let's remove readOnly to allow switching to custom easily.
-                    // BUT wait, if I type, it clears plan, then value becomes e.target.value (customPrice). Correct.
+                    readOnly={plans.length > 0 || (!isCustom && !!serviceName)}
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Currency</Label>
-                <Select value={activeCurrency} onValueChange={(v) => handleCurrencyChange(v as Currency)}>
+                <Select 
+                  value={activeCurrency} 
+                  onValueChange={(v) => {
+                     if (plans.length === 0) {
+                       handleCurrencyChange(v as Currency);
+                     }
+                  }}
+                  disabled={plans.length > 0}
+                >
                   <SelectTrigger className="input-ruby">
                     <SelectValue />
                   </SelectTrigger>

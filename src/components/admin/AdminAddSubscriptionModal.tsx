@@ -59,8 +59,22 @@ export const AdminAddSubscriptionModal = ({
     plans.find(p => p.id.toString() === selectedPlanId), 
   [plans, selectedPlanId]);
 
-  const activePrice = selectedPlan ? selectedPlan.price : customPrice;
-  const activeCurrency = selectedPlan ? (selectedPlan.currency as Currency) : customCurrency;
+  // Price logic: If plans exist, price comes from plan (or 0 if none selected).
+  // If no plans (custom), price comes from customPrice.
+  const activePrice = useMemo(() => {
+    if (plans.length > 0) {
+      return selectedPlan ? selectedPlan.price : 0;
+    }
+    return customPrice;
+  }, [plans.length, selectedPlan, customPrice]);
+
+  // Currency logic: Similar to price
+  const activeCurrency = useMemo(() => {
+    if (plans.length > 0) {
+      return selectedPlan ? (selectedPlan.currency as Currency) : "USD";
+    }
+    return customCurrency;
+  }, [plans.length, selectedPlan, customCurrency]);
 
   // Auto-fill URL/Color when name changes
   useEffect(() => {
@@ -121,6 +135,11 @@ export const AdminAddSubscriptionModal = ({
     if (!userEmail || !name || !activePrice) {
       toast.error("Please fill in all required fields");
       return;
+    }
+
+    if (plans.length > 0 && !selectedPlanId) {
+       toast.error("Please select a plan");
+       return;
     }
 
     setIsLoading(true);
@@ -229,20 +248,25 @@ export const AdminAddSubscriptionModal = ({
           {/* Plan Selection */}
           {plans.length > 0 && (
             <div className="space-y-2">
-              <Label>Plan</Label>
+              <Label>Plan <span className="text-red-500">*</span></Label>
               <Select 
                 value={selectedPlanId} 
                 onValueChange={(val) => setSelectedPlanId(val)}
               >
-                <SelectTrigger className="input-ruby"><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                <SelectTrigger className={!selectedPlanId ? "border-red-300 input-ruby" : "input-ruby"}>
+                  <SelectValue placeholder="Select a plan" />
+                </SelectTrigger>
                 <SelectContent>
                   {plans.map((p) => (
                     <SelectItem key={p.id} value={p.id.toString()}>
-                      {p.plan_name}
+                      {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {!selectedPlanId && (
+                <p className="text-xs text-red-500">Please select a plan to continue</p>
+              )}
             </div>
           )}
 
@@ -269,11 +293,15 @@ export const AdminAddSubscriptionModal = ({
                 type="number"
                 step="0.01"
                 min="0"
-                value={activePrice}
-                onChange={(e) => !selectedPlanId && setCustomPrice(e.target.value)}
+                value={activePrice === 0 ? "" : activePrice}
+                onChange={(e) => {
+                  if (plans.length === 0) {
+                    setCustomPrice(e.target.value);
+                  }
+                }}
                 placeholder="9.99"
-                className="input-ruby"
-                disabled={!!selectedPlanId}
+                className={plans.length > 0 ? "input-ruby bg-muted cursor-not-allowed" : "input-ruby"}
+                disabled={plans.length > 0}
                 required
               />
             </div>
@@ -282,8 +310,12 @@ export const AdminAddSubscriptionModal = ({
               <Label>Currency</Label>
               <Select 
                 value={activeCurrency} 
-                onValueChange={(v) => handleCurrencyChange(v as Currency)}
-                disabled={!!selectedPlanId}
+                onValueChange={(v) => {
+                  if (plans.length === 0) {
+                    handleCurrencyChange(v as Currency);
+                  }
+                }}
+                disabled={plans.length > 0}
               >
                 <SelectTrigger className="input-ruby">
                   <SelectValue />
@@ -356,7 +388,7 @@ export const AdminAddSubscriptionModal = ({
           <Button
             type="submit"
             className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all"
-            disabled={isLoading || !name || !price || !userEmail}
+            disabled={isLoading || !name || !activePrice || !userEmail}
           >
             {isLoading ? "Adding..." : "Add Subscription"}
           </Button>
