@@ -102,9 +102,17 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('id, name, price, currency')
-          .ilike('name', `${selectedPreset.name}%`);
+          .textSearch('name', selectedPreset.name, {
+            type: 'websearch',
+            config: 'english'
+          });
 
-        console.log("🔍 [fetchDbPlans] Query Result:", { selectedPreset: selectedPreset.name, data, error });
+        console.log("🔍 [fetchDbPlans] Query Result:", { 
+          preset: selectedPreset.name, 
+          queryType: 'textSearch',
+          data, 
+          error 
+        });
 
         if (error) throw error;
 
