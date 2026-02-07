@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,6 @@ import {
   currencies,
   findPreset,
   generateSlug,
-  getPlanPrice,
   Currency,
 } from "@/data/subscriptionPresets";
 import { Calendar, Link2, Palette, Mail, CreditCard } from "lucide-react";
@@ -43,35 +42,70 @@ export const AdminAddSubscriptionModal = ({
   const [userEmail, setUserEmail] = useState("");
   const [name, setName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
-  const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState<Currency>("USD");
+  
+  // Plan & Price State
+  const [plans, setPlans] = useState<any[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [customPrice, setCustomPrice] = useState("");
+  const [customCurrency, setCustomCurrency] = useState<Currency>("USD");
+  
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [cardColor, setCardColor] = useState("#E50914");
   const [isLoading, setIsLoading] = useState(false);
-  const [isPreset, setIsPreset] = useState(false);
 
-  // Auto-fill when name changes
+  // Derived state
+  const selectedPlan = useMemo(() => 
+    plans.find(p => p.id.toString() === selectedPlanId), 
+  [plans, selectedPlanId]);
+
+  const activePrice = selectedPlan ? selectedPlan.price : customPrice;
+  const activeCurrency = selectedPlan ? (selectedPlan.currency as Currency) : customCurrency;
+
+  // Auto-fill URL/Color when name changes
   useEffect(() => {
     const preset = findPreset(name);
     if (preset) {
       setWebsiteUrl(preset.url);
       setCardColor(preset.color);
-      // Use the default plan price
-      setPrice(getPlanPrice(preset, preset.defaultPlan, currency).toString());
-      setIsPreset(true);
-    } else {
-      setIsPreset(false);
     }
   }, [name]);
 
-  // Update price when currency changes (for presets)
+  // Fetch plans from DB
   useEffect(() => {
-    const preset = findPreset(name);
-    if (preset) {
-      setPrice(getPlanPrice(preset, preset.defaultPlan, currency).toString());
-    }
-  }, [currency, name]);
+    const fetchPlans = async () => {
+      if (!name) {
+        setPlans([]);
+        return;
+      }
+
+      // Only fetch if it matches a known preset (optional, but good for performance)
+      // or just fetch for any name to support dynamic adding in future
+      try {
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('id, plan_name, price, currency')
+          .eq('service_name', name)
+          .eq('currency', customCurrency);
+
+        if (error) throw error;
+
+        if (data) {
+           setPlans(data);
+        }
+      } catch (error) {
+        console.error('Error fetching plans:', error);
+      }
+    };
+
+    fetchPlans();
+  }, [name, customCurrency]);
+
+  // Handle currency change
+  const handleCurrencyChange = (newCurrency: Currency) => {
+    setSelectedPlanId(""); // Reset plan when currency changes
+    setCustomCurrency(newCurrency);
+  };
 
   const calculateNextPayment = (): string => {
     const start = new Date(startDate);
@@ -84,7 +118,7 @@ export const AdminAddSubscriptionModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userEmail || !name || !price) {
+    if (!userEmail || !name || !activePrice) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -110,8 +144,8 @@ export const AdminAddSubscriptionModal = ({
       user_id: foundUserId,
       name,
       slug: generateSlug(name),
-      price: parseFloat(price),
-      currency,
+      price: parseFloat(activePrice),
+      currency: activeCurrency,
       billing_cycle: billingCycle,
       start_date: startDate,
       next_payment_date: calculateNextPayment(),
@@ -135,12 +169,13 @@ export const AdminAddSubscriptionModal = ({
     setUserEmail("");
     setName("");
     setWebsiteUrl("");
-    setPrice("");
-    setCurrency("USD");
+    setPlans([]);
+    setSelectedPlanId("");
+    setCustomPrice("");
+    setCustomCurrency("USD");
     setBillingCycle("monthly");
     setStartDate(format(new Date(), "yyyy-MM-dd"));
     setCardColor("#E50914");
-    setIsPreset(false);
   };
 
   return (
@@ -191,6 +226,26 @@ export const AdminAddSubscriptionModal = ({
             </datalist>
           </div>
 
+          {/* Plan Selection */}
+          {plans.length > 0 && (
+            <div className="space-y-2">
+              <Label>Plan</Label>
+              <Select 
+                value={selectedPlanId} 
+                onValueChange={(val) => setSelectedPlanId(val)}
+              >
+                <SelectTrigger className="input-ruby"><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                <SelectContent>
+                  {plans.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.plan_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Website URL */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -214,18 +269,22 @@ export const AdminAddSubscriptionModal = ({
                 type="number"
                 step="0.01"
                 min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                value={activePrice}
+                onChange={(e) => !selectedPlanId && setCustomPrice(e.target.value)}
                 placeholder="9.99"
                 className="input-ruby"
-                disabled={isPreset}
+                disabled={!!selectedPlanId}
                 required
               />
             </div>
 
             <div className="space-y-2">
               <Label>Currency</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+              <Select 
+                value={activeCurrency} 
+                onValueChange={(v) => handleCurrencyChange(v as Currency)}
+                disabled={!!selectedPlanId}
+              >
                 <SelectTrigger className="input-ruby">
                   <SelectValue />
                 </SelectTrigger>
