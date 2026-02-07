@@ -87,6 +87,42 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
+  // New state for DB plans (requested task)
+  const [dbPlans, setDbPlans] = useState<any[]>([]);
+
+  // Fetch plans from DB when selectedPreset changes
+  useEffect(() => {
+    const fetchDbPlans = async () => {
+      if (!selectedPreset) {
+        setDbPlans([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('id, name, price, currency')
+          .ilike('name', `${selectedPreset.name}%`);
+
+        if (error) throw error;
+
+        if (data) {
+          // Parse plan name from "Service - Plan" format
+          const formattedPlans = data.map(plan => ({
+            ...plan,
+            plan_name: plan.name.replace(new RegExp(`^${selectedPreset.name}\\s*-\\s*`, 'i'), '') || plan.name
+          }));
+          console.log("Supabase subscription_plans data:", formattedPlans);
+          setDbPlans(formattedPlans);
+        }
+      } catch (error) {
+        console.error('Error fetching plans from DB:', error);
+      }
+    };
+
+    fetchDbPlans();
+  }, [selectedPreset, currency]);
+
   // 2. VERİ ÇEKME VE FİYAT DOLDURMA MOTORU
   useEffect(() => {
     const initializeModal = async () => {
@@ -189,31 +225,40 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setName(preset.name);
     setWebsiteUrl(preset.url);
     setCardColor(preset.color);
+    setSelectedPlan(""); // Reset plan
+    setPrice(""); // Reset price
     setStep("configure");
   };
 
-  // Update price and plan when a preset is selected
+  // Sync price/plan with DB plans (replaces old static data logic)
   useEffect(() => {
-    if (selectedPreset) {
-      // Check if the currently selected plan belongs to this preset
-      // If so, keep it (to support currency changes without resetting plan)
-      // If not (e.g. switched preset), fallback to default plan
-      const isPlanValid = selectedPlan && selectedPreset.plans && selectedPreset.plans[selectedPlan];
-      const targetPlan = isPlanValid ? selectedPlan : selectedPreset.defaultPlan;
+    if (selectedPreset && dbPlans.length > 0) {
+      // Determine target plan name
+      // Prioritize 'Standard' if available and no plan selected, otherwise fallback to defaultPlan
+      let targetPlanName = selectedPlan;
       
-      const newPrice = getPlanPrice(selectedPreset, targetPlan, currency);
-      
-      // Update state
-      if (targetPlan !== selectedPlan) {
-        setSelectedPlan(targetPlan);
+      if (!targetPlanName) {
+        const hasStandard = dbPlans.some(p => p.plan_name === 'Standard' && p.currency === currency);
+        targetPlanName = hasStandard ? 'Standard' : selectedPreset.defaultPlan;
       }
       
-      // Only update price if we have a valid price (prevent overriding with 0/undefined if error)
-      if (newPrice !== undefined && newPrice !== null) {
-        setPrice(newPrice);
+      // Find matching plan in DB plans for current currency
+      const plan = dbPlans.find(p => p.plan_name === targetPlanName && p.currency === currency);
+      
+      console.log("Selected Plan Object:", plan);
+      console.log("Current Price State:", price);
+      
+      if (plan) {
+         if (selectedPlan !== plan.plan_name) {
+             setSelectedPlan(plan.plan_name);
+         }
+         
+         // If price comes as undefined/null from DB, check the table data.
+         // It should be a number. If null, it overrides manual input with null/empty.
+         setPrice(plan.price);
       }
     }
-  }, [selectedPreset, currency]);
+  }, [selectedPreset, currency, dbPlans, selectedPlan]);
 
   // Handle custom subscription
   const handleCustomSubscription = () => {
@@ -424,24 +469,27 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
             </div>
 
             {/* PLAN SEÇİM KUTUSU - Plans dizisi doluysa mutlaka göster */}
-            {plans.length > 0 && (
+            {dbPlans.length > 0 && (
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select 
-                  value={selectedPlan} 
+                  value={dbPlans.find((p) => p.plan_name === selectedPlan && p.currency === currency)?.id?.toString()} 
                   onValueChange={(val) => {
-                    const plan = plans.find((p) => p.plan_name === val);
+                    const plan = dbPlans.find((p) => p.id.toString() === val);
                     if (plan) {
                        setSelectedPlan(plan.plan_name);
-                       setPrice(Number(plan.price)); // Plan değişince fiyatı güncelle
+                       setPrice(Number(plan.price));
+                       if (currencies.some(c => c.value === plan.currency)) {
+                         setCurrency(plan.currency as Currency);
+                       }
                     }
                   }}
                 >
-                  <SelectTrigger><SelectValue placeholder="Plan Seçiniz" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
                   <SelectContent>
-                    {plans.map((p) => (
-                      <SelectItem key={p.id} value={p.plan_name}>
-                        {p.plan_name} - {p.price} {currencySymbol}
+                    {dbPlans.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
                       </SelectItem>
                     ))}
                   </SelectContent>
