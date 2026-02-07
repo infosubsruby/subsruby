@@ -47,7 +47,7 @@ export const AdminAddSubscriptionModal = ({
   const [plans, setPlans] = useState<any[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [customPrice, setCustomPrice] = useState("");
-  const [customCurrency, setCustomCurrency] = useState<Currency>("USD");
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
   
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -68,13 +68,8 @@ export const AdminAddSubscriptionModal = ({
     return customPrice;
   }, [plans.length, selectedPlan, customPrice]);
 
-  // Currency logic: Similar to price
-  const activeCurrency = useMemo(() => {
-    if (plans.length > 0) {
-      return selectedPlan ? (selectedPlan.currency as Currency) : "USD";
-    }
-    return customCurrency;
-  }, [plans.length, selectedPlan, customCurrency]);
+  // Currency logic: simplified to use single source of truth
+  const activeCurrency = selectedCurrency;
 
   // Auto-fill URL/Color when name changes
   useEffect(() => {
@@ -310,7 +305,7 @@ export const AdminAddSubscriptionModal = ({
             <div className="space-y-2">
               <Label>Currency</Label>
               <Select 
-                value={activeCurrency} 
+                value={selectedCurrency} 
                 onValueChange={(v) => {
                   handleCurrencyChange(v as Currency);
                 }}

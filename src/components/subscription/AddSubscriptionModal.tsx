@@ -70,7 +70,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   
   // Custom price/currency (used when no plan is selected or for custom subscriptions)
   const [customPrice, setCustomPrice] = useState<number | "">("");
-  const [customCurrency, setCustomCurrency] = useState<Currency>("USD");
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
 
   // Derived state
   const selectedPlan = useMemo(() => 
@@ -86,13 +86,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     return customPrice;
   }, [plans.length, selectedPlan, customPrice]);
 
-  // Currency logic: Similar to price
-  const activeCurrency = useMemo(() => {
-    if (plans.length > 0) {
-      return selectedPlan ? (selectedPlan.currency as Currency) : "USD";
-    }
-    return customCurrency;
-  }, [plans.length, selectedPlan, customCurrency]);
+  // Currency logic: simplified to use single source of truth
+  const activeCurrency = selectedCurrency;
 
   // Track which fields were auto-filled by community data (kept for UI compatibility)
   const [priceSuggestedByCommunity, setPriceSuggestedByCommunity] = useState(false);
@@ -125,14 +120,14 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setPlans([]);
     setSelectedPlanId("");
     setCustomPrice("");
-    setCustomCurrency("USD");
+    setSelectedCurrency("USD");
     
     setStep("select");
     setSearchQuery("");
   };
 
 
-  // Fetch plans from DB when serviceName or customCurrency changes
+  // Fetch plans from DB when serviceName or selectedCurrency changes
   useEffect(() => {
     const fetchPlans = async () => {
       if (!serviceName) {
@@ -145,7 +140,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           .from('subscription_plans')
           .select('id, plan_name, price, currency')
           .eq('service_name', serviceName)
-          .eq('currency', customCurrency.toUpperCase()); // Normalize currency
+          .eq('currency', selectedCurrency.toUpperCase()); // Normalize currency
 
         if (error) throw error;
 
@@ -158,13 +153,13 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [serviceName, customCurrency]);
+  }, [serviceName, selectedCurrency]);
 
   // Handle currency change
   const handleCurrencyChange = useCallback((newCurrency: Currency) => {
     setSelectedPlanId(""); // Reset plan selection
     setCustomPrice(""); // Reset custom price
-    setCustomCurrency(newCurrency); // Update currency to trigger re-fetch
+    setSelectedCurrency(newCurrency); // Update currency to trigger re-fetch
   }, []);
 
   const handleUrlChange = useCallback((value: string) => {
@@ -451,7 +446,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               <div className="space-y-2">
                 <Label>Currency</Label>
                 <Select 
-                  value={activeCurrency} 
+                  value={selectedCurrency} 
                   onValueChange={(v) => {
                     handleCurrencyChange(v as Currency);
                   }}
