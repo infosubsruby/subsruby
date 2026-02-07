@@ -87,63 +87,75 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
-  // Independent Function to Fetch Plans
-  const fetchPlansFromDB = useCallback(async (serviceName: string, currentCurrency: string) => {
-    if (!serviceName) {
-      setPlans([]);
-      return;
-    }
+  // 1. TEK VE GÜÇLÜ useEffect (Hem Tıklama Hem Yazma İçin)
+  useEffect(() => {
+    const loadPlans = async () => {
+      // 1. Aranacak ismi bul (İkon varsa onu al, yoksa inputa bak)
+      const searchName = defaultService || name;
+      const currentCurrency = currency;
 
-    setLoadingPlans(true);
-    try {
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .ilike('name', `${serviceName}%`)
-        .eq('currency', currentCurrency);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setPlans(data);
-        
-        // Auto-Fill Logic: Select first plan and set price
-        const firstPlan = data[0];
-        setPrice(firstPlan.price);
-        setSelectedPlan(firstPlan.name);
-      } else {
+      if (!searchName) {
         setPlans([]);
+        return;
       }
-    } catch (err) {
-      console.error("Error fetching plans:", err);
-      setPlans([]);
-    } finally {
-      setLoadingPlans(false);
-    }
-  }, []);
+      
+      setLoadingPlans(true);
+      
+      try {
+        // 2. Veritabanından Çek
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .ilike('name', `${searchName}%`) // service_name olmadığı için name kullanıyoruz
+          .eq('currency', currentCurrency);
 
-  // 1. Effect for Default Service (Icon Click) - Runs IMMEDIATELY when modal opens
-  useEffect(() => {
-    if (open && defaultService) {
-      // If defaultService is present and modal is open, fetch immediately
-      setName(defaultService); // Ensure name input is filled
-      fetchPlansFromDB(defaultService, currency);
-    }
-  }, [open, defaultService, currency, fetchPlansFromDB]);
+        if (error) throw error;
 
-  // 2. Effect for Manual Typing (Debounced)
-  useEffect(() => {
-    // Only run if NOT using defaultService (user is typing manually)
-    if (!defaultService && name) {
-      const timer = setTimeout(() => {
-        fetchPlansFromDB(name, currency);
-      }, 500); // 500ms debounce
+        if (data && data.length > 0) {
+          // Adapt data to include plan_name for the UI logic
+          const adaptedData = data.map(p => ({
+              ...p,
+              plan_name: p.name.replace(new RegExp(`^${searchName}\\s*-\\s*`, 'i'), '') || p.name
+          }));
+          
+          setPlans(adaptedData); // Planları State'e at
+          
+          // 3. OTOMATİK DOLDURMA (Kritik Kısım)
+          // Eğer ikonla geldiyse veya fiyat boşsa, ilk planı seç ve fiyatı bas.
+          if (defaultService || !price || price === 0 || price === "") {
+             const firstPlan = adaptedData[0];
+             // Set plan name if using default service to ensure input is filled
+             if (defaultService && !name) {
+               setName(defaultService);
+             }
+             
+             setSelectedPlan(firstPlan.plan_name);
+             setPrice(firstPlan.price);
+          }
+        } else {
+          setPlans([]);
+        }
+      } catch (err) {
+        console.error("Error fetching plans:", err);
+        setPlans([]);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
 
-      return () => clearTimeout(timer);
-    } else if (!defaultService && !name) {
-      setPlans([]);
+    // Modal her açıldığında veya currency/name değiştiğinde çalıştır
+    if (open) {
+      // Debounce logic for manual typing if not defaultService
+      if (!defaultService && name) {
+        const timer = setTimeout(() => {
+          loadPlans();
+        }, 500);
+        return () => clearTimeout(timer);
+      } else {
+        loadPlans();
+      }
     }
-  }, [name, currency, defaultService, fetchPlansFromDB]);
+  }, [open, defaultService, currency, name]);
 
   // Handle name blur event
   const handleNameBlur = useCallback(() => {
@@ -385,18 +397,18 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             </div>
 
-            {/* Plan Selector - Always visible if plans exist */}
+            {/* PLAN SEÇİM KUTUSU - Plans dizisi doluysa mutlaka göster */}
             {plans.length > 0 && (
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select 
+                  // Formdaki değeri veya listedeki ilk planı varsayılan yap
                   value={selectedPlan} 
                   onValueChange={(val) => {
-                    setSelectedPlan(val);
-                    // Find and set price immediately
-                    const plan = plans.find((p) => p.name === val);
-                    if (plan) {
-                      setPrice(plan.price);
+                    const selected = plans.find((p) => p.plan_name === val);
+                    if (selected) {
+                      setSelectedPlan(selected.plan_name);
+                      setPrice(selected.price); // Seçince fiyatı güncelle
                     }
                   }}
                   disabled={loadingPlans}
@@ -406,8 +418,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
                     {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.name}>
-                        {plan.name} ({currencySymbol}{plan.price.toFixed(2)})
+                      <SelectItem key={plan.id} value={plan.plan_name}>
+                        {plan.plan_name} ({currencySymbol}{plan.price.toFixed(2)})
                       </SelectItem>
                     ))}
                   </SelectContent>
