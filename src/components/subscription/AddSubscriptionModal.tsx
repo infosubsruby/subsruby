@@ -87,10 +87,25 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [availablePlans, setAvailablePlans] = useState<any[]>([]);
   const [isFetchingPlans, setIsFetchingPlans] = useState(false);
 
-  // Fetch plans from Supabase when name or currency changes
+  // Derived search term to handle both preset and custom modes
+  const searchTerm = useMemo(() => {
+    // If user is in custom mode, use what they typed
+    if (isCustom) return name;
+    
+    // If a preset is selected, use its name
+    if (selectedPreset) return selectedPreset.name;
+    
+    // If a default service is provided via prop, use it
+    if (defaultService) return defaultService;
+    
+    // Fallback to name input
+    return name;
+  }, [isCustom, selectedPreset, defaultService, name]);
+
+  // Fetch plans from Supabase when searchTerm or currency changes
   useEffect(() => {
     const fetchPlans = async () => {
-      if (!name) {
+      if (!searchTerm) {
         setAvailablePlans([]);
         return;
       }
@@ -100,7 +115,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('*')
-          .ilike('name', `${name}%`) // Match service name prefix
+          .ilike('name', `${searchTerm}%`) // Match service name prefix
           .eq('currency', currency);
 
         if (error) throw error;
@@ -108,7 +123,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         // Filter and process plans
         const relevantPlans = (data || []).filter(plan => {
           // Double check if the plan name starts with the service name (case insensitive)
-          return plan.name.toLowerCase().includes(name.toLowerCase());
+          return plan.name.toLowerCase().includes(searchTerm.toLowerCase());
         });
         
         setAvailablePlans(relevantPlans);
@@ -122,7 +137,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [name, currency]);
+  }, [searchTerm, currency]);
 
   // Auto-select first plan when availablePlans changes
   useEffect(() => {
