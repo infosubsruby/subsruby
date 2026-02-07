@@ -30,11 +30,12 @@ import { cn } from "@/lib/utils";
 interface AddSubscriptionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultService?: string;
 }
 
 type Step = "select" | "configure";
 
-export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModalProps) => {
+export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: AddSubscriptionModalProps) => {
   const { createSubscription, canAddSubscription } = useSubscriptions();
   const { communityData, isLoading: isCommunityLoading, fetchCommunityData, clearCommunityData } = useCommunityData();
   
@@ -193,6 +194,31 @@ export const AddSubscriptionModal = ({ open, onOpenChange }: AddSubscriptionModa
     setSelectedPlan("");
     setStep("configure");
   };
+
+  // Initialize with defaultService if provided
+  useEffect(() => {
+    if (open && defaultService) {
+      const preset = findPreset(defaultService);
+      if (preset) {
+        setSelectedPreset(preset);
+        setIsCustom(false);
+        setName(preset.name);
+        setWebsiteUrl(preset.url);
+        setCardColor(preset.color);
+        setStep("configure");
+      } else {
+        setSelectedPreset(null);
+        setIsCustom(false);
+        setName(defaultService);
+        setWebsiteUrl(generateFallbackUrl(defaultService));
+        setCardColor("#E50914");
+        setStep("configure");
+      }
+      // Reset plan and price to trigger auto-selection
+      setSelectedPlan("");
+      setPrice("");
+    }
+  }, [open, defaultService]);
 
   // Handle selecting a plan from suggestions (if we keep suggestions overlay)
   const handleSelectPlan = (plan: any) => {
