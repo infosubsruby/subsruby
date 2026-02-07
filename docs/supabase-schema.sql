@@ -52,8 +52,8 @@ ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 -- --------------------------------------
 CREATE TABLE public.subscription_plans (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  subscription_id TEXT NOT NULL, -- Preset slug (e.g. 'netflix', 'spotify')
-  name TEXT NOT NULL, -- Plan name (e.g. 'Basic', 'Premium')
+  service_name TEXT NOT NULL, -- Service name (e.g. 'Netflix', 'Spotify')
+  plan_name TEXT NOT NULL, -- Plan name (e.g. 'Basic', 'Premium')
   price NUMERIC NOT NULL,
   currency TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc'::text, now())

@@ -52,7 +52,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [isLoading, setIsLoading] = useState(false);
 
   // --- NEW ARCHITECTURE STATE ---
-  const [subscriptionId, setSubscriptionId] = useState<string>(""); // Used to fetch plans
+  const [serviceName, setServiceName] = useState<string>(""); // Used to fetch plans
   const [plans, setPlans] = useState<any[]>([]); // Fetched plans
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   
@@ -90,10 +90,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     );
   }, [searchQuery, featuredServices]);
 
-  // Fetch plans from DB when subscriptionId changes
+  // Fetch plans from DB when serviceName changes
   useEffect(() => {
     const fetchPlans = async () => {
-      if (!subscriptionId) {
+      if (!serviceName) {
         setPlans([]);
         return;
       }
@@ -101,9 +101,9 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       try {
         const { data, error } = await supabase
           .from('subscription_plans')
-          .select('id, name, price, currency')
+          .select('id, plan_name, price, currency')
           // @ts-ignore - Assuming column exists per user request
-          .eq('subscription_id', subscriptionId);
+          .eq('service_name', serviceName);
 
         if (error) throw error;
 
@@ -120,7 +120,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [subscriptionId]);
+  }, [serviceName]);
 
   // Handle currency change
   const handleCurrencyChange = useCallback((newCurrency: Currency) => {
@@ -140,8 +140,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setWebsiteUrl(preset.url);
     setCardColor(preset.color);
     
-    // Set subscription ID for fetching plans (using slug as ID)
-    setSubscriptionId(preset.slug);
+    // Set service name for fetching plans
+    setServiceName(preset.name);
     
     // Reset selection
     setSelectedPlanId("");
@@ -159,7 +159,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setWebsiteUrl("");
     setCardColor("#6366F1");
     
-    setSubscriptionId(""); // No subscription ID for custom
+    setServiceName(""); // No service name for custom
     setPlans([]);
     setSelectedPlanId("");
     setCustomPrice("");
@@ -180,7 +180,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         setName(defaultService);
         setWebsiteUrl(generateFallbackUrl(defaultService));
         setCardColor("#E50914");
-        setSubscriptionId("");
+        setServiceName("");
         setStep("configure");
       }
     }
@@ -348,7 +348,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                   <SelectContent>
                     {plans.map((p) => (
                       <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.name} ({getCurrencySymbol(p.currency)}{p.price})
+                        {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
                       </SelectItem>
                     ))}
                   </SelectContent>
