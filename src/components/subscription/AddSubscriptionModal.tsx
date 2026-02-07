@@ -104,6 +104,9 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
   // Fetch plans from Supabase when searchTerm or currency changes
   useEffect(() => {
+    // If defaultService is provided, we handle it in a separate useEffect
+    if (defaultService) return;
+
     const fetchPlans = async () => {
       if (!searchTerm) {
         setAvailablePlans([]);
@@ -137,7 +140,46 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [searchTerm, currency]);
+  }, [searchTerm, currency, defaultService]);
+
+  // Special useEffect for defaultService (Icon Click) scenario
+  useEffect(() => {
+    if (open && defaultService) {
+      const fetchDefaultPlans = async () => {
+        setIsFetchingPlans(true);
+        try {
+          // Use name column as per schema, assuming it starts with service name
+          const { data, error } = await supabase
+            .from('subscription_plans')
+            .select('*')
+            .ilike('name', `${defaultService}%`) 
+            .eq('currency', currency);
+
+          if (error) throw error;
+
+          const relevantPlans = (data || []).filter(plan => 
+            plan.name.toLowerCase().includes(defaultService.toLowerCase())
+          );
+
+          setAvailablePlans(relevantPlans);
+
+          if (relevantPlans.length > 0) {
+            const firstPlan = relevantPlans[0];
+            // Automatically select first plan and set price
+            setSelectedPlan(firstPlan.name);
+            setPrice(firstPlan.price);
+            setName(defaultService);
+          }
+        } catch (err) {
+          console.error("Error fetching default plans:", err);
+        } finally {
+          setIsFetchingPlans(false);
+        }
+      };
+
+      fetchDefaultPlans();
+    }
+  }, [open, defaultService, currency]);
 
   // Auto-select first plan when availablePlans changes
   useEffect(() => {
