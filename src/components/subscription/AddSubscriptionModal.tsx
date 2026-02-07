@@ -33,13 +33,25 @@ interface AddSubscriptionModalProps {
 type Step = "select" | "configure";
 
 export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: AddSubscriptionModalProps) => {
-  const { createSubscription, canAddSubscription } = useSubscriptions();
+  const { createSubscription, canAddSubscription, subscriptions } = useSubscriptions();
   const { communityData } = useCommunityData();
   
   // Step management
   const [step, setStep] = useState<Step>("select");
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Recommended services state (separated from form selection)
+  const [recommendedServices, setRecommendedServices] = useState<SubscriptionPreset[]>([]);
+
+  // Derive recommended services from allServices - userSubscriptions
+  useEffect(() => {
+    if (open) {
+      const subscribedNames = new Set((subscriptions || []).map(s => s.name.toLowerCase()));
+      const derived = subscriptionPresets.filter(p => !subscribedNames.has(p.name.toLowerCase()));
+      setRecommendedServices(derived);
+    }
+  }, [open, subscriptions]);
+
   // Form state
   const [selectedPreset, setSelectedPreset] = useState<SubscriptionPreset | null>(null);
   const [isCustom, setIsCustom] = useState(false);
@@ -74,21 +86,37 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [showSuggestions, setShowSuggestions] = useState(false);
   const isUserTypingRef = useRef(false);
 
-  // Featured services for the grid (first 10)
-  const featuredServices = useMemo(() => {
-    return subscriptionPresets.slice(0, 10);
-  }, []);
-
   // Filtered services based on search
   const filteredServices = useMemo(() => {
-    if (!searchQuery.trim()) return featuredServices;
+    if (!searchQuery.trim()) return recommendedServices;
     const query = searchQuery.toLowerCase();
-    return subscriptionPresets.filter(
+    return recommendedServices.filter(
       (preset) =>
         preset.name.toLowerCase().includes(query) ||
         preset.category.toLowerCase().includes(query)
     );
-  }, [searchQuery, featuredServices]);
+  }, [searchQuery, recommendedServices]);
+
+  const resetForm = () => {
+    setSelectedPreset(null);
+    setIsCustom(false);
+    setName("");
+    setWebsiteUrl("");
+    setCardColor("#E50914");
+    setBillingCycle("monthly");
+    setBillingDay(new Date().getDate());
+    setBillingMonth(new Date().getMonth() + 1);
+    
+    setServiceName("");
+    setPlans([]);
+    setSelectedPlanId("");
+    setCustomPrice("");
+    setCustomCurrency("USD");
+    
+    setStep("select");
+    setSearchQuery("");
+  };
+
 
   // Fetch plans from DB when serviceName or customCurrency changes
   useEffect(() => {
@@ -214,6 +242,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       const result = await createSubscription(data);
       
       if (result.success) {
+        resetForm();
         onOpenChange(false);
       }
     } catch (error) {
