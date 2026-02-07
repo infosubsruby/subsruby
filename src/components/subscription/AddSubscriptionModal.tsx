@@ -87,75 +87,68 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
-  // 1. TEK VE GÜÇLÜ useEffect (Hem Tıklama Hem Yazma İçin)
+  // 2. VERİ ÇEKME VE FİYAT DOLDURMA MOTORU
   useEffect(() => {
-    const loadPlans = async () => {
+    const initializeModal = async () => {
       // 1. Aranacak ismi bul (İkon varsa onu al, yoksa inputa bak)
       const searchName = defaultService || name;
-      const currentCurrency = currency;
-
+      
       if (!searchName) {
         setPlans([]);
         return;
       }
-      
+
       setLoadingPlans(true);
-      
-      try {
-        // 2. Veritabanından Çek
-        const { data, error } = await supabase
-          .from('subscription_plans')
-          .select('*')
-          .ilike('name', `${searchName}%`) // service_name olmadığı için name kullanıyoruz
-          .eq('currency', currentCurrency);
 
-        if (error) throw error;
+      // B. Veritabanından planları çek
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .ilike('name', `${searchName}%`) // Adapting service_name to name
+        .eq('currency', currency);
 
-        if (data && data.length > 0) {
-          // Adapt data to include plan_name for the UI logic
-          const adaptedData = data.map(p => ({
-              ...p,
-              plan_name: p.name.replace(new RegExp(`^${searchName}\\s*-\\s*`, 'i'), '') || p.name
-          }));
-          
-          setPlans(adaptedData); // Planları State'e at
-          
-          // 3. OTOMATİK DOLDURMA (Kritik Kısım)
-          // Eğer ikonla geldiyse veya fiyat boşsa, ilk planı seç ve fiyatı bas.
-          if (defaultService || !price || price === 0 || price === "") {
-             const firstPlan = adaptedData[0];
-             // Set plan name if using default service to ensure input is filled
-             if (defaultService && !name) {
-               setName(defaultService);
-             }
-             
-             setSelectedPlan(firstPlan.plan_name);
-             setPrice(firstPlan.price);
-          }
-        } else {
-          setPlans([]);
+      if (data && data.length > 0) {
+        // Adapt data to include plan_name for the UI logic
+        const adaptedData = data.map(p => ({
+            ...p,
+            plan_name: p.name.replace(new RegExp(`^${searchName}\\s*-\\s*`, 'i'), '') || p.name
+        }));
+
+        // C. Planları state'e at (Dropdown görünsün diye)
+        setPlans(adaptedData);
+
+        // D. KRİTİK ADIM: İLK FİYATI KUTUYA ZORLA YAZ
+        // Eğer bir ikon seçilerek gelindiyse (defaultService varsa) veya fiyat boşsa
+        if (defaultService || !price || price === 0 || price === "") {
+           // A. İsmi kutuya yaz (Eğer ikonla gelindiyse)
+           if (defaultService) {
+             setName(defaultService);
+           }
+
+           // Kullanıcı henüz bir şey girmemişse, ilk planın fiyatını bas.
+           const firstPlan = adaptedData[0];
+           setSelectedPlan(firstPlan.plan_name);
+           setPrice(firstPlan.price);
+           
+           console.log("Fiyat Güncellendi:", firstPlan.price); // Konsol kontrolü
         }
-      } catch (err) {
-        console.error("Error fetching plans:", err);
+      } else {
         setPlans([]);
-      } finally {
-        setLoadingPlans(false);
       }
+      setLoadingPlans(false);
     };
 
-    // Modal her açıldığında veya currency/name değiştiğinde çalıştır
+    // Modal her açıldığında veya currency değiştiğinde çalıştır
+    // Debounce manual typing only
     if (open) {
-      // Debounce logic for manual typing if not defaultService
       if (!defaultService && name) {
-        const timer = setTimeout(() => {
-          loadPlans();
-        }, 500);
+        const timer = setTimeout(() => initializeModal(), 500);
         return () => clearTimeout(timer);
       } else {
-        loadPlans();
+        initializeModal();
       }
     }
-  }, [open, defaultService, currency, name]);
+  }, [defaultService, currency, open, name]);
 
   // Handle name blur event
   const handleNameBlur = useCallback(() => {
@@ -402,24 +395,20 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select 
-                  // Formdaki değeri veya listedeki ilk planı varsayılan yap
                   value={selectedPlan} 
                   onValueChange={(val) => {
-                    const selected = plans.find((p) => p.plan_name === val);
-                    if (selected) {
-                      setSelectedPlan(selected.plan_name);
-                      setPrice(selected.price); // Seçince fiyatı güncelle
+                    const plan = plans.find((p) => p.plan_name === val);
+                    if (plan) {
+                       setSelectedPlan(plan.plan_name);
+                       setPrice(Number(plan.price)); // Plan değişince fiyatı güncelle
                     }
                   }}
-                  disabled={loadingPlans}
                 >
-                  <SelectTrigger className="input-ruby">
-                    <SelectValue placeholder={loadingPlans ? "Loading plans..." : "Select a plan"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.plan_name}>
-                        {plan.plan_name} ({currencySymbol}{plan.price.toFixed(2)})
+                  <SelectTrigger><SelectValue placeholder="Plan Seçiniz" /></SelectTrigger>
+                  <SelectContent>
+                    {plans.map((p) => (
+                      <SelectItem key={p.id} value={p.plan_name}>
+                        {p.plan_name} - {p.price} {currencySymbol}
                       </SelectItem>
                     ))}
                   </SelectContent>
