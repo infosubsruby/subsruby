@@ -145,7 +145,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           .from('subscription_plans')
           .select('id, plan_name, price, currency')
           .eq('service_name', serviceName)
-          .eq('currency', customCurrency);
+          .eq('currency', customCurrency.toUpperCase()); // Normalize currency
 
         if (error) throw error;
 
@@ -162,8 +162,9 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
   // Handle currency change
   const handleCurrencyChange = useCallback((newCurrency: Currency) => {
-    setSelectedPlanId(""); // Switch to custom mode
-    setCustomCurrency(newCurrency);
+    setSelectedPlanId(""); // Reset plan selection
+    setCustomPrice(""); // Reset custom price
+    setCustomCurrency(newCurrency); // Update currency to trigger re-fetch
   }, []);
 
   const handleUrlChange = useCallback((value: string) => {
@@ -452,11 +453,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                 <Select 
                   value={activeCurrency} 
                   onValueChange={(v) => {
-                     if (plans.length === 0) {
-                       handleCurrencyChange(v as Currency);
-                     }
+                    handleCurrencyChange(v as Currency);
                   }}
-                  disabled={plans.length > 0}
                 >
                   <SelectTrigger className="input-ruby">
                     <SelectValue />

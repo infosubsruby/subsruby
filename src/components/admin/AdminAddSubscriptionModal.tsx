@@ -100,7 +100,7 @@ export const AdminAddSubscriptionModal = ({
           .from('subscription_plans')
           .select('id, plan_name, price, currency')
           .eq('service_name', name)
-          .eq('currency', customCurrency);
+          .eq('currency', customCurrency.toUpperCase());
 
         if (error) throw error;
 
@@ -118,6 +118,7 @@ export const AdminAddSubscriptionModal = ({
   // Handle currency change
   const handleCurrencyChange = (newCurrency: Currency) => {
     setSelectedPlanId(""); // Reset plan when currency changes
+    setCustomPrice(""); // Reset custom price
     setCustomCurrency(newCurrency);
   };
 
@@ -311,11 +312,8 @@ export const AdminAddSubscriptionModal = ({
               <Select 
                 value={activeCurrency} 
                 onValueChange={(v) => {
-                  if (plans.length === 0) {
-                    handleCurrencyChange(v as Currency);
-                  }
+                  handleCurrencyChange(v as Currency);
                 }}
-                disabled={plans.length > 0}
               >
                 <SelectTrigger className="input-ruby">
                   <SelectValue />
