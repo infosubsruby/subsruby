@@ -85,48 +85,53 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
   // Plans list state
   const [plans, setPlans] = useState<any[]>([]);
-  const [isFetchingPlans, setIsFetchingPlans] = useState(false);
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
   // Unified Data Fetching & Auto-Fill Logic
   useEffect(() => {
     const fetchPlans = async () => {
-      // Logic: Use defaultService if present, else user input name
-      const queryName = defaultService || name;
+      // 1. Determine name to search (defaultService or input)
+      const serviceName = defaultService || name;
 
-      if (!queryName) {
+      if (!serviceName) {
         setPlans([]);
         return;
       }
       
-      setIsFetchingPlans(true);
+      setLoadingPlans(true);
       try {
+        // 2. Fetch data from Supabase
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('*')
-          .ilike('name', `${queryName}%`)
+          // Using 'name' as 'service_name' column does not exist in schema
+          .ilike('name', `${serviceName}%`)
           .eq('currency', currency);
 
         if (error) throw error;
-        
-        // Filter locally to ensure relevance
-        const relevantPlans = (data || []).filter(plan => 
-          plan.name.toLowerCase().includes(queryName.toLowerCase())
-        );
-        
-        setPlans(relevantPlans);
 
-        // Auto-Fill Logic: Select first plan and set price
-        if (relevantPlans.length > 0) {
-          const firstPlan = relevantPlans[0];
-          setSelectedPlan(firstPlan.name);
+        if (data && data.length > 0) {
+          setPlans(data);
+          
+          // 3. AUTOMATIC SELECTION (Critical Part)
+          // Always select the first plan and set price when data is loaded
+          const firstPlan = data[0];
           setPrice(firstPlan.price);
+          setSelectedPlan(firstPlan.name);
+          
+          // Ensure name is set if using defaultService
+          if (defaultService && !name) {
+            setName(defaultService);
+          }
+        } else {
+          setPlans([]);
         }
         
       } catch (err) {
         console.error("Error fetching plans:", err);
         setPlans([]);
       } finally {
-        setIsFetchingPlans(false);
+        setLoadingPlans(false);
       }
     };
 
@@ -384,16 +389,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
             </div>
 
             {/* Plan Selector */}
-            {(plans.length > 0 || isFetchingPlans) && (
+            {plans.length > 0 && (
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select 
                   value={selectedPlan} 
                   onValueChange={setSelectedPlan}
-                  disabled={isFetchingPlans}
+                  disabled={loadingPlans}
                 >
                   <SelectTrigger className="input-ruby">
-                    <SelectValue placeholder={isFetchingPlans ? "Loading plans..." : "Select a plan"} />
+                    <SelectValue placeholder={loadingPlans ? "Loading plans..." : "Select a plan"} />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
                     {plans.map((plan) => (
