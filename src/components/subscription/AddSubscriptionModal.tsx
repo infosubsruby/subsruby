@@ -180,7 +180,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     // Reset selection
     setSelectedPlanId("");
     setCustomPrice("");
-    setCustomCurrency("USD"); // Or default for that service?
+    setSelectedCurrency("USD"); // Or default for that service?
     
     setStep("configure");
   };

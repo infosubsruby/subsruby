@@ -187,7 +187,7 @@ export const AdminAddSubscriptionModal = ({
     setPlans([]);
     setSelectedPlanId("");
     setCustomPrice("");
-    setCustomCurrency("USD");
+    setSelectedCurrency("USD");
     setBillingCycle("monthly");
     setStartDate(format(new Date(), "yyyy-MM-dd"));
     setCardColor("#E50914");
