@@ -90,6 +90,12 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   // 2. VERİ ÇEKME VE FİYAT DOLDURMA MOTORU
   useEffect(() => {
     const initializeModal = async () => {
+      // If custom subscription or user is typing, skip auto-fill from DB to prevent overwriting manual input
+      if (isCustom && !defaultService) {
+        setPlans([]);
+        return;
+      }
+
       // 1. Aranacak ismi bul (İkon varsa onu al, yoksa inputa bak)
       const searchName = defaultService || name;
       
@@ -106,6 +112,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         .select('*')
         .ilike('name', `${searchName}%`) // Adapting service_name to name
         .eq('currency', currency);
+
+      if (data) {
+        console.log("DB Fetched Plans for", searchName, ":", data);
+        data.forEach((plan, index) => {
+          console.log(`Plan [${index}]: Name=${plan.name}, Price=${plan.price} (${typeof plan.price}), Currency=${plan.currency}`);
+          if (plan.price === undefined || plan.currency === undefined) {
+            console.warn("⚠️ Missing price or currency in DB plan:", plan);
+          }
+        });
+      }
 
       if (data && data.length > 0) {
         // Adapt data to include plan_name for the UI logic
@@ -148,7 +164,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         initializeModal();
       }
     }
-  }, [defaultService, currency, open, name]);
+  }, [defaultService, currency, open, name, isCustom]);
 
   // Handle name blur event
   const handleNameBlur = useCallback(() => {
@@ -160,10 +176,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setCurrency(newCurrency);
   }, []);
 
-  // Handle price change
-  const handlePriceChange = useCallback((value: string) => {
-    setPrice(value ? Number(value) : "");
-  }, []);
+
 
   const handleUrlChange = useCallback((value: string) => {
     setWebsiteUrl(value);
@@ -176,11 +189,31 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setName(preset.name);
     setWebsiteUrl(preset.url);
     setCardColor(preset.color);
-    // Reset plan and price, they will be fetched/set by the useEffects
-    setSelectedPlan("");
-    setPrice(""); 
     setStep("configure");
   };
+
+  // Update price and plan when a preset is selected
+  useEffect(() => {
+    if (selectedPreset) {
+      // Check if the currently selected plan belongs to this preset
+      // If so, keep it (to support currency changes without resetting plan)
+      // If not (e.g. switched preset), fallback to default plan
+      const isPlanValid = selectedPlan && selectedPreset.plans && selectedPreset.plans[selectedPlan];
+      const targetPlan = isPlanValid ? selectedPlan : selectedPreset.defaultPlan;
+      
+      const newPrice = getPlanPrice(selectedPreset, targetPlan, currency);
+      
+      // Update state
+      if (targetPlan !== selectedPlan) {
+        setSelectedPlan(targetPlan);
+      }
+      
+      // Only update price if we have a valid price (prevent overriding with 0/undefined if error)
+      if (newPrice !== undefined && newPrice !== null) {
+        setPrice(newPrice);
+      }
+    }
+  }, [selectedPreset, currency]);
 
   // Handle custom subscription
   const handleCustomSubscription = () => {
@@ -433,7 +466,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                     type="number"
                     step="0.01"
                     value={price}
-                    onChange={(e) => handlePriceChange(e.target.value)}
+                    onChange={(e) => setPrice(e.target.value)}
                     className={cn(
                       "pl-8 input-ruby",
                       priceSuggestedByCommunity && "ring-1 ring-primary/50"
