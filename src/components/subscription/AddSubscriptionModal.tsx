@@ -122,14 +122,14 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     }
   }, []);
 
-  // 1. Effect for Default Service (Icon Click) - Runs IMMEDIATELY
+  // 1. Effect for Default Service (Icon Click) - Runs IMMEDIATELY when modal opens
   useEffect(() => {
-    if (defaultService) {
-      // If defaultService is present, fetch immediately without delay
+    if (open && defaultService) {
+      // If defaultService is present and modal is open, fetch immediately
       setName(defaultService); // Ensure name input is filled
       fetchPlansFromDB(defaultService, currency);
     }
-  }, [defaultService, currency, fetchPlansFromDB]);
+  }, [open, defaultService, currency, fetchPlansFromDB]);
 
   // 2. Effect for Manual Typing (Debounced)
   useEffect(() => {
@@ -144,16 +144,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       setPlans([]);
     }
   }, [name, currency, defaultService, fetchPlansFromDB]);
-
-  // Update price when plan is manually changed by user
-  useEffect(() => {
-    if (selectedPlan && plans.length > 0) {
-      const plan = plans.find(p => p.name === selectedPlan);
-      if (plan) {
-        setPrice(plan.price);
-      }
-    }
-  }, [selectedPlan, plans]);
 
   // Handle name blur event
   const handleNameBlur = useCallback(() => {
@@ -395,13 +385,20 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             </div>
 
-            {/* Plan Selector */}
+            {/* Plan Selector - Always visible if plans exist */}
             {plans.length > 0 && (
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select 
                   value={selectedPlan} 
-                  onValueChange={setSelectedPlan}
+                  onValueChange={(val) => {
+                    setSelectedPlan(val);
+                    // Find and set price immediately
+                    const plan = plans.find((p) => p.name === val);
+                    if (plan) {
+                      setPrice(plan.price);
+                    }
+                  }}
                   disabled={loadingPlans}
                 >
                   <SelectTrigger className="input-ruby">
