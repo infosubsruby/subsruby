@@ -87,59 +87,63 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
-  // Unified Data Fetching & Auto-Fill Logic
-  useEffect(() => {
-    const loadPlans = async () => {
-      // 1. Determine name to search (defaultService or input)
-      const searchName = defaultService || name;
+  // Independent Function to Fetch Plans
+  const fetchPlansFromDB = useCallback(async (serviceName: string, currentCurrency: string) => {
+    if (!serviceName) {
+      setPlans([]);
+      return;
+    }
 
-      // Stop if no name
-      if (!searchName) {
-        setPlans([]);
-        return;
-      }
-      
-      setLoadingPlans(true);
-      try {
-        // 2. Fetch data from Supabase
-        const { data, error } = await supabase
-          .from('subscription_plans')
-          .select('*')
-          // Using 'name' as 'service_name' column does not exist in schema
-          .ilike('name', `${searchName}%`)
-          .eq('currency', currency);
+    setLoadingPlans(true);
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .ilike('name', `${serviceName}%`)
+        .eq('currency', currentCurrency);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data && data.length > 0) {
-          setPlans(data);
-          
-          // 3. AUTOMATIC SELECTION (Critical Part)
-          // Logic: If defaultService is used OR price is empty/0, auto-fill
-          if (defaultService || !price || price === 0) {
-            const firstPlan = data[0];
-            setPrice(firstPlan.price);
-            setSelectedPlan(firstPlan.name);
-            
-            // Ensure name is set if using defaultService
-            if (defaultService && !name) {
-              setName(defaultService);
-            }
-          }
-        } else {
-          setPlans([]);
-        }
+      if (data && data.length > 0) {
+        setPlans(data);
         
-      } catch (err) {
-        console.error("Error fetching plans:", err);
+        // Auto-Fill Logic: Select first plan and set price
+        const firstPlan = data[0];
+        setPrice(firstPlan.price);
+        setSelectedPlan(firstPlan.name);
+      } else {
         setPlans([]);
-      } finally {
-        setLoadingPlans(false);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching plans:", err);
+      setPlans([]);
+    } finally {
+      setLoadingPlans(false);
+    }
+  }, []);
 
-    loadPlans();
-  }, [defaultService, name, currency]);
+  // 1. Effect for Default Service (Icon Click) - Runs IMMEDIATELY
+  useEffect(() => {
+    if (defaultService) {
+      // If defaultService is present, fetch immediately without delay
+      setName(defaultService); // Ensure name input is filled
+      fetchPlansFromDB(defaultService, currency);
+    }
+  }, [defaultService, currency, fetchPlansFromDB]);
+
+  // 2. Effect for Manual Typing (Debounced)
+  useEffect(() => {
+    // Only run if NOT using defaultService (user is typing manually)
+    if (!defaultService && name) {
+      const timer = setTimeout(() => {
+        fetchPlansFromDB(name, currency);
+      }, 500); // 500ms debounce
+
+      return () => clearTimeout(timer);
+    } else if (!defaultService && !name) {
+      setPlans([]);
+    }
+  }, [name, currency, defaultService, fetchPlansFromDB]);
 
   // Update price when plan is manually changed by user
   useEffect(() => {
