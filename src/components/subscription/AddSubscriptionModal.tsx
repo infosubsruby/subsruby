@@ -137,10 +137,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
         if (data) {
            setPlans(data);
-           // Auto-select first plan if available and none selected
-           if (data.length > 0) {
-             setSelectedPlanId(data[0].id.toString());
-           }
         }
       } catch (error) {
         console.error('Error fetching plans from DB:', error);
