@@ -83,33 +83,18 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     );
   }, [searchQuery, featuredServices]);
 
-  // Available plans from Supabase for selected preset/name
-  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
+  // Plans list state
+  const [plans, setPlans] = useState<any[]>([]);
   const [isFetchingPlans, setIsFetchingPlans] = useState(false);
 
-  // Derived search term to handle both preset and custom modes
-  const searchTerm = useMemo(() => {
-    // If user is in custom mode, use what they typed
-    if (isCustom) return name;
-    
-    // If a preset is selected, use its name
-    if (selectedPreset) return selectedPreset.name;
-    
-    // If a default service is provided via prop, use it
-    if (defaultService) return defaultService;
-    
-    // Fallback to name input
-    return name;
-  }, [isCustom, selectedPreset, defaultService, name]);
-
-  // Fetch plans from Supabase when searchTerm or currency changes
+  // Unified Data Fetching & Auto-Fill Logic
   useEffect(() => {
-    // If defaultService is provided, we handle it in a separate useEffect
-    if (defaultService) return;
-
     const fetchPlans = async () => {
-      if (!searchTerm) {
-        setAvailablePlans([]);
+      // Logic: Use defaultService if present, else user input name
+      const queryName = defaultService || name;
+
+      if (!queryName) {
+        setPlans([]);
         return;
       }
       
@@ -118,95 +103,45 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('*')
-          .ilike('name', `${searchTerm}%`) // Match service name prefix
+          .ilike('name', `${queryName}%`)
           .eq('currency', currency);
 
         if (error) throw error;
         
-        // Filter and process plans
-        const relevantPlans = (data || []).filter(plan => {
-          // Double check if the plan name starts with the service name (case insensitive)
-          return plan.name.toLowerCase().includes(searchTerm.toLowerCase());
-        });
+        // Filter locally to ensure relevance
+        const relevantPlans = (data || []).filter(plan => 
+          plan.name.toLowerCase().includes(queryName.toLowerCase())
+        );
         
-        setAvailablePlans(relevantPlans);
+        setPlans(relevantPlans);
+
+        // Auto-Fill Logic: Select first plan and set price
+        if (relevantPlans.length > 0) {
+          const firstPlan = relevantPlans[0];
+          setSelectedPlan(firstPlan.name);
+          setPrice(firstPlan.price);
+        }
         
       } catch (err) {
         console.error("Error fetching plans:", err);
-        setAvailablePlans([]);
+        setPlans([]);
       } finally {
         setIsFetchingPlans(false);
       }
     };
 
     fetchPlans();
-  }, [searchTerm, currency, defaultService]);
+  }, [defaultService, name, currency]);
 
-  // Special useEffect for defaultService (Icon Click) scenario
+  // Update price when plan is manually changed by user
   useEffect(() => {
-    if (open && defaultService) {
-      const fetchDefaultPlans = async () => {
-        setIsFetchingPlans(true);
-        try {
-          // Use name column as per schema, assuming it starts with service name
-          const { data, error } = await supabase
-            .from('subscription_plans')
-            .select('*')
-            .ilike('name', `${defaultService}%`) 
-            .eq('currency', currency);
-
-          if (error) throw error;
-
-          const relevantPlans = (data || []).filter(plan => 
-            plan.name.toLowerCase().includes(defaultService.toLowerCase())
-          );
-
-          setAvailablePlans(relevantPlans);
-
-          if (relevantPlans.length > 0) {
-            const firstPlan = relevantPlans[0];
-            // Automatically select first plan and set price
-            setSelectedPlan(firstPlan.name);
-            setPrice(firstPlan.price);
-            setName(defaultService);
-          }
-        } catch (err) {
-          console.error("Error fetching default plans:", err);
-        } finally {
-          setIsFetchingPlans(false);
-        }
-      };
-
-      fetchDefaultPlans();
-    }
-  }, [open, defaultService, currency]);
-
-  // Auto-select first plan when availablePlans changes
-  useEffect(() => {
-    if (availablePlans.length > 0) {
-      // If no plan is selected, or the currently selected plan is not in the new list (e.g. currency changed)
-      const currentPlanExists = availablePlans.some(p => p.name === selectedPlan);
-      
-      if (!selectedPlan || !currentPlanExists) {
-        const firstPlan = availablePlans[0];
-        setSelectedPlan(firstPlan.name);
-      }
-    } else {
-       if (!isCustom && selectedPlan) {
-         setSelectedPlan("");
-       }
-    }
-  }, [availablePlans, isCustom, selectedPlan]);
-
-  // Update price when plan changes
-  useEffect(() => {
-    if (selectedPlan && availablePlans.length > 0) {
-      const plan = availablePlans.find(p => p.name === selectedPlan);
+    if (selectedPlan && plans.length > 0) {
+      const plan = plans.find(p => p.name === selectedPlan);
       if (plan) {
         setPrice(plan.price);
       }
     }
-  }, [selectedPlan, availablePlans]);
+  }, [selectedPlan, plans]);
 
   // Handle name blur event
   const handleNameBlur = useCallback(() => {
@@ -424,33 +359,32 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 pt-2 space-y-5">
-            {/* Name (only editable for custom) */}
-            {isCustom && (
-              <div className="space-y-2 relative">
-                <Label>Subscription Name</Label>
-                <div className="relative">
-                  <Input
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      isUserTypingRef.current = true;
-                    }}
-                    onBlur={() => {
-                      // Small delay to allow click on suggestion
-                      setTimeout(() => setShowSuggestions(false), 200);
-                      handleNameBlur();
-                    }}
-                    placeholder="Enter service name"
-                    className="input-ruby"
-                    autoFocus
-                    autoComplete="off"
-                  />
-                </div>
+            {/* Name (Always visible, read-only for presets) */}
+            <div className="space-y-2 relative">
+              <Label>Subscription Name</Label>
+              <div className="relative">
+                <Input
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    isUserTypingRef.current = true;
+                  }}
+                  onBlur={() => {
+                    // Small delay to allow click on suggestion
+                    setTimeout(() => setShowSuggestions(false), 200);
+                    handleNameBlur();
+                  }}
+                  placeholder="Enter service name"
+                  className="input-ruby"
+                  autoFocus={isCustom}
+                  autoComplete="off"
+                  readOnly={!isCustom}
+                />
               </div>
-            )}
+            </div>
 
             {/* Plan Selector */}
-            {(availablePlans.length > 0 || isFetchingPlans) && (
+            {(plans.length > 0 || isFetchingPlans) && (
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select 
@@ -462,7 +396,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                     <SelectValue placeholder={isFetchingPlans ? "Loading plans..." : "Select a plan"} />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    {availablePlans.map((plan) => (
+                    {plans.map((plan) => (
                       <SelectItem key={plan.id} value={plan.name}>
                         {plan.name} ({currencySymbol}{plan.price.toFixed(2)})
                       </SelectItem>
