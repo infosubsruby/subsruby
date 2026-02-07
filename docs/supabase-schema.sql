@@ -47,6 +47,35 @@ CREATE TABLE public.user_roles (
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
 -- --------------------------------------
+-- SUBSCRIPTION_PLANS TABLE
+-- Global abonelik planları ve fiyatları
+-- --------------------------------------
+CREATE TABLE public.subscription_plans (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  subscription_id TEXT NOT NULL, -- Preset slug (e.g. 'netflix', 'spotify')
+  name TEXT NOT NULL, -- Plan name (e.g. 'Basic', 'Premium')
+  price NUMERIC NOT NULL,
+  currency TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- RLS aktif et
+ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
+
+-- Herkes okuyabilir (public read)
+CREATE POLICY "Public read access"
+  ON public.subscription_plans
+  FOR SELECT
+  USING (true);
+
+-- Sadece adminler yazabilir
+CREATE POLICY "Admins can manage plans"
+  ON public.subscription_plans
+  FOR ALL
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+-- --------------------------------------
 -- SUBSCRIPTIONS TABLE
 -- Abonelik kayıtları (Netflix, Spotify vb.)
 -- --------------------------------------

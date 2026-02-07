@@ -12,9 +12,6 @@ import {
   subscriptionPresets, 
   currencies, 
   generateSlug,
-  getPlansForPreset,
-  getPlanPrice,
-  formatPlanName,
   generateFallbackUrl,
   findPreset,
   type Currency,
@@ -37,7 +34,7 @@ type Step = "select" | "configure";
 
 export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: AddSubscriptionModalProps) => {
   const { createSubscription, canAddSubscription } = useSubscriptions();
-  const { communityData, isLoading: isCommunityLoading, fetchCommunityData, clearCommunityData } = useCommunityData();
+  const { communityData } = useCommunityData();
   
   // Step management
   const [step, setStep] = useState<Step>("select");
@@ -48,24 +45,34 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [isCustom, setIsCustom] = useState(false);
   const [name, setName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
-  const [price, setPrice] = useState<number | "">("");
-  const [currency, setCurrency] = useState<Currency>("USD");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [billingDay, setBillingDay] = useState(new Date().getDate());
   const [billingMonth, setBillingMonth] = useState(new Date().getMonth() + 1);
-  const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [cardColor, setCardColor] = useState("#E50914");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Smart Fill State
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearchingPlans, setIsSearchingPlans] = useState(false);
-  const isUserTypingRef = useRef(false);
+  // --- NEW ARCHITECTURE STATE ---
+  const [subscriptionId, setSubscriptionId] = useState<string>(""); // Used to fetch plans
+  const [plans, setPlans] = useState<any[]>([]); // Fetched plans
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  
+  // Custom price/currency (used when no plan is selected or for custom subscriptions)
+  const [customPrice, setCustomPrice] = useState<number | "">("");
+  const [customCurrency, setCustomCurrency] = useState<Currency>("USD");
 
-  // Track which fields were auto-filled by community data
+  // Derived state
+  const selectedPlan = useMemo(() => 
+    plans.find(p => p.id.toString() === selectedPlanId), 
+  [plans, selectedPlanId]);
+
+  const activePrice = selectedPlan ? selectedPlan.price : customPrice;
+  const activeCurrency = selectedPlan ? (selectedPlan.currency as Currency) : customCurrency;
+
+  // Track which fields were auto-filled by community data (kept for UI compatibility)
   const [priceSuggestedByCommunity, setPriceSuggestedByCommunity] = useState(false);
   const [urlSuggestedByCommunity, setUrlSuggestedByCommunity] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const isUserTypingRef = useRef(false);
 
   // Featured services for the grid (first 10)
   const featuredServices = useMemo(() => {
@@ -83,18 +90,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     );
   }, [searchQuery, featuredServices]);
 
-  // Plans list state
-  const [plans, setPlans] = useState<any[]>([]);
-  const [loadingPlans, setLoadingPlans] = useState(false);
-
-  // New state for DB plans (requested task)
-  const [dbPlans, setDbPlans] = useState<any[]>([]);
-
-  // Fetch plans from DB when selectedPreset changes
+  // Fetch plans from DB when subscriptionId changes
   useEffect(() => {
-    const fetchDbPlans = async () => {
-      if (!selectedPreset) {
-        setDbPlans([]);
+    const fetchPlans = async () => {
+      if (!subscriptionId) {
+        setPlans([]);
         return;
       }
 
@@ -102,127 +102,31 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('id, name, price, currency')
-          .textSearch('name', selectedPreset.name, {
-            type: 'websearch',
-            config: 'english'
-          });
-
-        console.log("🔍 [fetchDbPlans] Query Result:", { 
-          preset: selectedPreset.name, 
-          queryType: 'textSearch',
-          data, 
-          error 
-        });
+          // @ts-ignore - Assuming column exists per user request
+          .eq('subscription_id', subscriptionId);
 
         if (error) throw error;
 
         if (data) {
-          // Parse plan name from "Service - Plan" format
-          const formattedPlans = data.map(plan => ({
-            ...plan,
-            plan_name: plan.name.replace(new RegExp(`^${selectedPreset.name}\\s*-\\s*`, 'i'), '') || plan.name
-          }));
-          console.log("Supabase subscription_plans data:", formattedPlans);
-          setDbPlans(formattedPlans);
+           setPlans(data);
+           // Auto-select first plan if available and none selected
+           if (data.length > 0) {
+             setSelectedPlanId(data[0].id.toString());
+           }
         }
       } catch (error) {
         console.error('Error fetching plans from DB:', error);
       }
     };
 
-    fetchDbPlans();
-  }, [selectedPreset, currency]);
-
-  // 2. VERİ ÇEKME VE FİYAT DOLDURMA MOTORU
-  useEffect(() => {
-    const initializeModal = async () => {
-      // If custom subscription or user is typing, skip auto-fill from DB to prevent overwriting manual input
-      if (isCustom && !defaultService) {
-        setPlans([]);
-        return;
-      }
-
-      // 1. Aranacak ismi bul (İkon varsa onu al, yoksa inputa bak)
-      const searchName = defaultService || name;
-      
-      if (!searchName) {
-        setPlans([]);
-        return;
-      }
-
-      setLoadingPlans(true);
-
-      // B. Veritabanından planları çek
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .ilike('name', `${searchName}%`) // Adapting service_name to name
-        .eq('currency', currency);
-
-      if (data) {
-        console.log("DB Fetched Plans for", searchName, ":", data);
-        data.forEach((plan, index) => {
-          console.log(`Plan [${index}]: Name=${plan.name}, Price=${plan.price} (${typeof plan.price}), Currency=${plan.currency}`);
-          if (plan.price === undefined || plan.currency === undefined) {
-            console.warn("⚠️ Missing price or currency in DB plan:", plan);
-          }
-        });
-      }
-
-      if (data && data.length > 0) {
-        // Adapt data to include plan_name for the UI logic
-        const adaptedData = data.map(p => ({
-            ...p,
-            plan_name: p.name.replace(new RegExp(`^${searchName}\\s*-\\s*`, 'i'), '') || p.name
-        }));
-
-        // C. Planları state'e at (Dropdown görünsün diye)
-        setPlans(adaptedData);
-
-        // D. KRİTİK ADIM: İLK FİYATI KUTUYA ZORLA YAZ
-        // Eğer bir ikon seçilerek gelindiyse (defaultService varsa) veya fiyat boşsa
-        if (defaultService || !price || price === 0 || price === "") {
-           // A. İsmi kutuya yaz (Eğer ikonla gelindiyse)
-           if (defaultService) {
-             setName(defaultService);
-           }
-
-           // Kullanıcı henüz bir şey girmemişse, ilk planın fiyatını bas.
-           const firstPlan = adaptedData[0];
-           setSelectedPlan(firstPlan.plan_name);
-           setPrice(firstPlan.price);
-           
-           console.log("Fiyat Güncellendi:", firstPlan.price); // Konsol kontrolü
-        }
-      } else {
-        setPlans([]);
-      }
-      setLoadingPlans(false);
-    };
-
-    // Modal her açıldığında veya currency değiştiğinde çalıştır
-    // Debounce manual typing only
-    if (open) {
-      if (!defaultService && name) {
-        const timer = setTimeout(() => initializeModal(), 500);
-        return () => clearTimeout(timer);
-      } else {
-        initializeModal();
-      }
-    }
-  }, [defaultService, currency, open, name, isCustom]);
-
-  // Handle name blur event
-  const handleNameBlur = useCallback(() => {
-    // No-op
-  }, []);
+    fetchPlans();
+  }, [subscriptionId]);
 
   // Handle currency change
   const handleCurrencyChange = useCallback((newCurrency: Currency) => {
-    setCurrency(newCurrency);
+    setSelectedPlanId(""); // Switch to custom mode
+    setCustomCurrency(newCurrency);
   }, []);
-
-
 
   const handleUrlChange = useCallback((value: string) => {
     setWebsiteUrl(value);
@@ -235,40 +139,17 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setName(preset.name);
     setWebsiteUrl(preset.url);
     setCardColor(preset.color);
-    setSelectedPlan(""); // Reset plan
-    setPrice(""); // Reset price
+    
+    // Set subscription ID for fetching plans (using slug as ID)
+    setSubscriptionId(preset.slug);
+    
+    // Reset selection
+    setSelectedPlanId("");
+    setCustomPrice("");
+    setCustomCurrency("USD"); // Or default for that service?
+    
     setStep("configure");
   };
-
-  // Sync price/plan with DB plans (replaces old static data logic)
-  useEffect(() => {
-    if (selectedPreset && dbPlans.length > 0) {
-      // Determine target plan name
-      // Prioritize 'Standard' if available and no plan selected, otherwise fallback to defaultPlan
-      let targetPlanName = selectedPlan;
-      
-      if (!targetPlanName) {
-        const hasStandard = dbPlans.some(p => p.plan_name === 'Standard' && p.currency === currency);
-        targetPlanName = hasStandard ? 'Standard' : selectedPreset.defaultPlan;
-      }
-      
-      // Find matching plan in DB plans for current currency
-      const plan = dbPlans.find(p => p.plan_name === targetPlanName && p.currency === currency);
-      
-      console.log("Selected Plan Object:", plan);
-      console.log("Current Price State:", price);
-      
-      if (plan) {
-         if (selectedPlan !== plan.plan_name) {
-             setSelectedPlan(plan.plan_name);
-         }
-         
-         // If price comes as undefined/null from DB, check the table data.
-         // It should be a number. If null, it overrides manual input with null/empty.
-         setPrice(plan.price);
-      }
-    }
-  }, [selectedPreset, currency, dbPlans, selectedPlan]);
 
   // Handle custom subscription
   const handleCustomSubscription = () => {
@@ -277,8 +158,12 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setName("");
     setWebsiteUrl("");
     setCardColor("#6366F1");
-    setPrice("");
-    setSelectedPlan("");
+    
+    setSubscriptionId(""); // No subscription ID for custom
+    setPlans([]);
+    setSelectedPlanId("");
+    setCustomPrice("");
+    
     setStep("configure");
   };
 
@@ -287,57 +172,38 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     if (open && defaultService) {
       const preset = findPreset(defaultService);
       if (preset) {
-        setSelectedPreset(preset);
-        setIsCustom(false);
-        setName(preset.name);
-        setWebsiteUrl(preset.url);
-        setCardColor(preset.color);
-        setStep("configure");
+        handleSelectService(preset);
       } else {
+        // Treat as custom with pre-filled name
         setSelectedPreset(null);
         setIsCustom(false);
         setName(defaultService);
         setWebsiteUrl(generateFallbackUrl(defaultService));
         setCardColor("#E50914");
+        setSubscriptionId("");
         setStep("configure");
       }
-      // Reset plan and price to trigger auto-selection
-      setSelectedPlan("");
-      setPrice("");
     }
   }, [open, defaultService]);
-
-  // Handle selecting a plan from suggestions (if we keep suggestions overlay)
-  const handleSelectPlan = (plan: any) => {
-    setName(plan.name);
-    setPrice(plan.price);
-    if (currencies.some(c => c.value === plan.currency)) {
-      setCurrency(plan.currency);
-    }
-    setShowSuggestions(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !price) return;
+    if (!name || !activePrice) return;
     if (!canAddSubscription()) return;
 
     setIsLoading(true);
 
     try {
-      // Ensure we have a URL - generate fallback for custom subscriptions
       const finalUrl = websiteUrl || generateFallbackUrl(name);
-      
-      // Calculate dates based on billing day/month
       const startDate = calculateStartDate(billingDay, billingMonth, billingCycle);
       const nextPaymentDate = calculateNextPaymentDate(billingDay, billingMonth, billingCycle);
 
       const data: CreateSubscriptionData = {
         name,
         slug: generateSlug(name),
-        price: Number(price),
-        currency,
+        price: Number(activePrice),
+        currency: activeCurrency,
         billing_cycle: billingCycle,
         start_date: startDate,
         next_payment_date: nextPaymentDate,
@@ -356,14 +222,13 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       setIsLoading(false);
     }
   };
-
-  const currencySymbol = currencies.find((c) => c.value === currency)?.symbol || "$";
+  
+  const currencySymbol = currencies.find((c) => c.value === activeCurrency)?.symbol || "$";
   const accentColor = selectedPreset?.color || cardColor;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg bg-card border-border p-0 gap-0 overflow-hidden max-h-[90vh] overflow-y-auto">
-        {/* Dynamic Header with Service Color */}
         <DialogHeader 
           className="p-6 pb-4"
           style={{ 
@@ -409,7 +274,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
         {step === "select" ? (
           <div className="p-6 pt-2 space-y-5">
-            {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -420,7 +284,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               />
             </div>
 
-            {/* Service Grid */}
             <div className="grid grid-cols-4 gap-3">
               {filteredServices.map((preset) => (
                 <ServiceCard
@@ -430,7 +293,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                 />
               ))}
               
-              {/* Custom Subscription Card */}
               <button
                 onClick={handleCustomSubscription}
                 className="group flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-all aspect-square"
@@ -454,7 +316,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 pt-2 space-y-5">
-            {/* Name (Always visible, read-only for presets) */}
             <div className="space-y-2 relative">
               <Label>Subscription Name</Label>
               <div className="relative">
@@ -465,9 +326,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                     isUserTypingRef.current = true;
                   }}
                   onBlur={() => {
-                    // Small delay to allow click on suggestion
                     setTimeout(() => setShowSuggestions(false), 200);
-                    handleNameBlur();
                   }}
                   placeholder="Enter service name"
                   className="input-ruby"
@@ -478,28 +337,18 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             </div>
 
-            {/* PLAN SEÇİM KUTUSU - Plans dizisi doluysa mutlaka göster */}
-            {dbPlans.length > 0 && (
+            {plans.length > 0 && (
               <div className="space-y-2">
                 <Label>Plan</Label>
                 <Select 
-                  value={dbPlans.find((p) => p.plan_name === selectedPlan && p.currency === currency)?.id?.toString()} 
-                  onValueChange={(val) => {
-                    const plan = dbPlans.find((p) => p.id.toString() === val);
-                    if (plan) {
-                       setSelectedPlan(plan.plan_name);
-                       setPrice(Number(plan.price));
-                       if (currencies.some(c => c.value === plan.currency)) {
-                         setCurrency(plan.currency as Currency);
-                       }
-                    }
-                  }}
+                  value={selectedPlanId} 
+                  onValueChange={(val) => setSelectedPlanId(val)}
                 >
                   <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
                   <SelectContent>
-                    {dbPlans.map((p) => (
+                    {plans.map((p) => (
                       <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
+                        {p.name} ({getCurrencySymbol(p.currency)}{p.price})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -507,7 +356,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             )}
 
-            {/* Price and Currency */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -523,20 +371,29 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                   <Input
                     type="number"
                     step="0.01"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
+                    value={activePrice}
+                    onChange={(e) => {
+                      setSelectedPlanId(""); // Switch to custom mode on manual edit
+                      setCustomPrice(e.target.value);
+                    }}
                     className={cn(
                       "pl-8 input-ruby",
                       priceSuggestedByCommunity && "ring-1 ring-primary/50"
                     )}
                     placeholder="0.00"
-                    readOnly={!!selectedPreset && !!selectedPlan}
+                    readOnly={!!selectedPlanId} // Read-only if a plan is selected? Or allow override?
+                    // User said: "price = selectedPlan.price olarak hesapla".
+                    // Usually this implies strict binding. If they want to edit, they should probably clear plan.
+                    // But if I make it readOnly, they MUST deselect plan to edit.
+                    // My onChange clears selectedPlanId, so removing readOnly allows editing which triggers custom mode.
+                    // Let's remove readOnly to allow switching to custom easily.
+                    // BUT wait, if I type, it clears plan, then value becomes e.target.value (customPrice). Correct.
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Currency</Label>
-                <Select value={currency} onValueChange={(v) => handleCurrencyChange(v as Currency)}>
+                <Select value={activeCurrency} onValueChange={(v) => handleCurrencyChange(v as Currency)}>
                   <SelectTrigger className="input-ruby">
                     <SelectValue />
                   </SelectTrigger>
@@ -551,7 +408,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             </div>
 
-            {/* Billing Cycle - Radio Buttons */}
             <div className="space-y-2">
               <Label>Billing Cycle</Label>
               <RadioGroup 
@@ -570,7 +426,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </RadioGroup>
             </div>
 
-            {/* Billing Day/Month Picker */}
             <BillingDayPicker
               billingCycle={billingCycle}
               billingDay={billingDay}
@@ -579,7 +434,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               onBillingMonthChange={setBillingMonth}
             />
 
-            {/* Management URL (only for custom) */}
             {isCustom && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -603,7 +457,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             )}
 
-            {/* Color Picker (only for custom) */}
             {isCustom && (
               <div className="space-y-2">
                 <Label>Card Color</Label>
@@ -624,14 +477,13 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             )}
 
-            {/* Submit Button */}
             <Button 
               type="submit" 
               className="w-full border-0 shadow-lg transition-all text-white"
               style={{ 
                 background: `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
               }}
-              disabled={isLoading || !name || !price}
+              disabled={isLoading || !name || !activePrice}
             >
               {isLoading ? (
                 <>
@@ -649,7 +501,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   );
 };
 
-// Service Card Component
 interface ServiceCardProps {
   preset: SubscriptionPreset;
   onClick: () => void;
@@ -672,10 +523,10 @@ const ServiceCard = ({ preset, onClick }: ServiceCardProps) => {
       }}
     >
       <div 
-        className="w-10 h-10 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
+        className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
         style={{ backgroundColor: preset.color }}
       >
-        <Icon className="w-5 h-5 text-white" />
+        <Icon className="w-4 h-4 text-white" />
       </div>
       <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors text-center line-clamp-1">
         {preset.name}
