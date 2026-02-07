@@ -104,6 +104,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           .select('id, name, price, currency')
           .ilike('name', `${selectedPreset.name}%`);
 
+        console.log("🔍 [fetchDbPlans] Query Result:", { selectedPreset: selectedPreset.name, data, error });
+
         if (error) throw error;
 
         if (data) {
