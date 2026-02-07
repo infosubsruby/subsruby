@@ -89,11 +89,12 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
   // Unified Data Fetching & Auto-Fill Logic
   useEffect(() => {
-    const fetchPlans = async () => {
+    const loadPlans = async () => {
       // 1. Determine name to search (defaultService or input)
-      const serviceName = defaultService || name;
+      const searchName = defaultService || name;
 
-      if (!serviceName) {
+      // Stop if no name
+      if (!searchName) {
         setPlans([]);
         return;
       }
@@ -105,7 +106,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           .from('subscription_plans')
           .select('*')
           // Using 'name' as 'service_name' column does not exist in schema
-          .ilike('name', `${serviceName}%`)
+          .ilike('name', `${searchName}%`)
           .eq('currency', currency);
 
         if (error) throw error;
@@ -114,14 +115,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           setPlans(data);
           
           // 3. AUTOMATIC SELECTION (Critical Part)
-          // Always select the first plan and set price when data is loaded
-          const firstPlan = data[0];
-          setPrice(firstPlan.price);
-          setSelectedPlan(firstPlan.name);
-          
-          // Ensure name is set if using defaultService
-          if (defaultService && !name) {
-            setName(defaultService);
+          // Logic: If defaultService is used OR price is empty/0, auto-fill
+          if (defaultService || !price || price === 0) {
+            const firstPlan = data[0];
+            setPrice(firstPlan.price);
+            setSelectedPlan(firstPlan.name);
+            
+            // Ensure name is set if using defaultService
+            if (defaultService && !name) {
+              setName(defaultService);
+            }
           }
         } else {
           setPlans([]);
@@ -135,7 +138,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       }
     };
 
-    fetchPlans();
+    loadPlans();
   }, [defaultService, name, currency]);
 
   // Update price when plan is manually changed by user
