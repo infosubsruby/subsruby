@@ -90,7 +90,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     );
   }, [searchQuery, featuredServices]);
 
-  // Fetch plans from DB when serviceName changes
+  // Fetch plans from DB when serviceName or customCurrency changes
   useEffect(() => {
     const fetchPlans = async () => {
       if (!serviceName) {
@@ -102,8 +102,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('id, plan_name, price, currency')
-          // @ts-ignore - Assuming column exists per user request
-          .eq('service_name', serviceName);
+          .eq('service_name', serviceName)
+          .eq('currency', customCurrency);
 
         if (error) throw error;
 
@@ -120,7 +120,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [serviceName]);
+  }, [serviceName, customCurrency]);
 
   // Handle currency change
   const handleCurrencyChange = useCallback((newCurrency: Currency) => {
