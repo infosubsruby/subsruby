@@ -122,7 +122,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setSelectedPlanId("");
     setCustomPrice("");
     setSelectedCurrency("USD");
-    setSelectedCountry("US");
+    setSelectedCountry(null);
     
     setStep("select");
     setSearchQuery("");
@@ -132,7 +132,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   // Fetch plans from DB when serviceName or selectedCurrency changes
   useEffect(() => {
     const fetchPlans = async () => {
-      if (!serviceName) {
+      if (!serviceName || !selectedCountry) {
         setPlans([]);
         return;
       }
@@ -182,7 +182,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     // Reset selection
     setSelectedPlanId("");
     setCustomPrice("");
-    setSelectedCurrency("USD"); // Or default for that service?
+    setSelectedCurrency("USD"); // Default to USD
+    setSelectedCountry(null);
     
     setStep("configure");
   };
