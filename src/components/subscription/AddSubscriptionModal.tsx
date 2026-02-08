@@ -58,16 +58,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [isCustom, setIsCustom] = useState(false);
   const [name, setName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const [billingDay, setBillingDay] = useState(new Date().getDate());
   const [billingMonth, setBillingMonth] = useState(new Date().getMonth() + 1);
   const [cardColor, setCardColor] = useState("#E50914");
   const [isLoading, setIsLoading] = useState(false);
 
   // --- NEW ARCHITECTURE STATE ---
-  const [serviceName, setServiceName] = useState<string>(""); // Used to fetch plans
+  const [selectedService, setSelectedService] = useState<string>(""); // Used to fetch plans
   const [plans, setPlans] = useState<any[]>([]); // Fetched plans
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   
   // Custom price/currency (used when no plan is selected or for custom subscriptions)
   const [customPrice, setCustomPrice] = useState<number | "">("");
@@ -80,22 +80,17 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
   const [selectedCountry, setSelectedCountry] = useState<CountryState | null>(null);
 
-  // Derived state
-  const selectedPlan = useMemo(() => 
-    plans.find(p => p.id.toString() === selectedPlanId), 
-  [plans, selectedPlanId]);
-
   // Price logic: If plans exist, price comes from plan (or 0 if none selected).
   // If no plans (custom), price comes from customPrice.
   const activePrice = useMemo(() => {
     if (plans.length > 0) {
-      return selectedPlan ? selectedPlan.price : 0;
+      return selectedPlan?.price || 0;
     }
     return customPrice;
   }, [plans.length, selectedPlan, customPrice]);
 
   // Currency logic: simplified to use single source of truth
-  const activeCurrency = selectedCurrency;
+  const activeCurrency = selectedCountry?.currency;
 
   // Track which fields were auto-filled by community data (kept for UI compatibility)
   const [priceSuggestedByCommunity, setPriceSuggestedByCommunity] = useState(false);
@@ -120,13 +115,13 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setName("");
     setWebsiteUrl("");
     setCardColor("#E50914");
-    setBillingCycle("monthly");
+    setBillingPeriod("monthly");
     setBillingDay(new Date().getDate());
     setBillingMonth(new Date().getMonth() + 1);
     
-    setServiceName("");
+    setSelectedService("");
     setPlans([]);
-    setSelectedPlanId("");
+    setSelectedPlan(null);
     setCustomPrice("");
     setSelectedCountry(null);
     
@@ -135,10 +130,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   };
 
 
-  // Fetch plans from DB when serviceName or selectedCurrency changes
+  // Fetch plans from DB when serviceName, selectedCountry or billingPeriod changes
   useEffect(() => {
     const fetchPlans = async () => {
-      if (!serviceName || !selectedCountry || !selectedCurrency) {
+      // Clear plans if requirements are not met
+      if (!serviceName || !selectedCountry) {
         setPlans([]);
         return;
       }
@@ -146,14 +142,17 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       try {
         const { data, error } = await supabase
           .from('subscription_plans')
-          .select('id, plan_name, price, currency')
+          .select('*')
           .eq('service_name', serviceName)
-          .eq('currency', selectedCurrency.toUpperCase()); // Normalize currency
+          .eq('country_code', selectedCountry.code)
+          .eq('billing_period', billingPeriod);
 
         if (error) throw error;
 
         if (data) {
            setPlans(data);
+           // Reset selected plan when plans are refetched (e.g. country or billing period changed)
+           setSelectedPlan(null);
         }
       } catch (error) {
         console.error('Error fetching plans from DB:', error);
@@ -161,17 +160,21 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [serviceName, selectedCurrency, selectedCountry]);
+  }, [selectedService, selectedCountry, billingPeriod]);
 
   // Handle country/currency change
   const handleCountryChange = useCallback((value: string) => {
     const selectedOption = countryCurrencies.find(c => c.code === value);
     if (!selectedOption) return;
 
-    setSelectedPlanId(""); // Reset plan selection
+    setSelectedPlan(null); // Reset plan selection
     setCustomPrice(""); // Reset custom price
-    setSelectedCurrency(selectedOption.currency);
-    setSelectedCountry(selectedOption.code);
+    
+    setSelectedCountry({
+      code: selectedOption.code,
+      name: selectedOption.name,
+      currency: selectedOption.currency as Currency
+    });
   }, []);
 
   const handleUrlChange = useCallback((value: string) => {
@@ -192,7 +195,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     // Reset selection
     setSelectedPlanId("");
     setCustomPrice("");
-    setSelectedCurrency("USD"); // Default to USD
     setSelectedCountry(null);
     
     setStep("configure");
@@ -227,7 +229,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         setName(defaultService);
         setWebsiteUrl(generateFallbackUrl(defaultService));
         setCardColor("#E50914");
-        setServiceName("");
+        setSelectedService("");
         setStep("configure");
       }
     }
@@ -450,10 +452,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                     className={cn(
                       "pl-8 input-ruby",
                       priceSuggestedByCommunity && "ring-1 ring-primary/50",
-                      (plans.length > 0 || (!isCustom && !!serviceName)) && "bg-muted text-muted-foreground cursor-not-allowed"
+                      (plans.length > 0 || (!isCustom && !!selectedService)) && "bg-muted text-muted-foreground cursor-not-allowed"
                     )}
                     placeholder="0.00"
-                    readOnly={plans.length > 0 || (!isCustom && !!serviceName)}
+                    readOnly={plans.length > 0 || (!isCustom && !!selectedService)}
                   />
                 </div>
               </div>
