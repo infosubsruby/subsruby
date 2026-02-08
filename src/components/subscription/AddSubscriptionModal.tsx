@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   subscriptionPresets, 
   currencies, 
+  countryCurrencies,
   generateSlug,
   generateFallbackUrl,
   findPreset,
@@ -121,6 +122,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setSelectedPlanId("");
     setCustomPrice("");
     setSelectedCurrency("USD");
+    setSelectedCountry("US");
     
     setStep("select");
     setSearchQuery("");
@@ -444,19 +446,17 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Currency</Label>
+                <Label>Region & Currency</Label>
                 <Select 
-                  value={selectedCurrency} 
-                  onValueChange={(v) => {
-                    handleCurrencyChange(v as Currency);
-                  }}
+                  value={selectedCountry} 
+                  onValueChange={handleCountryChange}
                 >
                   <SelectTrigger className="input-ruby">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {currencies.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
+                  <SelectContent className="bg-popover border-border max-h-[300px]">
+                    {countryCurrencies.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
                         {c.label}
                       </SelectItem>
                     ))}

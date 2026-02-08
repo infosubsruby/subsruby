@@ -11,6 +11,7 @@ export interface Subscription {
   website_url: string | null;
   // Stored as a hex string (e.g. "#E50914"). We normalize nulls to a default in the API layer.
   card_color: string;
+  country_code: string | null;
   created_at: string;
 }
 
@@ -24,4 +25,5 @@ export interface CreateSubscriptionData {
   next_payment_date: string;
   website_url?: string;
   card_color: string;
+  country_code?: string;
 }

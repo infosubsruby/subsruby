@@ -161,6 +161,23 @@ export const currencies = [
   { value: "BRL", label: "BRL (R$)", symbol: "R$" },
 ] as const;
 
+export const countryCurrencies = [
+  { code: "US", currency: "USD", name: "United States", label: "USD ($) – United States" },
+  { code: "GB", currency: "GBP", name: "United Kingdom", label: "GBP (£) – United Kingdom" },
+  { code: "TR", currency: "TRY", name: "Turkey", label: "TRY (₺) – Turkey" },
+  { code: "DE", currency: "EUR", name: "Germany", label: "EUR (€) – Germany" },
+  { code: "FR", currency: "EUR", name: "France", label: "EUR (€) – France" },
+  { code: "IT", currency: "EUR", name: "Italy", label: "EUR (€) – Italy" },
+  { code: "ES", currency: "EUR", name: "Spain", label: "EUR (€) – Spain" },
+  { code: "NL", currency: "EUR", name: "Netherlands", label: "EUR (€) – Netherlands" },
+  { code: "CA", currency: "CAD", name: "Canada", label: "CAD (C$) – Canada" },
+  { code: "AU", currency: "AUD", name: "Australia", label: "AUD (A$) – Australia" },
+  { code: "JP", currency: "JPY", name: "Japan", label: "JPY (¥) – Japan" },
+  { code: "IN", currency: "INR", name: "India", label: "INR (₹) – India" },
+  { code: "BR", currency: "BRL", name: "Brazil", label: "BRL (R$) – Brazil" },
+  { code: "MX", currency: "MXN", name: "Mexico", label: "MXN ($) – Mexico" },
+] as const;
+
 export type Currency = (typeof currencies)[number]["value"];
 
 /**

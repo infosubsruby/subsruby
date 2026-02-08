@@ -113,6 +113,7 @@ export const useSubscriptions = () => {
         next_payment_date: payload.next_payment_date,
         website_url: payload.website_url ?? null,
         card_color: payload.card_color,
+        country_code: payload.country_code ?? null,
         created_at: new Date().toISOString(),
       };
 

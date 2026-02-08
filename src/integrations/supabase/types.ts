@@ -145,6 +145,7 @@ export type Database = {
           start_date: string
           user_id: string
           website_url: string | null
+          country_code: string | null
         }
         Insert: {
           billing_cycle?: string | null
@@ -159,6 +160,7 @@ export type Database = {
           start_date: string
           user_id: string
           website_url?: string | null
+          country_code?: string | null
         }
         Update: {
           billing_cycle?: string | null
@@ -173,6 +175,7 @@ export type Database = {
           start_date?: string
           user_id?: string
           website_url?: string | null
+          country_code?: string | null
         }
         Relationships: []
       }
