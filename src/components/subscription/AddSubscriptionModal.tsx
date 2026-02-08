@@ -71,8 +71,14 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   
   // Custom price/currency (used when no plan is selected or for custom subscriptions)
   const [customPrice, setCustomPrice] = useState<number | "">("");
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  
+  type CountryState = {
+    code: string;
+    name: string;
+    currency: Currency;
+  };
+
+  const [selectedCountry, setSelectedCountry] = useState<CountryState | null>(null);
 
   // Derived state
   const selectedPlan = useMemo(() => 
@@ -122,7 +128,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setPlans([]);
     setSelectedPlanId("");
     setCustomPrice("");
-    setSelectedCurrency(null);
     setSelectedCountry(null);
     
     setStep("select");
@@ -251,6 +256,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         next_payment_date: nextPaymentDate,
         website_url: finalUrl,
         card_color: cardColor,
+        country_code: selectedCountry?.code || null,
       };
 
       const result = await createSubscription(data);
@@ -454,7 +460,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               <div className="space-y-2">
                 <Label>Region & Currency</Label>
                 <Select 
-                  value={selectedCountry || ""} 
+                  value={selectedCountry?.code || ""} 
                   onValueChange={handleCountryChange}
                 >
                   <SelectTrigger className="input-ruby">

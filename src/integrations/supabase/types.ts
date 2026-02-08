@@ -185,6 +185,10 @@ export type Database = {
           currency: string
           id: number
           name: string
+          plan_name: string
+          service_name: string
+          country_code: string | null
+          billing_period: string | null
           price: number
         }
         Insert: {
@@ -192,6 +196,10 @@ export type Database = {
           currency: string
           id?: number
           name: string
+          plan_name?: string
+          service_name?: string
+          country_code?: string | null
+          billing_period?: string | null
           price: number
         }
         Update: {
@@ -199,6 +207,10 @@ export type Database = {
           currency?: string
           id?: number
           name?: string
+          plan_name?: string
+          service_name?: string
+          country_code?: string | null
+          billing_period?: string | null
           price?: number
         }
         Relationships: []
