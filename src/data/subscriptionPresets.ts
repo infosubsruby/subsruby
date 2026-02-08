@@ -2,6 +2,7 @@ import { Play, Music, Film, Palette, ShoppingBag, Gamepad2, Cloud, BookOpen, Tv,
 
 export interface SubscriptionPreset {
   name: string;
+  service_name: string; // Exact match for DB
   slug: string;
   url: string; // Management URL
   color: string;
@@ -12,6 +13,7 @@ export interface SubscriptionPreset {
 export const subscriptionPresets: SubscriptionPreset[] = [
   {
     name: "Netflix",
+    service_name: "Netflix",
     slug: "netflix",
     url: "https://www.netflix.com/youraccount",
     color: "#E50914",
@@ -20,6 +22,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Spotify",
+    service_name: "Spotify",
     slug: "spotify",
     url: "https://www.spotify.com/account",
     color: "#1DB954",
@@ -28,6 +31,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "YouTube Premium",
+    service_name: "Youtube",
     slug: "youtube-premium",
     url: "https://www.youtube.com/paid_memberships",
     color: "#FF0000",
@@ -36,6 +40,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Disney+",
+    service_name: "Disney+",
     slug: "disney-plus",
     url: "https://www.disneyplus.com/account",
     color: "#113CCF",
@@ -44,6 +49,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Amazon Prime",
+    service_name: "Amazon Prime",
     slug: "amazon-prime",
     url: "https://www.amazon.com/gp/primecentral",
     color: "#FF9900",
@@ -52,6 +58,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Apple Music",
+    service_name: "Apple Music",
     slug: "apple-music",
     url: "https://music.apple.com/account",
     color: "#FC3C44",
@@ -60,6 +67,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Adobe Creative Cloud",
+    service_name: "Adobe Creative Cloud",
     slug: "adobe-cc",
     url: "https://account.adobe.com/plans",
     color: "#FF0000",
@@ -68,6 +76,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Canva",
+    service_name: "Canva",
     slug: "canva",
     url: "https://www.canva.com/settings/billing",
     color: "#00C4CC",
@@ -76,6 +85,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Proton VPN",
+    service_name: "Proton VPN",
     slug: "proton-vpn",
     url: "https://account.protonvpn.com",
     color: "#6D4AFF",
@@ -84,6 +94,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "X Premium",
+    service_name: "X Premium",
     slug: "x-twitter",
     url: "https://twitter.com/settings/manage_subscription",
     color: "#000000",
@@ -92,6 +103,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Xbox Game Pass",
+    service_name: "Xbox Game Pass",
     slug: "xbox-game-pass",
     url: "https://account.xbox.com/subscriptions",
     color: "#107C10",
@@ -100,6 +112,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "PlayStation Plus",
+    service_name: "PlayStation Plus",
     slug: "playstation-plus",
     url: "https://www.playstation.com/account/subscriptions",
     color: "#003087",
@@ -108,6 +121,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "iCloud+",
+    service_name: "iCloud+",
     slug: "icloud",
     url: "https://www.icloud.com/settings/",
     color: "#3693F3",
@@ -116,6 +130,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "HBO Max",
+    service_name: "HBO Max",
     slug: "hbo-max",
     url: "https://www.max.com/account",
     color: "#5822B4",
@@ -124,6 +139,7 @@ export const subscriptionPresets: SubscriptionPreset[] = [
   },
   {
     name: "Audible",
+    service_name: "Audible",
     slug: "audible",
     url: "https://www.audible.com/account",
     color: "#F8991D",

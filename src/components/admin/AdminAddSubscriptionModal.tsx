@@ -88,14 +88,18 @@ export const AdminAddSubscriptionModal = ({
         return;
       }
 
+      // Determine DB service name (use preset mapping if available)
+      const preset = findPreset(name);
+      const dbServiceName = preset ? preset.service_name : name;
+
       // Only fetch if it matches a known preset (optional, but good for performance)
       // or just fetch for any name to support dynamic adding in future
       try {
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('id, plan_name, price, currency')
-          .eq('service_name', name)
-          .eq('currency', customCurrency.toUpperCase());
+          .eq('service_name', dbServiceName)
+          .eq('currency', selectedCurrency.toUpperCase());
 
         if (error) throw error;
 
@@ -108,7 +112,7 @@ export const AdminAddSubscriptionModal = ({
     };
 
     fetchPlans();
-  }, [name, customCurrency]);
+  }, [name, selectedCurrency]);
 
   // Handle currency change
   const handleCurrencyChange = (newCurrency: Currency) => {

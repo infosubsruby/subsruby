@@ -175,7 +175,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setCardColor(preset.color);
     
     // Set service name for fetching plans
-    setServiceName(preset.name);
+    setServiceName(preset.service_name);
     
     // Reset selection
     setSelectedPlanId("");
