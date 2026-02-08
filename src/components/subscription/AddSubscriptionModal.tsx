@@ -71,7 +71,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   
   // Custom price/currency (used when no plan is selected or for custom subscriptions)
   const [customPrice, setCustomPrice] = useState<number | "">("");
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
   // Derived state
   const selectedPlan = useMemo(() => 
@@ -121,7 +122,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setPlans([]);
     setSelectedPlanId("");
     setCustomPrice("");
-    setSelectedCurrency("USD");
+    setSelectedCurrency(null);
     setSelectedCountry(null);
     
     setStep("select");
@@ -132,7 +133,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   // Fetch plans from DB when serviceName or selectedCurrency changes
   useEffect(() => {
     const fetchPlans = async () => {
-      if (!serviceName || !selectedCountry) {
+      if (!serviceName || !selectedCountry || !selectedCurrency) {
         setPlans([]);
         return;
       }
@@ -155,13 +156,17 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [serviceName, selectedCurrency]);
+  }, [serviceName, selectedCurrency, selectedCountry]);
 
-  // Handle currency change
-  const handleCurrencyChange = useCallback((newCurrency: Currency) => {
+  // Handle country/currency change
+  const handleCountryChange = useCallback((value: string) => {
+    const selectedOption = countryCurrencies.find(c => c.code === value);
+    if (!selectedOption) return;
+
     setSelectedPlanId(""); // Reset plan selection
     setCustomPrice(""); // Reset custom price
-    setSelectedCurrency(newCurrency); // Update currency to trigger re-fetch
+    setSelectedCurrency(selectedOption.currency);
+    setSelectedCountry(selectedOption.code);
   }, []);
 
   const handleUrlChange = useCallback((value: string) => {
@@ -226,7 +231,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !activePrice) return;
+    if (!name || !activePrice || !activeCurrency) return;
     if (!canAddSubscription()) return;
 
     setIsLoading(true);
@@ -449,11 +454,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               <div className="space-y-2">
                 <Label>Region & Currency</Label>
                 <Select 
-                  value={selectedCountry} 
+                  value={selectedCountry || ""} 
                   onValueChange={handleCountryChange}
                 >
                   <SelectTrigger className="input-ruby">
-                    <SelectValue />
+                    <SelectValue placeholder="Select region" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border max-h-[300px]">
                     {countryCurrencies.map((c) => (
