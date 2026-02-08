@@ -65,7 +65,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [isLoading, setIsLoading] = useState(false);
 
   // --- NEW ARCHITECTURE STATE ---
-  const [selectedService, setSelectedService] = useState<string>(""); // Used to fetch plans
+  const [selectedService, setSelectedService] = useState<string | null>(null); // Used to fetch plans
   const [plans, setPlans] = useState<any[]>([]); // Fetched plans
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   
@@ -119,7 +119,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setBillingDay(new Date().getDate());
     setBillingMonth(new Date().getMonth() + 1);
     
-    setSelectedService("");
+    setSelectedService(null);
     setPlans([]);
     setSelectedPlan(null);
     setCustomPrice("");
@@ -130,11 +130,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   };
 
 
-  // Fetch plans from DB when serviceName, selectedCountry or billingPeriod changes
+  // Fetch plans from DB when selectedService, selectedCountry or billingPeriod changes
   useEffect(() => {
     const fetchPlans = async () => {
       // Clear plans if requirements are not met
-      if (!serviceName || !selectedCountry) {
+      if (!selectedService || !selectedCountry) {
         setPlans([]);
         return;
       }
@@ -143,7 +143,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('*')
-          .eq('service_name', serviceName)
+          .eq('service_name', selectedService)
           .eq('country_code', selectedCountry.code)
           .eq('billing_period', billingPeriod);
 
@@ -190,10 +190,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setCardColor(preset.color);
     
     // Set service name for fetching plans
-    setServiceName(preset.service_name);
+    setSelectedService(preset.service_name);
     
     // Reset selection
-    setSelectedPlanId("");
+    setSelectedPlan(null);
     setCustomPrice("");
     setSelectedCountry(null);
     
@@ -208,9 +208,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setWebsiteUrl("");
     setCardColor("#6366F1");
     
-    setServiceName(""); // No service name for custom
+    setSelectedService(null); // No service name for custom
     setPlans([]);
-    setSelectedPlanId("");
     setCustomPrice("");
     
     setStep("configure");
@@ -229,7 +228,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         setName(defaultService);
         setWebsiteUrl(generateFallbackUrl(defaultService));
         setCardColor("#E50914");
-        setSelectedService("");
+        setSelectedService(null);
         setStep("configure");
       }
     }
@@ -245,15 +244,15 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
 
     try {
       const finalUrl = websiteUrl || generateFallbackUrl(name);
-      const startDate = calculateStartDate(billingDay, billingMonth, billingCycle);
-      const nextPaymentDate = calculateNextPaymentDate(billingDay, billingMonth, billingCycle);
+      const startDate = calculateStartDate(billingDay, billingMonth, billingPeriod);
+      const nextPaymentDate = calculateNextPaymentDate(billingDay, billingMonth, billingPeriod);
 
       const data: CreateSubscriptionData = {
         name,
         slug: generateSlug(name),
         price: Number(activePrice),
         currency: activeCurrency,
-        billing_cycle: billingCycle,
+        billing_cycle: billingPeriod,
         start_date: startDate,
         next_payment_date: nextPaymentDate,
         website_url: finalUrl,
@@ -388,16 +387,64 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             </div>
 
-            {(!isCustom && serviceName) && (
+            <div className="space-y-2">
+              <Label>Region & Currency</Label>
+              <Select 
+                value={selectedCountry?.code || ""} 
+                onValueChange={handleCountryChange}
+              >
+                <SelectTrigger className="input-ruby">
+                  <SelectValue placeholder="Select region" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border max-h-[300px]">
+                  {countryCurrencies.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Billing Cycle</Label>
+              <RadioGroup 
+                value={billingPeriod} 
+                onValueChange={(v) => setBillingPeriod(v as "monthly" | "yearly")}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="monthly" id="monthly" />
+                  <Label htmlFor="monthly" className="font-normal cursor-pointer">Monthly</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yearly" id="yearly" />
+                  <Label htmlFor="yearly" className="font-normal cursor-pointer">Yearly</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <BillingDayPicker
+              billingCycle={billingPeriod}
+              billingDay={billingDay}
+              billingMonth={billingMonth}
+              onBillingDayChange={setBillingDay}
+              onBillingMonthChange={setBillingMonth}
+            />
+
+            {(!isCustom && selectedService) && (
               <div className="space-y-2">
                 <Label>Plan <span className="text-red-500">*</span></Label>
                 {plans.length > 0 ? (
                   <>
                     <Select 
-                      value={selectedPlanId} 
-                      onValueChange={(val) => setSelectedPlanId(val)}
+                      value={selectedPlan?.id?.toString() || ""} 
+                      onValueChange={(val) => {
+                        const plan = plans.find(p => p.id.toString() === val);
+                        setSelectedPlan(plan || null);
+                      }}
                     >
-                      <SelectTrigger className={!selectedPlanId ? "border-red-300" : ""}>
+                      <SelectTrigger className={!selectedPlan ? "border-red-300" : ""}>
                         <SelectValue placeholder="Select a plan" />
                       </SelectTrigger>
                       <SelectContent>
@@ -408,7 +455,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                         ))}
                       </SelectContent>
                     </Select>
-                    {!selectedPlanId && (
+                    {!selectedPlan && (
                       <p className="text-xs text-red-500">Please select a plan to continue</p>
                     )}
                   </>
@@ -428,82 +475,36 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Price</Label>
-                  {priceSuggestedByCommunity && communityData && (
-                    <CommunitySuggestionBadge matchCount={communityData.priceCount} />
-                  )}
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    {currencySymbol}
-                  </span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={activePrice === 0 ? "" : activePrice}
-                    onChange={(e) => {
-                      if (plans.length === 0 && isCustom) {
-                        setCustomPrice(e.target.value);
-                      }
-                    }}
-                    className={cn(
-                      "pl-8 input-ruby",
-                      priceSuggestedByCommunity && "ring-1 ring-primary/50",
-                      (plans.length > 0 || (!isCustom && !!selectedService)) && "bg-muted text-muted-foreground cursor-not-allowed"
-                    )}
-                    placeholder="0.00"
-                    readOnly={plans.length > 0 || (!isCustom && !!selectedService)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Region & Currency</Label>
-                <Select 
-                  value={selectedCountry?.code || ""} 
-                  onValueChange={handleCountryChange}
-                >
-                  <SelectTrigger className="input-ruby">
-                    <SelectValue placeholder="Select region" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border max-h-[300px]">
-                    {countryCurrencies.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label>Billing Cycle</Label>
-              <RadioGroup 
-                value={billingCycle} 
-                onValueChange={(v) => setBillingCycle(v as "monthly" | "yearly")}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="monthly" id="monthly" />
-                  <Label htmlFor="monthly" className="font-normal cursor-pointer">Monthly</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yearly" id="yearly" />
-                  <Label htmlFor="yearly" className="font-normal cursor-pointer">Yearly</Label>
-                </div>
-              </RadioGroup>
+              <div className="flex items-center justify-between">
+                <Label>Price</Label>
+                {priceSuggestedByCommunity && communityData && (
+                  <CommunitySuggestionBadge matchCount={communityData.priceCount} />
+                )}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {currencySymbol}
+                </span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={activePrice === 0 ? "" : activePrice}
+                  onChange={(e) => {
+                    if (plans.length === 0 && isCustom) {
+                      setCustomPrice(e.target.value);
+                    }
+                  }}
+                  className={cn(
+                    "pl-8 input-ruby",
+                    priceSuggestedByCommunity && "ring-1 ring-primary/50",
+                    (plans.length > 0 || (!isCustom && !!selectedService)) && "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
+                  placeholder="0.00"
+                  readOnly={plans.length > 0 || (!isCustom && !!selectedService)}
+                />
+              </div>
             </div>
-
-            <BillingDayPicker
-              billingCycle={billingCycle}
-              billingDay={billingDay}
-              billingMonth={billingMonth}
-              onBillingDayChange={setBillingDay}
-              onBillingMonthChange={setBillingMonth}
-            />
 
             {isCustom && (
               <div className="space-y-2">
