@@ -174,7 +174,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           .from('subscription_plans')
           .select('*')
           .eq('service_id', selectedService.id)
-          .eq('billing_period', billingPeriod)
+          .eq('billing_cycle', billingPeriod)
           .eq('currency', selectedCurrency);
 
         if (error) throw error;
@@ -187,7 +187,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
             .from('subscription_plans')
             .select('*')
             .eq('service_id', selectedService.id)
-            .eq('billing_period', billingPeriod)
+            .eq('billing_cycle', billingPeriod)
             .eq('currency', 'USD');
           if (usdError) throw usdError;
           setPlans((usdData || []).map(p => ({ ...p, baseCurrency: true })));
