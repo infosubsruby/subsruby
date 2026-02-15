@@ -21,7 +21,8 @@ import {
 import { useSubscriptions, type CreateSubscriptionData } from "@/hooks/useSubscriptions";
 import { useCommunityData } from "@/hooks/useCommunityData";
 import { calculateNextPaymentDate, calculateStartDate } from "@/lib/dateUtils";
-import { getCurrencySymbol } from "@/lib/currency";
+import { getCurrencySymbol, convertWithDynamicRates } from "@/lib/currency";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Search, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [selectedService, setSelectedService] = useState<string | null>(null); // Used to fetch plans
   const [plans, setPlans] = useState<any[]>([]); // Fetched plans
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
+  const [plansLoading, setPlansLoading] = useState(false);
   
   // Custom price/currency (used when no plan is selected or for custom subscriptions)
   const [customPrice, setCustomPrice] = useState<number | "">("");
@@ -89,8 +92,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     return customPrice;
   }, [plans.length, selectedPlan, customPrice]);
 
-  // Currency logic: simplified to use single source of truth
   const activeCurrency = selectedCountry?.currency;
+
+  const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
+  const exchangeRates = useMemo(() => {
+    if (!exchangeRatesList) return {};
+    return exchangeRatesList.reduce((acc, curr) => {
+      acc[curr.currency_code] = Number(curr.rate);
+      return acc;
+    }, {} as Record<string, number>);
+  }, [exchangeRatesList]);
 
   // Track which fields were auto-filled by community data (kept for UI compatibility)
   const [priceSuggestedByCommunity, setPriceSuggestedByCommunity] = useState(false);
@@ -130,12 +141,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   };
 
 
-  // Fetch plans from DB when selectedService, selectedCountry or billingPeriod changes
+  // Fetch plans with USD fallback
   useEffect(() => {
     const fetchPlans = async () => {
-      // Clear plans if requirements are not met
+      console.log("Selected service:", selectedService);
+      console.log("Selected country:", selectedCountry);
+      console.log("Selected currency:", selectedCurrency);
+      setPlansLoading(true);
       if (!selectedService || !selectedCountry) {
         setPlans([]);
+        setPlansLoading(false);
         return;
       }
 
@@ -145,36 +160,50 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           .select('*')
           .eq('service_name', selectedService)
           .eq('country_code', selectedCountry.code)
-          .eq('billing_period', billingPeriod);
+          .eq('billing_period', billingPeriod)
+          .eq('currency', selectedCurrency);
 
         if (error) throw error;
 
-        if (data) {
-           setPlans(data);
-           // Reset selected plan when plans are refetched (e.g. country or billing period changed)
-           setSelectedPlan(null);
+        if (data && data.length > 0) {
+          setPlans(data.map(p => ({ ...p, baseCurrency: false })));
+          setSelectedPlan(null);
+        } else {
+          const { data: usdData, error: usdError } = await supabase
+            .from('subscription_plans')
+            .select('*')
+            .eq('service_name', selectedService)
+            .eq('billing_period', billingPeriod)
+            .eq('currency', 'USD');
+          if (usdError) throw usdError;
+          setPlans((usdData || []).map(p => ({ ...p, baseCurrency: true })));
+          setSelectedPlan(null);
         }
       } catch (error) {
         console.error('Error fetching plans from DB:', error);
+      } finally {
+        setPlansLoading(false);
+        console.log("Fetched plans:", plans);
       }
     };
 
     fetchPlans();
-  }, [selectedService, selectedCountry, billingPeriod]);
+  }, [selectedService, selectedCountry, billingPeriod, selectedCurrency]);
 
   // Handle country/currency change
   const handleCountryChange = useCallback((value: string) => {
     const selectedOption = countryCurrencies.find(c => c.code === value);
     if (!selectedOption) return;
 
-    setSelectedPlan(null); // Reset plan selection
-    setCustomPrice(""); // Reset custom price
+    setSelectedPlan(null);
+    setCustomPrice("");
     
     setSelectedCountry({
       code: selectedOption.code,
       name: selectedOption.name,
       currency: selectedOption.currency as Currency
     });
+    setSelectedCurrency(selectedOption.currency as string);
   }, []);
 
   const handleUrlChange = useCallback((value: string) => {
@@ -448,17 +477,28 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                         <SelectValue placeholder="Select a plan" />
                       </SelectTrigger>
                       <SelectContent>
-                        {plans.map((p) => (
-                          <SelectItem key={p.id} value={p.id.toString()}>
-                            {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
-                          </SelectItem>
-                        ))}
+                        {plans.map((p) => {
+                          const needsConvert = p.currency === 'USD' && selectedCurrency && selectedCurrency !== 'USD';
+                          const priceValue = needsConvert ? convertWithDynamicRates(Number(p.price), 'USD', selectedCurrency, exchangeRates) : Number(p.price);
+                          const shownCurrency = needsConvert ? selectedCurrency : p.currency;
+                          const rounded = Math.round(priceValue * 100) / 100;
+                          return (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {p.plan_name} ({getCurrencySymbol(shownCurrency)}{rounded})
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     {!selectedPlan && (
                       <p className="text-xs text-red-500">Please select a plan to continue</p>
                     )}
                   </>
+                ) : plansLoading ? (
+                  <div className="text-sm text-muted-foreground border rounded-md p-3 bg-muted/50 flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Loading plans...</span>
+                  </div>
                 ) : (
                   <div className="text-sm text-muted-foreground border rounded-md p-3 bg-muted/50 flex flex-col gap-2">
                     <p>No plans found for this currency.</p>
