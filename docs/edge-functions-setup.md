@@ -2,7 +2,7 @@
 
 ## Mevcut Edge Functions
 
-### 1. community-suggestions
+### 1) community-suggestions
 
 Bu fonksiyon, kullanıcıların abonelik eklerken topluluk verilerinden fiyat ve URL önerileri almasını sağlar.
 
@@ -14,6 +14,28 @@ Bu fonksiyon, kullanıcıların abonelik eklerken topluluk verilerinden fiyat ve
 - Input validation
 - Currency whitelist
 - Mode calculation (en sık kullanılan değer)
+
+### 2) get-exchange-rates
+
+Frankfurter API tabanlı döviz kurlarını getirir; veritabanında cache’ler (ör. 6 saat TTL).
+
+**Dosya:** `supabase/functions/get-exchange-rates/index.ts`
+
+**Özellikler:**
+- Frankfurter API ile EUR tabanlı kur çekimi
+- `exchange_rates` tablosuna yazma (Service Role anahtarı ile)
+- Cache kontrolü ve güncel veri döndürme
+
+### 3) update-regional-plans
+
+Global video ve diğer servis planlarını (USD/EUR vb.) `subscription_plans` tablosuna upsert eder.
+
+**Dosya:** `supabase/functions/update-regional-plans/index.ts`
+
+**Özellikler:**
+- Video ve diğer planların birleştirilmesi
+- `subscription_plans` için manuel upsert (varsa update, yoksa insert)
+- Birden fazla para birimini kapsayan genişletilebilir yapı
 
 ## Supabase CLI Kurulumu
 
@@ -31,8 +53,10 @@ supabase link --project-ref YOUR_PROJECT_ID
 ## Edge Function Deployment
 
 ```bash
-# Tek fonksiyon deploy
-supabase functions deploy community-suggestions
+# Tek fonksiyon deploy (JWT doğrulamayı kapatmak için önerilen)
+supabase functions deploy community-suggestions --no-verify-jwt
+supabase functions deploy get-exchange-rates --no-verify-jwt
+supabase functions deploy update-regional-plans --no-verify-jwt
 
 # Tüm fonksiyonları deploy
 supabase functions deploy
@@ -47,9 +71,6 @@ Edge functions için gerekli secret'lar:
 supabase secrets set SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 supabase secrets set SUPABASE_ANON_KEY=your_anon_key
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Opsiyonel (AI özellikleri için)
-supabase secrets set LOVABLE_API_KEY=your_api_key
 ```
 
 ## Local Development
@@ -60,6 +81,8 @@ supabase functions serve
 
 # Belirli bir fonksiyonu çalıştır
 supabase functions serve community-suggestions
+supabase functions serve get-exchange-rates
+supabase functions serve update-regional-plans
 ```
 
 ## Config.toml
@@ -70,6 +93,12 @@ supabase functions serve community-suggestions
 project_id = "YOUR_PROJECT_ID"
 
 [functions.community-suggestions]
+verify_jwt = false
+
+[functions.get-exchange-rates]
+verify_jwt = false
+
+[functions.update-regional-plans]
 verify_jwt = false
 ```
 
@@ -99,6 +128,16 @@ const response = await fetch(
 );
 
 const data = await response.json();
+```
+
+Alternatif olarak Supabase JS client ile:
+
+```typescript
+// Kur oranlarını almak için
+const { data: rates } = await supabase.functions.invoke("get-exchange-rates");
+
+// Bölgesel planları güncellemek/deploy sonrası tetiklemek için
+const { data: updated } = await supabase.functions.invoke("update-regional-plans");
 ```
 
 ## CORS Headers
