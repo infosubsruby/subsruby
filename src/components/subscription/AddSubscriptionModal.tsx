@@ -11,11 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   subscriptionPresets, 
   currencies, 
-  countryCurrencies,
   generateSlug,
   generateFallbackUrl,
   findPreset,
-  type Currency,
   type SubscriptionPreset 
 } from "@/data/subscriptionPresets";
 import { useSubscriptions, type CreateSubscriptionData } from "@/hooks/useSubscriptions";
@@ -72,17 +70,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
   const [plansLoading, setPlansLoading] = useState(false);
+  const [availableCurrencies, setAvailableCurrencies] = useState<string[]>([]);
   
   // Custom price/currency (used when no plan is selected or for custom subscriptions)
   const [customPrice, setCustomPrice] = useState<number | "">("");
-  
-  type CountryState = {
-    code: string;
-    name: string;
-    currency: Currency;
-  };
-
-  const [selectedCountry, setSelectedCountry] = useState<CountryState | null>(null);
 
   // Price logic: If plans exist, price comes from plan (or 0 if none selected).
   // If no plans (custom), price comes from customPrice.
@@ -93,7 +84,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     return customPrice;
   }, [plans.length, selectedPlan, customPrice]);
 
-  const activeCurrency = selectedCountry?.currency;
+  // Currency logic now driven by selectedCurrency
+  const activeCurrency = selectedCurrency;
 
   const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
   const exchangeRates = useMemo(() => {
@@ -142,14 +134,36 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   };
 
 
-  // Fetch plans with USD fallback (service_id based)
+  // Load available currencies for selected service (unique)
+  useEffect(() => {
+    const loadCurrencies = async () => {
+      if (!selectedService) {
+        setAvailableCurrencies([]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('currency')
+        .eq('service_id', selectedService.id);
+      if (!error && data) {
+        const uniq = Array.from(new Set(data.map(d => d.currency).filter(Boolean)));
+        setAvailableCurrencies(uniq);
+        if (!selectedCurrency) {
+          if (uniq.includes('USD')) setSelectedCurrency('USD');
+          else if (uniq[0]) setSelectedCurrency(uniq[0]);
+        }
+      }
+    };
+    loadCurrencies();
+  }, [selectedService]);
+
+  // Fetch plans with USD fallback (service_id + currency based)
   useEffect(() => {
     const fetchPlans = async () => {
       console.log("Selected service:", selectedService);
-      console.log("Selected country:", selectedCountry);
       console.log("Selected currency:", selectedCurrency);
       setPlansLoading(true);
-      if (!selectedService || !selectedCountry) {
+      if (!selectedService || !selectedCurrency) {
         setPlans([]);
         setPlansLoading(false);
         return;
@@ -160,7 +174,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           .from('subscription_plans')
           .select('*')
           .eq('service_id', selectedService.id)
-          .eq('country_code', selectedCountry.code)
           .eq('billing_period', billingPeriod)
           .eq('currency', selectedCurrency);
 
@@ -189,22 +202,13 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     };
 
     fetchPlans();
-  }, [selectedService, selectedCountry, billingPeriod, selectedCurrency]);
+  }, [selectedService, billingPeriod, selectedCurrency]);
 
-  // Handle country/currency change
-  const handleCountryChange = useCallback((value: string) => {
-    const selectedOption = countryCurrencies.find(c => c.code === value);
-    if (!selectedOption) return;
-
+  // Handle currency change
+  const handleCurrencyChange = useCallback((value: string) => {
     setSelectedPlan(null);
     setCustomPrice("");
-    
-    setSelectedCountry({
-      code: selectedOption.code,
-      name: selectedOption.name,
-      currency: selectedOption.currency as Currency
-    });
-    setSelectedCurrency(selectedOption.currency as string);
+    setSelectedCurrency(value);
   }, []);
 
   const handleUrlChange = useCallback((value: string) => {
@@ -250,7 +254,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     // Reset selection
     setSelectedPlan(null);
     setCustomPrice("");
-    setSelectedCountry(null);
     
     setStep("configure");
   };
@@ -312,7 +315,6 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         next_payment_date: nextPaymentDate,
         website_url: finalUrl,
         card_color: cardColor,
-        country_code: selectedCountry?.code || null,
       };
 
       const result = await createSubscription(data);
@@ -445,16 +447,16 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
             <div className="space-y-2">
               <Label>Region & Currency</Label>
               <Select 
-                value={selectedCountry?.code || ""} 
-                onValueChange={handleCountryChange}
+                value={selectedCurrency || ""} 
+                onValueChange={handleCurrencyChange}
               >
                 <SelectTrigger className="input-ruby">
-                  <SelectValue placeholder="Select region" />
+                  <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border max-h-[300px]">
-                  {countryCurrencies.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>
-                      {c.label}
+                  {availableCurrencies.map((cur) => (
+                    <SelectItem key={cur} value={cur}>
+                      {cur}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -549,9 +551,9 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                 )}
               </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {currencySymbol}
-                </span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {currencySymbol}
+                  </span>
                 <Input
                   type="number"
                   step="0.01"
