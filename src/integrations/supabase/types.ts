@@ -131,6 +131,33 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          id: number
+          name: string
+          slug: string | null
+          logo_url: string | null
+          color: string | null
+          category: string | null
+        }
+        Insert: {
+          id?: number
+          name: string
+          slug?: string | null
+          logo_url?: string | null
+          color?: string | null
+          category?: string | null
+        }
+        Update: {
+          id?: number
+          name?: string
+          slug?: string | null
+          logo_url?: string | null
+          color?: string | null
+          category?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           billing_cycle: string | null
@@ -187,8 +214,10 @@ export type Database = {
           name: string
           plan_name: string
           service_name: string
+          service_id: number | null
           country_code: string | null
           billing_period: string | null
+          billing_cycle: string | null
           price: number
         }
         Insert: {
@@ -198,8 +227,10 @@ export type Database = {
           name: string
           plan_name?: string
           service_name?: string
+          service_id?: number | null
           country_code?: string | null
           billing_period?: string | null
+          billing_cycle?: string | null
           price: number
         }
         Update: {
@@ -209,8 +240,10 @@ export type Database = {
           name?: string
           plan_name?: string
           service_name?: string
+          service_id?: number | null
           country_code?: string | null
           billing_period?: string | null
+          billing_cycle?: string | null
           price?: number
         }
         Relationships: []
