@@ -10,7 +10,6 @@ import { CommunitySuggestionBadge } from "./CommunitySuggestionBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   subscriptionPresets, 
-  currencies, 
   generateSlug,
   generateFallbackUrl,
   findPreset,
@@ -297,7 +296,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     }
   };
   
-  const currencySymbol = currencies.find((c) => c.value === activeCurrency)?.symbol || "$";
+  const currencySymbol = getCurrencySymbol(activeCurrency);
   const accentColor = selectedPreset?.color || cardColor;
 
   return (
