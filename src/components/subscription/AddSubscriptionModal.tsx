@@ -66,7 +66,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const [isLoading, setIsLoading] = useState(false);
 
   // --- NEW ARCHITECTURE STATE ---
-  const [selectedService, setSelectedService] = useState<string | null>(null); // Used to fetch plans
+  type SelectedServiceState = { id: number; name: string } | null;
+  const [selectedService, setSelectedService] = useState<SelectedServiceState>(null); // Used to fetch plans
   const [plans, setPlans] = useState<any[]>([]); // Fetched plans
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
@@ -141,7 +142,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   };
 
 
-  // Fetch plans with USD fallback
+  // Fetch plans with USD fallback (service_id based)
   useEffect(() => {
     const fetchPlans = async () => {
       console.log("Selected service:", selectedService);
@@ -158,7 +159,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('*')
-          .eq('service_name', selectedService)
+          .eq('service_id', selectedService.id)
           .eq('country_code', selectedCountry.code)
           .eq('billing_period', billingPeriod)
           .eq('currency', selectedCurrency);
@@ -172,7 +173,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
           const { data: usdData, error: usdError } = await supabase
             .from('subscription_plans')
             .select('*')
-            .eq('service_name', selectedService)
+            .eq('service_id', selectedService.id)
             .eq('billing_period', billingPeriod)
             .eq('currency', 'USD');
           if (usdError) throw usdError;
@@ -210,16 +211,41 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setWebsiteUrl(value);
   }, []);
 
-  // Handle service selection
-  const handleSelectService = (preset: SubscriptionPreset) => {
+  // Handle service selection (resolve service_id and keep in state)
+  const handleSelectService = async (preset: SubscriptionPreset) => {
     setSelectedPreset(preset);
     setIsCustom(false);
     setName(preset.name);
     setWebsiteUrl(preset.url);
     setCardColor(preset.color);
     
-    // Set service name for fetching plans
-    setSelectedService(preset.service_name);
+    // Resolve service id from Supabase 'services' table by slug or name
+    try {
+      let svcId: number | null = null;
+      // Try by slug first if available
+      // @ts-ignore - some presets may not have slug
+      const presetSlug = (preset as any).slug as string | undefined;
+      if (presetSlug) {
+        const { data: bySlug } = await supabase.from('services').select('id,name').eq('slug', presetSlug).maybeSingle();
+        if (bySlug) {
+          svcId = bySlug.id;
+          setSelectedService({ id: bySlug.id, name: bySlug.name });
+        }
+      }
+      if (svcId === null) {
+        const { data: byName } = await supabase.from('services').select('id,name').eq('name', preset.name).maybeSingle();
+        if (byName) {
+          svcId = byName.id;
+          setSelectedService({ id: byName.id, name: byName.name });
+        } else {
+          // Fallback: keep null to avoid bad queries
+          setSelectedService(null);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to resolve service id:', e);
+      setSelectedService(null);
+    }
     
     // Reset selection
     setSelectedPlan(null);
