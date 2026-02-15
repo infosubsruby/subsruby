@@ -19,8 +19,7 @@ import {
 import { useSubscriptions, type CreateSubscriptionData } from "@/hooks/useSubscriptions";
 import { useCommunityData } from "@/hooks/useCommunityData";
 import { calculateNextPaymentDate, calculateStartDate } from "@/lib/dateUtils";
-import { getCurrencySymbol, convertWithDynamicRates } from "@/lib/currency";
-import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { getCurrencySymbol } from "@/lib/currency";
 import { Search, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -66,7 +65,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   // --- NEW ARCHITECTURE STATE ---
   type SelectedServiceState = { id: number; name: string } | null;
   const [selectedService, setSelectedService] = useState<SelectedServiceState>(null); // Used to fetch plans
-  const [plans, setPlans] = useState<any[]>([]); // Fetched plans
+  const [allPlans, setAllPlans] = useState<any[]>([]); // Raw plans from DB
+  const [filteredPlans, setFilteredPlans] = useState<any[]>([]); // Plans for current currency + billing
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
   const [plansLoading, setPlansLoading] = useState(false);
@@ -75,26 +75,17 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   // Custom price/currency (used when no plan is selected or for custom subscriptions)
   const [customPrice, setCustomPrice] = useState<number | "">("");
 
-  // Price logic: If plans exist, price comes from plan (or 0 if none selected).
+  // Price logic: If filtered plans exist, price comes from plan (or 0 if none selected).
   // If no plans (custom), price comes from customPrice.
   const activePrice = useMemo(() => {
-    if (plans.length > 0) {
+    if (filteredPlans.length > 0) {
       return selectedPlan?.price || 0;
     }
     return customPrice;
-  }, [plans.length, selectedPlan, customPrice]);
+  }, [filteredPlans.length, selectedPlan, customPrice]);
 
   // Currency logic now driven by selectedCurrency
   const activeCurrency = selectedCurrency;
-
-  const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
-  const exchangeRates = useMemo(() => {
-    if (!exchangeRatesList) return {};
-    return exchangeRatesList.reduce((acc, curr) => {
-      acc[curr.currency_code] = Number(curr.rate);
-      return acc;
-    }, {} as Record<string, number>);
-  }, [exchangeRatesList]);
 
   // Track which fields were auto-filled by community data (kept for UI compatibility)
   const [priceSuggestedByCommunity, setPriceSuggestedByCommunity] = useState(false);
@@ -124,47 +115,22 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setBillingMonth(new Date().getMonth() + 1);
     
     setSelectedService(null);
-    setPlans([]);
+    setAllPlans([]);
+    setFilteredPlans([]);
     setSelectedPlan(null);
     setCustomPrice("");
-    setSelectedCountry(null);
     
     setStep("select");
     setSearchQuery("");
   };
 
-
-  // Load available currencies for selected service (unique)
-  useEffect(() => {
-    const loadCurrencies = async () => {
-      if (!selectedService) {
-        setAvailableCurrencies([]);
-        return;
-      }
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('currency')
-        .eq('service_id', selectedService.id);
-      if (!error && data) {
-        const uniq = Array.from(new Set(data.map(d => d.currency).filter(Boolean)));
-        setAvailableCurrencies(uniq);
-        if (!selectedCurrency) {
-          if (uniq.includes('USD')) setSelectedCurrency('USD');
-          else if (uniq[0]) setSelectedCurrency(uniq[0]);
-        }
-      }
-    };
-    loadCurrencies();
-  }, [selectedService]);
-
-  // Fetch plans with USD fallback (service_id + currency based)
+  // Fetch ALL plans for selected service (only by service_id). Then derive currencies.
   useEffect(() => {
     const fetchPlans = async () => {
-      console.log("Selected service:", selectedService);
-      console.log("Selected currency:", selectedCurrency);
       setPlansLoading(true);
-      if (!selectedService || !selectedCurrency) {
-        setPlans([]);
+      if (!selectedService?.id) {
+        setAllPlans([]);
+        setAvailableCurrencies([]);
         setPlansLoading(false);
         return;
       }
@@ -173,36 +139,36 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
         const { data, error } = await supabase
           .from('subscription_plans')
           .select('*')
-          .eq('service_id', selectedService.id)
-          .eq('billing_cycle', billingPeriod)
-          .eq('currency', selectedCurrency);
+          .eq('service_id', selectedService.id);
 
         if (error) throw error;
 
-        if (data && data.length > 0) {
-          setPlans(data.map(p => ({ ...p, baseCurrency: false })));
-          setSelectedPlan(null);
-        } else {
-          const { data: usdData, error: usdError } = await supabase
-            .from('subscription_plans')
-            .select('*')
-            .eq('service_id', selectedService.id)
-            .eq('billing_cycle', billingPeriod)
-            .eq('currency', 'USD');
-          if (usdError) throw usdError;
-          setPlans((usdData || []).map(p => ({ ...p, baseCurrency: true })));
-          setSelectedPlan(null);
+        const rows = data || [];
+        setAllPlans(rows);
+        const uniq = Array.from(new Set(rows.map(p => p.currency).filter(Boolean)));
+        setAvailableCurrencies(uniq);
+        if (!selectedCurrency || !uniq.includes(selectedCurrency)) {
+          if (uniq.length > 0) setSelectedCurrency(uniq[0]);
         }
+        setSelectedPlan(null);
       } catch (error) {
         console.error('Error fetching plans from DB:', error);
       } finally {
         setPlansLoading(false);
-        console.log("Fetched plans:", plans);
       }
     };
 
     fetchPlans();
-  }, [selectedService, billingPeriod, selectedCurrency]);
+  }, [selectedService]);
+
+  // Derive filtered plans on currency/billing changes
+  useEffect(() => {
+    const plans = allPlans.filter(
+      (p) => p.currency === selectedCurrency && p.billing_cycle === billingPeriod
+    );
+    setFilteredPlans(plans);
+    setSelectedPlan(null);
+  }, [allPlans, selectedCurrency, billingPeriod]);
 
   // Handle currency change
   const handleCurrencyChange = useCallback((value: string) => {
@@ -267,7 +233,8 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setCardColor("#6366F1");
     
     setSelectedService(null); // No service name for custom
-    setPlans([]);
+    setAllPlans([]);
+    setFilteredPlans([]);
     setCustomPrice("");
     
     setStep("configure");
@@ -492,12 +459,12 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
             {(!isCustom && selectedService) && (
               <div className="space-y-2">
                 <Label>Plan <span className="text-red-500">*</span></Label>
-                {plans.length > 0 ? (
+                {filteredPlans.length > 0 ? (
                   <>
                     <Select 
                       value={selectedPlan?.id?.toString() || ""} 
                       onValueChange={(val) => {
-                        const plan = plans.find(p => p.id.toString() === val);
+                        const plan = filteredPlans.find(p => p.id.toString() === val);
                         setSelectedPlan(plan || null);
                       }}
                     >
@@ -505,17 +472,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                         <SelectValue placeholder="Select a plan" />
                       </SelectTrigger>
                       <SelectContent>
-                        {plans.map((p) => {
-                          const needsConvert = p.currency === 'USD' && selectedCurrency && selectedCurrency !== 'USD';
-                          const priceValue = needsConvert ? convertWithDynamicRates(Number(p.price), 'USD', selectedCurrency, exchangeRates) : Number(p.price);
-                          const shownCurrency = needsConvert ? selectedCurrency : p.currency;
-                          const rounded = Math.round(priceValue * 100) / 100;
-                          return (
-                            <SelectItem key={p.id} value={p.id.toString()}>
-                              {p.plan_name} ({getCurrencySymbol(shownCurrency)}{rounded})
-                            </SelectItem>
-                          );
-                        })}
+                        {filteredPlans.map((p) => (
+                          <SelectItem key={p.id} value={p.id.toString()}>
+                            {p.plan_name} ({getCurrencySymbol(p.currency)}{p.price})
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {!selectedPlan && (
@@ -559,17 +520,18 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
                   step="0.01"
                   value={activePrice === 0 ? "" : activePrice}
                   onChange={(e) => {
-                    if (plans.length === 0 && isCustom) {
-                      setCustomPrice(e.target.value);
+                    if (filteredPlans.length === 0 && isCustom) {
+                      const val = e.target.value;
+                      setCustomPrice(val === "" ? "" : Number(val));
                     }
                   }}
                   className={cn(
                     "pl-8 input-ruby",
                     priceSuggestedByCommunity && "ring-1 ring-primary/50",
-                    (plans.length > 0 || (!isCustom && !!selectedService)) && "bg-muted text-muted-foreground cursor-not-allowed"
+                    (filteredPlans.length > 0 || (!isCustom && !!selectedService)) && "bg-muted text-muted-foreground cursor-not-allowed"
                   )}
                   placeholder="0.00"
-                  readOnly={plans.length > 0 || (!isCustom && !!selectedService)}
+                  readOnly={filteredPlans.length > 0 || (!isCustom && !!selectedService)}
                 />
               </div>
             </div>
