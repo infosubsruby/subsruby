@@ -22,6 +22,8 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { Search, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const GLOBAL_CURRENCIES = ['USD', 'TRY', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CNY', 'INR', 'BRL', 'MXN', 'RUB', 'CHF', 'SEK', 'NOK', 'DKK', 'SAR', 'AED', 'Other'];
+
 interface AddSubscriptionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -234,6 +236,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     setSelectedService(null); // No service name for custom
     setAllPlans([]);
     setFilteredPlans([]);
+    setAvailableCurrencies(GLOBAL_CURRENCIES);
+    if (!selectedCurrency && GLOBAL_CURRENCIES.length > 0) {
+      setSelectedCurrency(GLOBAL_CURRENCIES[0]);
+    }
     setCustomPrice("");
     
     setStep("configure");
