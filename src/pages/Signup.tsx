@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Navbar } from "@/components/layout/Navbar";
-import { Diamond, Mail, Lock, User, Phone, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const Signup = () => {
@@ -78,10 +78,13 @@ const Signup = () => {
       
       <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-screen">
         <div className="w-full max-w-md">
-          {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl ruby-gradient flex items-center justify-center mx-auto mb-4 shadow-ruby animate-pulse-ruby">
-              <Diamond className="w-8 h-8 text-white" />
+            <div className="h-10 w-10 rounded-2xl ruby-gradient flex items-center justify-center mx-auto mb-4 shadow-ruby animate-pulse-ruby overflow-hidden">
+              <img
+                src="/logo.jpeg"
+                alt="Site Logosu"
+                className="h-full w-full object-contain"
+              />
             </div>
             <h1 className="font-display text-2xl font-bold">Create your account</h1>
             <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">

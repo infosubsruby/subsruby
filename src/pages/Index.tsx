@@ -172,8 +172,12 @@ const Index = () => {
             {/* Background decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[60px] -z-10" />
             
-            <div className="w-16 h-16 rounded-2xl ruby-gradient flex items-center justify-center mx-auto mb-6 shadow-ruby animate-pulse-ruby">
-              <Diamond className="w-8 h-8 text-white" />
+            <div className="h-10 w-10 rounded-2xl ruby-gradient flex items-center justify-center mx-auto mb-6 shadow-ruby animate-pulse-ruby overflow-hidden">
+              <img
+                src="/logo.jpeg"
+                alt="Site Logosu"
+                className="h-full w-full object-contain"
+              />
             </div>
             
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
@@ -197,8 +201,12 @@ const Index = () => {
       <footer className="py-8 px-4 border-t border-border">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 ruby-gradient rounded-md flex items-center justify-center">
-              <Diamond className="w-3 h-3 text-white" />
+            <div className="h-10 w-10 ruby-gradient rounded-md flex items-center justify-center overflow-hidden">
+              <img
+                src="/logo.jpeg"
+                alt="Site Logosu"
+                className="h-full w-full object-contain"
+              />
             </div>
             <span className="font-display font-semibold">SubsRuby</span>
           </div>

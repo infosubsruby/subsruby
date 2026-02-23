@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, Shield, Diamond, Wallet } from "lucide-react";
+import { User, LogOut, Settings, Shield, Wallet } from "lucide-react";
 
 export const Navbar = () => {
   const { user, profile, isAdmin: globalIsAdmin, signOut } = useAuth();
@@ -49,10 +49,13 @@ export const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo - links to dashboard if logged in, otherwise home */}
         <Link to={user ? "/control" : "/"} className="flex items-center gap-2 group">
-          <div className="w-8 h-8 ruby-gradient rounded-lg flex items-center justify-center shadow-ruby group-hover:shadow-ruby-strong transition-shadow">
-            <Diamond className="w-4 h-4 text-white" />
+          <div className="h-10 w-10 ruby-gradient rounded-lg flex items-center justify-center shadow-ruby group-hover:shadow-ruby-strong transition-shadow overflow-hidden">
+            <img
+              src="/logo.jpeg"
+              alt="Site Logosu"
+              className="h-full w-full object-contain"
+            />
           </div>
           <span className="font-display text-xl font-bold text-foreground">
             Subs<span className="ruby-text-gradient">Ruby</span>
