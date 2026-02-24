@@ -50,11 +50,11 @@ export const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to={user ? "/control" : "/"} className="flex items-center gap-2 group">
-          <div className="h-10 w-10 ruby-gradient rounded-lg flex items-center justify-center shadow-ruby group-hover:shadow-ruby-strong transition-shadow overflow-hidden">
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden">
             <img
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="Site Logosu"
-              className="h-full w-full object-contain"
+              className="h-full w-auto max-h-8 sm:max-h-10 object-contain"
             />
           </div>
           <span className="font-display text-xl font-bold text-foreground">

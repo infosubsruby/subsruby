@@ -172,11 +172,11 @@ const Index = () => {
             {/* Background decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[60px] -z-10" />
             
-            <div className="h-10 w-10 rounded-2xl ruby-gradient flex items-center justify-center mx-auto mb-6 shadow-ruby animate-pulse-ruby overflow-hidden">
+            <div className="h-10 w-10 rounded-2xl flex items-center justify-center mx-auto mb-6 overflow-hidden">
               <img
-                src="/logo.jpeg"
+                src="/logo.png"
                 alt="Site Logosu"
-                className="h-full w-full object-contain"
+                className="h-full w-auto max-h-8 sm:max-h-10 object-contain"
               />
             </div>
             
@@ -201,11 +201,11 @@ const Index = () => {
       <footer className="py-8 px-4 border-t border-border">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10 ruby-gradient rounded-md flex items-center justify-center overflow-hidden">
+            <div className="h-10 w-10 rounded-md flex items-center justify-center overflow-hidden">
               <img
-                src="/logo.jpeg"
+                src="/logo.png"
                 alt="Site Logosu"
-                className="h-full w-full object-contain"
+                className="h-full w-auto max-h-8 sm:max-h-10 object-contain"
               />
             </div>
             <span className="font-display font-semibold">SubsRuby</span>

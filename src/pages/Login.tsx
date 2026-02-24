@@ -44,11 +44,11 @@ const Login = () => {
       <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-screen">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="h-10 w-10 rounded-2xl ruby-gradient flex items-center justify-center mx-auto mb-4 shadow-ruby overflow-hidden">
+            <div className="h-10 w-10 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
               <img
-                src="/logo.jpeg"
+                src="/logo.png"
                 alt="Site Logosu"
-                className="h-full w-full object-contain"
+                className="h-full w-auto max-h-8 sm:max-h-10 object-contain"
               />
             </div>
             <h1 className="font-display text-2xl font-bold">Welcome back</h1>
