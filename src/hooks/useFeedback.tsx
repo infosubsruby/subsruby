@@ -82,12 +82,12 @@ export const useFeedback = () => {
       return { error: new Error("Not authenticated") };
     }
 
-    const { data, error } = await supabase.from("feedbacks").insert({
+    const { error } = await supabase.from("feedbacks").insert({
       user_id: user.id,
       type,
       subject,
       message,
-    }).select().single();
+    });
 
     if (error) {
       toast.error("Failed to submit feedback");
@@ -96,7 +96,7 @@ export const useFeedback = () => {
 
     toast.success("Feedback submitted successfully!");
     await fetchFeedbacks();
-    return { data };
+    return { success: true };
   };
 
   const updateFeedbackResponse = async (

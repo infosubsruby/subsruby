@@ -10,6 +10,8 @@ function normalizeSubscription(row: any): Subscription {
     currency: (row?.currency ?? DEFAULT_CURRENCY) as string,
     card_color: (row?.card_color ?? DEFAULT_CARD_COLOR) as string,
     country_code: row?.country_code ?? null,
+     isMarkedUnused:
+       (row?.isMarkedUnused ?? row?.is_marked_unused ?? false) ? true : false,
   };
 }
 

@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const crypto = globalThis.crypto;
 
-serve(async (req) => {
+serve(async (req: Request) => {
   try {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
@@ -68,7 +68,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("MY_SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let error = null;
+    let dbError = null;
 
     // 5. Olaylara Göre İşlem Yapma
     
@@ -84,7 +84,7 @@ serve(async (req) => {
            renews_at: null,  // Yenilenmez
            ends_at: null     // Bitmez
          }, { onConflict: "user_id" });
-       error = upsertError;
+       dbError = upsertError;
     } 
     // SENARYO B: Abonelik Başlatma/Güncelleme -> 'subscription_created', 'subscription_updated'
     else if (eventName === "subscription_created" || eventName === "subscription_updated") {
@@ -99,7 +99,7 @@ serve(async (req) => {
            renews_at: data.attributes.renews_at,
            ends_at: data.attributes.ends_at
          }, { onConflict: "user_id" });
-       error = upsertError;
+       dbError = upsertError;
     } 
     // SENARYO C: Abonelik İptali/Bitmesi -> 'subscription_cancelled', 'subscription_expired'
     else if (eventName === "subscription_cancelled" || eventName === "subscription_expired") {
@@ -110,11 +110,11 @@ serve(async (req) => {
             ends_at: data.attributes.ends_at
          })
          .eq("subscription_id", data.id);
-        error = updateError;
+        dbError = updateError;
     }
 
-    if (error) {
-      console.error("Supabase veritabanı hatası:", error);
+    if (dbError) {
+      console.error("Supabase veritabanı hatası:", dbError);
       return new Response("Database error", { status: 500 });
     }
 
@@ -122,6 +122,7 @@ serve(async (req) => {
 
   } catch (err) {
     console.error("Webhook hatası:", err);
-    return new Response("Internal Server Error", { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Internal Server Error";
+    return new Response(errorMessage, { status: 500 });
   }
 });

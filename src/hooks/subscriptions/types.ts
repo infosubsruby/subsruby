@@ -13,6 +13,7 @@ export interface Subscription {
   card_color: string;
   country_code: string | null;
   created_at: string;
+  isMarkedUnused: boolean;
 }
 
 export interface CreateSubscriptionData {
@@ -26,4 +27,5 @@ export interface CreateSubscriptionData {
   website_url?: string;
   card_color: string;
   country_code?: string;
+   isMarkedUnused?: boolean;
 }

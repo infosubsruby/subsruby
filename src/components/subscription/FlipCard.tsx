@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
+import { Switch } from "@/components/ui/switch";
 
 interface FlipCardProps {
   subscription: Subscription;
@@ -33,6 +34,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   // Edit form state
   const [editName, setEditName] = useState(subscription.name);
@@ -112,6 +114,16 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
     e.stopPropagation();
     const url = getManageUrl();
     window.open(url, "_blank");
+  };
+
+  const handleToggleUnused = async (checked: boolean) => {
+    if (isToggling) return;
+    setIsToggling(true);
+    const result = await onUpdate(subscription.id, { isMarkedUnused: checked });
+    setIsToggling(false);
+    if (!result.success) {
+      return;
+    }
   };
 
   return (
@@ -309,6 +321,17 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                         {symbol}{subscription.price.toFixed(2)} / {subscription.billing_cycle === "yearly" ? "yr" : "mo"}
                       </span>
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-3 text-xs">
+                    <span className="text-muted-foreground">Mark as unused</span>
+                    <Switch
+                      checked={subscription.isMarkedUnused ?? false}
+                      onCheckedChange={handleToggleUnused}
+                      onClick={(e) => e.stopPropagation()}
+                      disabled={isToggling}
+                      className="scale-90"
+                    />
                   </div>
 
                   {/* Actions - Manage button always visible */}

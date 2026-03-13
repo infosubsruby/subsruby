@@ -115,6 +115,7 @@ export const useSubscriptions = () => {
         card_color: payload.card_color,
         country_code: payload.country_code ?? null,
         created_at: new Date().toISOString(),
+        isMarkedUnused: false,
       };
 
       queryClient.setQueryData(listKey, (old) => {

@@ -53,8 +53,7 @@ export const FeedbackChat = ({ isOpen, onClose }: FeedbackChatProps) => {
     const result = await createFeedback(selectedType, subject, message);
     setIsSubmitting(false);
 
-    if (!result.error && result.data) {
-      setLastFeedbackId(result.data.id);
+    if (!result.error) {
       setStep("sent");
     }
   };

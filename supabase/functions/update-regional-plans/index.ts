@@ -79,7 +79,19 @@ const otherPlans = [
   { "service_name": "X Premium", "plan_name": "Premium", "price": 150.00, "currency": "TRY" }
 ]
 
-serve(async (req) => {
+interface PlanError {
+  plan: string;
+  currency: string;
+  error: string;
+}
+
+interface UpdateResults {
+  success: number;
+  failed: number;
+  errors: PlanError[];
+}
+
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -91,7 +103,7 @@ serve(async (req) => {
     )
 
     const allPlans = [...videoPlans, ...otherPlans]
-    const results = { success: 0, failed: 0, errors: [] }
+    const results: UpdateResults = { success: 0, failed: 0, errors: [] }
 
     for (const plan of allPlans) {
       // Check if plan exists
@@ -106,7 +118,11 @@ serve(async (req) => {
       if (searchError) {
         console.error(`Error searching ${plan.service_name} - ${plan.plan_name}:`, searchError)
         results.failed++
-        results.errors.push({ plan: `${plan.service_name} - ${plan.plan_name}`, currency: plan.currency, error: searchError.message })
+        results.errors.push({ 
+          plan: `${plan.service_name} - ${plan.plan_name}`, 
+          currency: plan.currency, 
+          error: searchError.message 
+        })
         continue
       }
 
@@ -115,12 +131,16 @@ serve(async (req) => {
         const { error: updateError } = await supabase
           .from('subscription_plans')
           .update({ price: plan.price })
-          .eq('id', existingPlans.id)
+          .eq('id', (existingPlans as { id: string }).id)
 
         if (updateError) {
           console.error(`Error updating ${plan.service_name} - ${plan.plan_name}:`, updateError)
           results.failed++
-          results.errors.push({ plan: `${plan.service_name} - ${plan.plan_name}`, currency: plan.currency, error: updateError.message })
+          results.errors.push({ 
+            plan: `${plan.service_name} - ${plan.plan_name}`, 
+            currency: plan.currency, 
+            error: updateError.message 
+          })
         } else {
           results.success++
         }
@@ -138,7 +158,11 @@ serve(async (req) => {
         if (insertError) {
           console.error(`Error inserting ${plan.service_name} - ${plan.plan_name}:`, insertError)
           results.failed++
-          results.errors.push({ plan: `${plan.service_name} - ${plan.plan_name}`, currency: plan.currency, error: insertError.message })
+          results.errors.push({ 
+            plan: `${plan.service_name} - ${plan.plan_name}`, 
+            currency: plan.currency, 
+            error: insertError.message 
+          })
         } else {
           results.success++
         }
@@ -154,8 +178,9 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

@@ -9,6 +9,8 @@ export interface SubscriptionInput {
   billing_cycle?: BillingCycle | string | null;
   startDate?: string | Date | null;
   start_date?: string | null;
+  isMarkedUnused?: boolean | null;
+  is_marked_unused?: boolean | null;
 }
 
 /**
@@ -111,6 +113,20 @@ export const monthOverMonthChangePercentage = (
   if (!isFinite(previous) || previous <= 0) return 0;
   if (!isFinite(current) || current < 0) return 0;
   return ((current - previous) / previous) * 100;
+};
+
+export const calculatePotentialSavings = (
+  subscriptions: SubscriptionInput[]
+): number => {
+  const total = subscriptions.reduce((sum, sub) => {
+    const flagged =
+      sub.isMarkedUnused ?? sub.is_marked_unused ?? false;
+    if (!flagged) return sum;
+    return sum + toMonthlyPrice(sub);
+  }, 0);
+
+  if (!isFinite(total) || total <= 0) return 0;
+  return Number(total.toFixed(2));
 };
 
 export type InsightSeverity = "good" | "warning" | "danger";

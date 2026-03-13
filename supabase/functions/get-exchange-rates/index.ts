@@ -6,7 +6,7 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -47,7 +47,7 @@ serve(async (req) => {
     }
 
     // 3. Return cached data if fresh
-    if (!isStale && existingRates.length > 0) {
+    if (!isStale && existingRates && existingRates.length > 0) {
       console.log("Returning cached rates from database");
       return new Response(JSON.stringify(existingRates), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -70,7 +70,7 @@ serve(async (req) => {
     // Note: 'rates' from API is an object, we need to convert it to array of rows
     const upsertData = Object.entries(rates).map(([currency, rate]) => ({
       currency_code: currency,
-      rate: rate,
+      rate: rate as number,
       last_updated: new Date().toISOString(),
     }));
 
@@ -101,7 +101,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Error in get-exchange-rates:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
