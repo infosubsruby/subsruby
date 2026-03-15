@@ -215,13 +215,14 @@ const Dashboard = () => {
             </div>
 
             <div className="bg-card p-6 rounded-2xl border shadow-sm relative group">
-              <button 
+              <Button 
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsSavingsModalOpen(true)}
-                className="absolute top-4 right-4 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
-                title="View details"
+                className="absolute top-3 right-3 h-7 px-2 text-[10px] text-muted-foreground hover:text-primary transition-colors"
               >
-                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-              </button>
+                View Details
+              </Button>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
                   <PiggyBank className="w-6 h-6 text-green-500" />
