@@ -12,11 +12,12 @@ import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionM
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3 } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
-import { calculatePotentialSavings } from "@/lib/subscriptionInsights";
+import { calculatePotentialSavings, subscriptionPercentageOfIncome } from "@/lib/subscriptionInsights";
 import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsModal";
+import { useFinance } from "@/hooks/useFinance";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const Dashboard = () => {
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
+  const { totalIncome } = useFinance();
 
   // Fetch dynamic exchange rates
   const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
@@ -114,6 +116,25 @@ const Dashboard = () => {
     return { potentialSavings: savings, unusedSubscriptions: unused };
   }, [subscriptions, activeCurrency, exchangeRates]);
 
+  // Calculate subscription vs income percentage
+  const subscriptionPercentage = useMemo(() => {
+    if (!totalIncome || totalIncome <= 0) return 0;
+    
+    // We already have monthlySpend in the active currency.
+    // However, totalIncome from useFinance is based on transactions which don't have currency.
+    // Assuming transactions/income are in the active currency as well (consistent with Finance.tsx)
+    const percentage = subscriptionPercentageOfIncome(monthlySpend, totalIncome);
+    return Math.round(percentage);
+  }, [monthlySpend, totalIncome]);
+
+  const getStatusLabel = (percentage: number) => {
+    if (percentage < 15) return { label: "Healthy", color: "text-green-500" };
+    if (percentage <= 30) return { label: "Moderate", color: "text-amber-500" };
+    return { label: "Risky", color: "text-red-500" };
+  };
+
+  const status = getStatusLabel(subscriptionPercentage);
+
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
@@ -173,7 +194,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -210,6 +231,25 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
                   <h3 className="text-2xl font-bold">{subscriptions.length}</h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Subs vs Income</p>
+                  <h3 className="text-2xl font-bold">
+                    {totalIncome > 0 ? `${subscriptionPercentage}%` : "N/A"}
+                  </h3>
+                  {totalIncome > 0 && (
+                    <p className={cn("text-[11px] font-medium mt-0.5", status.color)}>
+                      {status.label}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
