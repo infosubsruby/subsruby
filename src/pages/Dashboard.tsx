@@ -12,9 +12,10 @@ import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionM
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, Loader2 } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
+import { calculatePotentialSavings } from "@/lib/subscriptionInsights";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -97,6 +98,16 @@ const Dashboard = () => {
 
   const yearlySpend = monthlySpend * 12;
 
+  // Calculate potential savings from unused subscriptions
+  const potentialSavings = useMemo(() => {
+    // Map subscriptions to display currency so calculatePotentialSavings returns correct value
+    const convertedSubscriptions = subscriptions.map(sub => ({
+      ...sub,
+      price: convertWithDynamicRates(Number(sub.price ?? 0), sub.currency, activeCurrency, exchangeRates)
+    }));
+    return calculatePotentialSavings(convertedSubscriptions as any);
+  }, [subscriptions, activeCurrency, exchangeRates]);
+
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
@@ -156,7 +167,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-card p-6 rounded-2xl border shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -193,6 +204,26 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
                   <h3 className="text-2xl font-bold">{subscriptions.length}</h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <PiggyBank className="w-6 h-6 text-green-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Potential Savings</p>
+                  <h3 className="text-2xl font-bold truncate">
+                    {currencySymbol}{potentialSavings.toFixed(2)}
+                    {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">/ month</span>}
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground mt-1 leading-tight line-clamp-2">
+                    {potentialSavings > 0 
+                      ? "You could save this by cancelling unused subscriptions" 
+                      : "No unused subscriptions detected"}
+                  </p>
                 </div>
               </div>
             </div>
