@@ -118,12 +118,15 @@ const Dashboard = () => {
 
   // Calculate subscription vs income percentage
   const subscriptionPercentage = useMemo(() => {
-    if (!totalIncome || totalIncome <= 0) return 0;
+    // Robust check for totalIncome
+    const income = Number(totalIncome);
+    if (!income || !isFinite(income) || income <= 0) return 0;
     
-    // We already have monthlySpend in the active currency.
-    // However, totalIncome from useFinance is based on transactions which don't have currency.
-    // Assuming transactions/income are in the active currency as well (consistent with Finance.tsx)
-    const percentage = subscriptionPercentageOfIncome(monthlySpend, totalIncome);
+    const percentage = subscriptionPercentageOfIncome(monthlySpend, income);
+    
+    // Prevent NaN and Infinity
+    if (isNaN(percentage) || !isFinite(percentage)) return 0;
+    
     return Math.round(percentage);
   }, [monthlySpend, totalIncome]);
 
@@ -240,14 +243,18 @@ const Dashboard = () => {
                 <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-blue-500" />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Subs vs Income</p>
-                  <h3 className="text-2xl font-bold">
-                    {totalIncome > 0 ? `${subscriptionPercentage}%` : "N/A"}
-                  </h3>
-                  {totalIncome > 0 && (
-                    <p className={cn("text-[11px] font-medium mt-0.5", status.color)}>
-                      {status.label}
+                  {totalIncome > 0 ? (
+                    <>
+                      <h3 className="text-2xl font-bold">{subscriptionPercentage}%</h3>
+                      <p className={cn("text-[11px] font-medium mt-0.5", status.color)}>
+                        {status.label}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                      Add income in Finance to see this metric
                     </p>
                   )}
                 </div>
