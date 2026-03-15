@@ -12,10 +12,11 @@ import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionM
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 import { calculatePotentialSavings } from "@/lib/subscriptionInsights";
+import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsModal";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const Dashboard = () => {
   console.log("Active Exchange Rates:", exchangeRates);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSavingsModalOpen, setIsSavingsModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>("TRY");
 
   const FREE_PLAN_LIMIT = 3;
@@ -99,13 +101,17 @@ const Dashboard = () => {
   const yearlySpend = monthlySpend * 12;
 
   // Calculate potential savings from unused subscriptions
-  const potentialSavings = useMemo(() => {
+  const { potentialSavings, unusedSubscriptions } = useMemo(() => {
     // Map subscriptions to display currency so calculatePotentialSavings returns correct value
     const convertedSubscriptions = subscriptions.map(sub => ({
       ...sub,
       price: convertWithDynamicRates(Number(sub.price ?? 0), sub.currency, activeCurrency, exchangeRates)
     }));
-    return calculatePotentialSavings(convertedSubscriptions as any);
+    
+    const savings = calculatePotentialSavings(convertedSubscriptions as any);
+    const unused = subscriptions.filter(sub => sub.is_marked_unused);
+    
+    return { potentialSavings: savings, unusedSubscriptions: unused };
   }, [subscriptions, activeCurrency, exchangeRates]);
 
   // Redirect to login if not authenticated
@@ -208,7 +214,14 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+            <div className="bg-card p-6 rounded-2xl border shadow-sm relative group">
+              <button 
+                onClick={() => setIsSavingsModalOpen(true)}
+                className="absolute top-4 right-4 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
+                title="View details"
+              >
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+              </button>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
                   <PiggyBank className="w-6 h-6 text-green-500" />
@@ -228,6 +241,15 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+
+          <SavingsDetailsModal
+            isOpen={isSavingsModalOpen}
+            onClose={() => setIsSavingsModalOpen(false)}
+            unusedSubscriptions={unusedSubscriptions}
+            monthlySavings={potentialSavings}
+            yearlySavings={potentialSavings * 12}
+            currencySymbol={currencySymbol}
+          />
 
           {/* Selector moved to header */}
 
