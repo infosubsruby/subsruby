@@ -214,31 +214,41 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm relative group">
-              <Button 
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSavingsModalOpen(true)}
-                className="absolute top-3 right-3 h-7 px-2 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-              >
-                View Details
-              </Button>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <PiggyBank className="w-6 h-6 text-green-500" />
+            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col h-full group">
+              {/* Top row */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <PiggyBank className="w-5 h-5 text-green-500" />
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium">Potential Savings</p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">Potential Savings</p>
-                  <h3 className="text-2xl font-bold truncate">
-                    {currencySymbol}{potentialSavings.toFixed(2)}
-                    {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">/ month</span>}
-                  </h3>
-                  <p className="text-[10px] text-muted-foreground mt-1 leading-tight line-clamp-2">
-                    {potentialSavings > 0 
-                      ? "You could save this by cancelling unused subscriptions" 
-                      : "No unused subscriptions detected"}
-                  </p>
-                </div>
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSavingsModalOpen(true)}
+                  className="h-7 px-2 text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  View Details
+                  <span className="text-xs">→</span>
+                </Button>
+              </div>
+
+              {/* Middle row */}
+              <div className="mb-3">
+                <h3 className="text-2xl font-bold">
+                  {currencySymbol}{potentialSavings.toFixed(2)}
+                  {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">/ month</span>}
+                </h3>
+              </div>
+
+              {/* Bottom row */}
+              <div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {potentialSavings > 0 
+                    ? "You could save this by cancelling unused subscriptions" 
+                    : "No unused subscriptions detected"}
+                </p>
               </div>
             </div>
           </div>
