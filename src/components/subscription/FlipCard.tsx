@@ -119,7 +119,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
   const handleToggleUnused = async (checked: boolean) => {
     if (isToggling) return;
     setIsToggling(true);
-    const result = await onUpdate(subscription.id, { isMarkedUnused: checked });
+    const result = await onUpdate(subscription.id, { is_marked_unused: checked });
     setIsToggling(false);
     if (!result.success) {
       return;
@@ -326,7 +326,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                   <div className="flex items-center justify-between mt-3 text-xs">
                     <span className="text-muted-foreground">Mark as unused</span>
                     <Switch
-                      checked={subscription.isMarkedUnused ?? false}
+                      checked={subscription.is_marked_unused ?? false}
                       onCheckedChange={handleToggleUnused}
                       onClick={(e) => e.stopPropagation()}
                       disabled={isToggling}

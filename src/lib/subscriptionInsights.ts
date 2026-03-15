@@ -9,7 +9,6 @@ export interface SubscriptionInput {
   billing_cycle?: BillingCycle | string | null;
   startDate?: string | Date | null;
   start_date?: string | null;
-  isMarkedUnused?: boolean | null;
   is_marked_unused?: boolean | null;
 }
 
@@ -119,8 +118,7 @@ export const calculatePotentialSavings = (
   subscriptions: SubscriptionInput[]
 ): number => {
   const total = subscriptions.reduce((sum, sub) => {
-    const flagged =
-      sub.isMarkedUnused ?? sub.is_marked_unused ?? false;
+    const flagged = sub.is_marked_unused ?? false;
     if (!flagged) return sum;
     return sum + toMonthlyPrice(sub);
   }, 0);
