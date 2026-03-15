@@ -214,12 +214,12 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col h-full group">
+            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col h-full group">
               {/* Top row */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <PiggyBank className="w-5 h-5 text-green-500" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <PiggyBank className="w-4.5 h-4.5 text-green-500" />
                   </div>
                   <p className="text-sm text-muted-foreground font-medium">Potential Savings</p>
                 </div>
@@ -227,7 +227,7 @@ const Dashboard = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsSavingsModalOpen(true)}
-                  className="h-7 px-2 text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                  className="h-6 px-0 text-[10px] text-muted-foreground hover:text-red-500 hover:bg-transparent transition-colors flex items-center gap-1"
                 >
                   View Details
                   <span className="text-xs">→</span>
@@ -235,7 +235,7 @@ const Dashboard = () => {
               </div>
 
               {/* Middle row */}
-              <div className="mb-3">
+              <div className="mb-2">
                 <h3 className="text-2xl font-bold">
                   {currencySymbol}{potentialSavings.toFixed(2)}
                   {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">/ month</span>}
@@ -244,7 +244,7 @@ const Dashboard = () => {
 
               {/* Bottom row */}
               <div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                <p className="text-[11px] text-muted-foreground leading-snug">
                   {potentialSavings > 0 
                     ? "You could save this by cancelling unused subscriptions" 
                     : "No unused subscriptions detected"}
