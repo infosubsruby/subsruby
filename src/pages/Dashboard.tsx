@@ -31,7 +31,7 @@ const Dashboard = () => {
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
-  const { totalIncome } = useFinance();
+  const { totalIncome, isLoading: financeLoading } = useFinance();
 
   // Fetch dynamic exchange rates
   const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
@@ -267,6 +267,10 @@ const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">Subs vs Income</p>
                   {(() => {
                     try {
+                      if (financeLoading) {
+                        return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">Loading income data...</p>;
+                      }
+
                       const safeIncome = Number(totalIncome) || 0;
                       if (safeIncome <= 0) {
                         return (
@@ -284,8 +288,10 @@ const Dashboard = () => {
                       return (
                         <>
                           <h3 className="text-2xl font-bold">{safePercentage}%</h3>
-                          <p className={cn("text-[11px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
-                            {status?.label || "Calculating..."}
+                          <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
+                            {safePercentage > 0 
+                              ? `Subscriptions use ${safePercentage}% of your income` 
+                              : status?.label || "Healthy"}
                           </p>
                         </>
                       );
