@@ -31,7 +31,7 @@ const Dashboard = () => {
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
-  const { totalIncome, isLoading: financeLoading } = useFinance();
+  const { totalIncome, currentMonthlyIncome, isLoading: financeLoading } = useFinance();
 
   // Fetch dynamic exchange rates
   const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
@@ -132,7 +132,9 @@ const Dashboard = () => {
   // Calculate subscription vs income percentage
   const subscriptionPercentage = useMemo(() => {
     try {
-      const safeIncome = Number(totalIncome) || 0;
+      // Use current monthly income if available, otherwise fallback to total income
+      const income = Number(currentMonthlyIncome) > 0 ? Number(currentMonthlyIncome) : Number(totalIncome);
+      const safeIncome = income || 0;
       const safeMonthlySpend = Number(monthlySpend) || 0;
       
       if (safeIncome <= 0 || !isFinite(safeIncome)) return 0;
@@ -147,7 +149,7 @@ const Dashboard = () => {
       console.error("Error calculating subscription percentage:", error);
       return 0;
     }
-  }, [monthlySpend, totalIncome]);
+  }, [monthlySpend, totalIncome, currentMonthlyIncome]);
 
   const getStatusLabel = (percentage: number) => {
     const safePercentage = Number(percentage) || 0;
@@ -271,7 +273,10 @@ const Dashboard = () => {
                         return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">Loading income data...</p>;
                       }
 
-                      const safeIncome = Number(totalIncome) || 0;
+                      const income = Number(currentMonthlyIncome) > 0 ? Number(currentMonthlyIncome) : Number(totalIncome);
+                      const safeIncome = income || 0;
+                      const safeMonthlySpend = Number(monthlySpend) || 0;
+
                       if (safeIncome <= 0) {
                         return (
                           <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
@@ -280,18 +285,15 @@ const Dashboard = () => {
                         );
                       }
                       
-                      const safePercentage = Number(subscriptionPercentage);
-                      if (isNaN(safePercentage) || !isFinite(safePercentage)) {
-                        return <h3 className="text-sm font-bold mt-1 text-muted-foreground">Data unavailable</h3>;
-                      }
+                      const safePercentage = Number(subscriptionPercentage) || 0;
 
                       return (
                         <>
-                          <h3 className="text-2xl font-bold">{safePercentage}%</h3>
+                          <h3 className="text-xl font-bold mt-0.5 truncate">
+                            {currencySymbol}{safeMonthlySpend.toFixed(0)} / {currencySymbol}{safeIncome.toFixed(0)}
+                          </h3>
                           <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
-                            {safePercentage > 0 
-                              ? `Subscriptions use ${safePercentage}% of your income` 
-                              : status?.label || "Healthy"}
+                            {safePercentage}% of your income
                           </p>
                         </>
                       );

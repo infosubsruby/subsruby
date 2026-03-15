@@ -420,6 +420,20 @@ export const useFinance = () => {
     .filter((t) => t.type === "expense")
     .reduce((total, t) => total + Number(t.amount), 0);
 
+  // Calculate current monthly income
+  const currentMonthlyIncome = (() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    return transactions
+      .filter((t) => {
+        const tDate = new Date(t.date);
+        return t.type === "income" && tDate >= startOfMonth && tDate <= endOfMonth;
+      })
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+  })();
+
   // Calculate total monthly subscription cost (no currency conversion here - let the UI handle it)
   const totalMonthlyCost = subscriptions.reduce((total, sub) => {
     const rawPrice = Number(sub.price ?? 0);
@@ -516,6 +530,7 @@ export const useFinance = () => {
     deleteBudget,
     getSpentByCategory,
     totalIncome,
+    currentMonthlyIncome,
     totalExpenses,
     totalMonthlyCost,
     netWorth,
