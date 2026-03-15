@@ -18,13 +18,13 @@ import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 import { calculatePotentialSavings, subscriptionPercentageOfIncome } from "@/lib/subscriptionInsights";
 import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsModal";
 import { useFinance } from "@/hooks/useFinance";
+import { SubscriptionInput } from "@/lib/subscriptionInsights";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const { isPro, loading: subStatusLoading } = useSubscription();
-  const { t: rawT } = useLanguage();
-  const t = rawT as any;
+  const { t } = useLanguage();
   const { 
     subscriptions, 
     isLoading: subsLoading, 
@@ -83,8 +83,12 @@ const Dashboard = () => {
 
   // Calculate total monthly cost with currency conversion
   const monthlySpend = useMemo(() => {
-    return subscriptions.reduce((total, sub) => {
+    const safeSubscriptions = subscriptions ?? [];
+    return safeSubscriptions.reduce((total, sub) => {
+      if (!sub) return total;
       const rawPrice = Number(sub.price ?? 0);
+      if (isNaN(rawPrice) || !isFinite(rawPrice)) return total;
+      
       // Normalize yearly to monthly
       const monthlyPrice = sub.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
       
@@ -96,43 +100,59 @@ const Dashboard = () => {
         exchangeRates
       );
       
+      if (isNaN(convertedPrice) || !isFinite(convertedPrice)) return total;
+      
       return total + convertedPrice;
     }, 0);
   }, [subscriptions, activeCurrency, exchangeRates]);
 
-  const yearlySpend = monthlySpend * 12;
+  const yearlySpend = isFinite(monthlySpend * 12) ? monthlySpend * 12 : 0;
 
   // Calculate potential savings from unused subscriptions
   const { potentialSavings, unusedSubscriptions } = useMemo(() => {
-    // Map subscriptions to display currency so calculatePotentialSavings returns correct value
-    const convertedSubscriptions = subscriptions.map(sub => ({
-      ...sub,
-      price: convertWithDynamicRates(Number(sub.price ?? 0), sub.currency, activeCurrency, exchangeRates)
-    }));
+    const safeSubscriptions = subscriptions ?? [];
+    const convertedSubscriptions: SubscriptionInput[] = safeSubscriptions.map(sub => {
+      const price = convertWithDynamicRates(Number(sub?.price ?? 0), sub?.currency, activeCurrency, exchangeRates);
+      return {
+        price: isFinite(price) ? price : 0,
+        billing_cycle: sub?.billing_cycle,
+        is_marked_unused: sub?.is_marked_unused
+      };
+    });
     
-    const savings = calculatePotentialSavings(convertedSubscriptions as any);
-    const unused = subscriptions.filter(sub => sub.is_marked_unused);
+    const savings = calculatePotentialSavings(convertedSubscriptions);
+    const unused = safeSubscriptions.filter(sub => sub?.is_marked_unused);
     
-    return { potentialSavings: savings, unusedSubscriptions: unused };
+    return { 
+      potentialSavings: isFinite(savings) ? savings : 0, 
+      unusedSubscriptions: unused 
+    };
   }, [subscriptions, activeCurrency, exchangeRates]);
 
   // Calculate subscription vs income percentage
   const subscriptionPercentage = useMemo(() => {
-    // Robust check for totalIncome
-    const income = Number(totalIncome);
-    if (!income || !isFinite(income) || income <= 0) return 0;
-    
-    const percentage = subscriptionPercentageOfIncome(monthlySpend, income);
-    
-    // Prevent NaN and Infinity
-    if (isNaN(percentage) || !isFinite(percentage)) return 0;
-    
-    return Math.round(percentage);
+    try {
+      const safeIncome = Number(totalIncome) || 0;
+      const safeMonthlySpend = Number(monthlySpend) || 0;
+      
+      if (safeIncome <= 0 || !isFinite(safeIncome)) return 0;
+      if (safeMonthlySpend <= 0 || !isFinite(safeMonthlySpend)) return 0;
+      
+      const percentage = (safeMonthlySpend / safeIncome) * 100;
+      
+      if (isNaN(percentage) || !isFinite(percentage)) return 0;
+      
+      return Math.round(percentage);
+    } catch (error) {
+      console.error("Error calculating subscription percentage:", error);
+      return 0;
+    }
   }, [monthlySpend, totalIncome]);
 
   const getStatusLabel = (percentage: number) => {
-    if (percentage < 15) return { label: "Healthy", color: "text-green-500" };
-    if (percentage <= 30) return { label: "Moderate", color: "text-amber-500" };
+    const safePercentage = Number(percentage) || 0;
+    if (safePercentage < 15) return { label: "Healthy", color: "text-green-500" };
+    if (safePercentage <= 30) return { label: "Moderate", color: "text-amber-500" };
     return { label: "Risky", color: "text-red-500" };
   };
 
@@ -245,18 +265,35 @@ const Dashboard = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Subs vs Income</p>
-                  {totalIncome > 0 ? (
-                    <>
-                      <h3 className="text-2xl font-bold">{subscriptionPercentage}%</h3>
-                      <p className={cn("text-[11px] font-medium mt-0.5", status.color)}>
-                        {status.label}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                      Add income in Finance to see this metric
-                    </p>
-                  )}
+                  {(() => {
+                    try {
+                      const safeIncome = Number(totalIncome) || 0;
+                      if (safeIncome <= 0) {
+                        return (
+                          <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                            Add income in Finance to see this metric
+                          </p>
+                        );
+                      }
+                      
+                      const safePercentage = Number(subscriptionPercentage);
+                      if (isNaN(safePercentage) || !isFinite(safePercentage)) {
+                        return <h3 className="text-sm font-bold mt-1 text-muted-foreground">Data unavailable</h3>;
+                      }
+
+                      return (
+                        <>
+                          <h3 className="text-2xl font-bold">{safePercentage}%</h3>
+                          <p className={cn("text-[11px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
+                            {status?.label || "Calculating..."}
+                          </p>
+                        </>
+                      );
+                    } catch (e) {
+                      console.error("Error rendering Subscriptions vs Income card:", e);
+                      return <h3 className="text-sm font-bold mt-1 text-muted-foreground">Data unavailable</h3>;
+                    }
+                  })()}
                 </div>
               </div>
             </div>
