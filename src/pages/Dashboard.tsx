@@ -174,7 +174,7 @@ const Dashboard = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <Wallet className="w-6 h-6 text-primary" />
@@ -188,7 +188,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <CreditCard className="w-6 h-6 text-primary" />
@@ -202,7 +202,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm">
+            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-primary" />
