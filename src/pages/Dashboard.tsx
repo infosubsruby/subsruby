@@ -15,10 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3 } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
-import { calculatePotentialSavings, subscriptionPercentageOfIncome } from "@/lib/subscriptionInsights";
+import { calculatePotentialSavings, subscriptionPercentageOfIncome, SubscriptionInput } from "@/lib/subscriptionInsights";
 import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsModal";
 import { useFinance } from "@/hooks/useFinance";
-import { SubscriptionInput } from "@/lib/subscriptionInsights";
+import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
   const navigate = useNavigate();
