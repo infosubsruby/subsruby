@@ -12,10 +12,17 @@ import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionM
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3 } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3, ArrowUp, ArrowDown } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
-import { calculatePotentialSavings, subscriptionPercentageOfIncome, SubscriptionInput } from "@/lib/subscriptionInsights";
+import { 
+  calculatePotentialSavings, 
+  subscriptionPercentageOfIncome, 
+  SubscriptionInput,
+  currentMonthSubscriptionTotal,
+  previousMonthSubscriptionTotal,
+  monthOverMonthChangePercentage
+} from "@/lib/subscriptionInsights";
 import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsModal";
 import { useFinance } from "@/hooks/useFinance";
 import { cn } from "@/lib/utils";
@@ -160,6 +167,38 @@ const Dashboard = () => {
 
   const status = getStatusLabel(subscriptionPercentage);
 
+  // Calculate month-over-month spending change
+  const spendingChange = useMemo(() => {
+    try {
+      const safeSubscriptions = subscriptions ?? [];
+      
+      // Convert all subscriptions to display currency first for consistent totals
+      const convertedSubscriptions: SubscriptionInput[] = safeSubscriptions.map(sub => {
+        const price = convertWithDynamicRates(Number(sub?.price ?? 0), sub?.currency, activeCurrency, exchangeRates);
+        return {
+          price: isFinite(price) ? price : 0,
+          billing_cycle: sub?.billing_cycle,
+          start_date: sub?.start_date
+        };
+      });
+
+      const currentTotal = currentMonthSubscriptionTotal(convertedSubscriptions);
+      const previousTotal = previousMonthSubscriptionTotal(convertedSubscriptions);
+      
+      const percentageChange = monthOverMonthChangePercentage(currentTotal, previousTotal);
+      
+      return {
+        currentTotal,
+        previousTotal,
+        percentageChange: isFinite(percentageChange) ? percentageChange : 0,
+        hasPreviousData: previousTotal > 0
+      };
+    } catch (error) {
+      console.error("Error calculating spending change:", error);
+      return null;
+    }
+  }, [subscriptions, activeCurrency, exchangeRates]);
+
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
@@ -219,7 +258,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -273,8 +312,9 @@ const Dashboard = () => {
                         return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">Loading income data...</p>;
                       }
 
+                      const safeIncome = Number(totalIncome) || 0;
                       const income = Number(currentMonthlyIncome) > 0 ? Number(currentMonthlyIncome) : Number(totalIncome);
-                      const safeIncome = income || 0;
+                      const safeEffectiveIncome = income || 0;
                       const safeMonthlySpend = Number(monthlySpend) || 0;
 
                       if (safeIncome <= 0) {
@@ -290,7 +330,7 @@ const Dashboard = () => {
                       return (
                         <>
                           <h3 className="text-xl font-bold mt-0.5 truncate">
-                            {currencySymbol}{safeMonthlySpend.toFixed(0)} / {currencySymbol}{safeIncome.toFixed(0)}
+                            {currencySymbol}{safeMonthlySpend.toFixed(0)} / {currencySymbol}{safeEffectiveIncome.toFixed(0)}
                           </h3>
                           <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
                             {safePercentage}% of your income
@@ -300,6 +340,44 @@ const Dashboard = () => {
                     } catch (e) {
                       console.error("Error rendering Subscriptions vs Income card:", e);
                       return <h3 className="text-sm font-bold mt-1 text-muted-foreground">Data unavailable</h3>;
+                    }
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                  {spendingChange?.percentageChange && spendingChange.percentageChange > 0 ? (
+                    <ArrowUp className="w-6 h-6 text-orange-500" />
+                  ) : (
+                    <ArrowDown className="w-6 h-6 text-green-500" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Spending Change</p>
+                  {(() => {
+                    try {
+                      if (!spendingChange) return <p className="text-[10px] text-muted-foreground mt-1">Unable to calculate spending change</p>;
+                      if (!spendingChange.hasPreviousData) return <p className="text-[10px] text-muted-foreground mt-1">Not enough data to compare months</p>;
+                      
+                      const change = spendingChange.percentageChange;
+                      const isIncrease = change > 0;
+                      const isDecrease = change < 0;
+                      
+                      return (
+                        <>
+                          <h3 className="text-2xl font-bold">
+                            {isIncrease ? "+" : ""}{change.toFixed(1)}%
+                          </h3>
+                          <p className={cn("text-[10px] font-medium mt-0.5", isIncrease ? "text-orange-500" : "text-green-500")}>
+                            {isIncrease ? "⚠ Increased" : isDecrease ? "✅ Decreased" : "No change"} this month
+                          </p>
+                        </>
+                      );
+                    } catch (e) {
+                      return <p className="text-[10px] text-muted-foreground mt-1">Unable to calculate spending change</p>;
                     }
                   })()}
                 </div>
