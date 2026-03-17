@@ -47,122 +47,206 @@ const Finance = () => {
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
 
+  // Defensive arrays
+  const safeSubscriptions = useMemo(() => Array.isArray(subscriptions) ? subscriptions : [], [subscriptions]);
+  const safeTransactions = useMemo(() => Array.isArray(transactions) ? transactions : [], [transactions]);
+
   // Determine the most used currency from subscriptions (auto-detect)
   const autoDetectedCurrency = useMemo(() => {
-    const counts: Record<string, number> = {};
-    subscriptions.forEach((sub) => {
-      counts[sub.currency] = (counts[sub.currency] || 0) + 1;
-    });
-    const entries = Object.entries(counts);
-    if (entries.length === 0) return "USD";
-    return entries.sort((a, b) => b[1] - a[1])[0][0];
-  }, [subscriptions]);
+    try {
+      const counts: Record<string, number> = {};
+      safeSubscriptions.forEach((sub) => {
+        if (sub?.currency) {
+          counts[sub.currency] = (counts[sub.currency] || 0) + 1;
+        }
+      });
+      const entries = Object.entries(counts);
+      if (entries.length === 0) return "USD";
+      return entries.sort((a, b) => b[1] - a[1])[0][0];
+    } catch (e) {
+      return "USD";
+    }
+  }, [safeSubscriptions]);
 
   // Use user-selected currency or auto-detected
   const activeCurrency = displayCurrency || autoDetectedCurrency;
   const currencySymbol = getCurrencySymbol(activeCurrency);
 
-  // Calculate totals with currency conversion
-  const totalIncome = useMemo(() => {
-    // Transactions don't have currency, so we assume they're in the active currency
-    return transactions
-      .filter((t) => t.type === "income")
-      .reduce((total, t) => total + Number(t.amount), 0);
-  }, [transactions]);
+  // Wrap all data calculations in a safe memo
+  const financialData = useMemo(() => {
+    try {
+      // Calculate totals with currency conversion
+      const income = safeTransactions
+        .filter((t) => t?.type === "income")
+        .reduce((total, t) => total + Number(t?.amount || 0), 0);
 
-  const totalExpenses = useMemo(() => {
-    return transactions
-      .filter((t) => t.type === "expense")
-      .reduce((total, t) => total + Number(t.amount), 0);
-  }, [transactions]);
+      const expenses = safeTransactions
+        .filter((t) => t?.type === "expense")
+        .reduce((total, t) => total + Number(t?.amount || 0), 0);
 
-  // Calculate subscription cost with proper currency conversion
-  const totalMonthlyCost = useMemo(() => {
-    return subscriptions.reduce((total, sub) => {
-      const rawPrice = Number(sub.price ?? 0);
-      const monthlyPrice = sub.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
-      // Convert from subscription's currency to display currency
-      const convertedPrice = convertCurrency(monthlyPrice, sub.currency, activeCurrency);
-      return total + convertedPrice;
-    }, 0);
-  }, [subscriptions, activeCurrency]);
+      // Calculate subscription cost with proper currency conversion
+      const monthlySubCost = safeSubscriptions.reduce((total, sub) => {
+        const rawPrice = Number(sub?.price ?? 0);
+        const monthlyPrice = sub?.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
+        // Convert from subscription's currency to display currency
+        const convertedPrice = convertCurrency(monthlyPrice, sub?.currency || activeCurrency, activeCurrency);
+        return total + (isFinite(convertedPrice) ? convertedPrice : 0);
+      }, 0);
 
-  const netWorth = totalIncome - (totalExpenses + totalMonthlyCost);
+      const net = income - (expenses + monthlySubCost);
+
+      // Health Score Calculation
+      let health = { score: null as number | null, label: "", emoji: "", color: "", description: "Add income to calculate financial health" };
+      
+      if (income > 0) {
+        const ratio = monthlySubCost / income;
+        let score = 0;
+        let label = "";
+        let emoji = "";
+        let color = "";
+
+        if (ratio < 0.05) {
+          score = Math.round(90 + (0.05 - ratio) * 200); // 90-100
+          label = "Excellent";
+          emoji = "🟢";
+          color = "text-success bg-success/10";
+        } else if (ratio < 0.10) {
+          score = Math.round(70 + (0.10 - ratio) * 400); // 70-89
+          label = "Healthy";
+          emoji = "🟢";
+          color = "text-success bg-success/10";
+        } else if (ratio < 0.20) {
+          score = Math.round(40 + (0.20 - ratio) * 300); // 40-69
+          label = "Warning";
+          emoji = "🟡";
+          color = "text-warning bg-warning/10";
+        } else {
+          score = Math.max(0, Math.round(40 - ratio * 100)); // 0-39
+          label = "Risky";
+          emoji = "🔴";
+          color = "text-destructive bg-destructive/10";
+        }
+
+        score = Math.min(100, Math.max(0, score));
+        const percentage = Math.round(ratio * 100);
+
+        health = {
+          score: isFinite(score) ? score : 0,
+          label,
+          emoji,
+          color,
+          description: `Your subscriptions use ${isFinite(percentage) ? percentage : 0}% of your income.`,
+        };
+      }
+
+      return {
+        totalIncome: isFinite(income) ? income : 0,
+        totalExpenses: isFinite(expenses) ? expenses : 0,
+        totalMonthlyCost: isFinite(monthlySubCost) ? monthlySubCost : 0,
+        netWorth: isFinite(net) ? net : 0,
+        financialHealth: health
+      };
+    } catch (error) {
+      console.error("Financial calculation error:", error);
+      return {
+        totalIncome: 0,
+        totalExpenses: 0,
+        totalMonthlyCost: 0,
+        netWorth: 0,
+        financialHealth: { score: null as number | null, label: "", emoji: "", color: "", description: "Data unavailable" }
+      };
+    }
+  }, [safeSubscriptions, safeTransactions, activeCurrency]);
+
+  const { totalIncome, totalExpenses, totalMonthlyCost, netWorth, financialHealth } = financialData;
 
   // Monthly cash flow data for charts
   const getMonthlyCashFlow = () => {
-    const months: { month: string; income: number; expenses: number }[] = [];
-    const now = new Date();
+    try {
+      const months: { month: string; income: number; expenses: number }[] = [];
+      const now = new Date();
 
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthStr = date.toLocaleDateString("en-US", {
-        month: "short",
-        year: "2-digit",
-      });
-      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthStr = date.toLocaleDateString("en-US", {
+          month: "short",
+          year: "2-digit",
+        });
+        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-      const monthlyIncome = transactions
-        .filter((t) => {
-          const tDate = new Date(t.date);
-          return (
-            t.type === "income" && tDate >= startOfMonth && tDate <= endOfMonth
-          );
-        })
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+        const monthlyIncome = safeTransactions
+          .filter((t) => {
+            if (!t?.date) return false;
+            const tDate = new Date(t.date);
+            return (
+              t.type === "income" && tDate >= startOfMonth && tDate <= endOfMonth
+            );
+          })
+          .reduce((sum, t) => sum + Number(t?.amount || 0), 0);
 
-      const monthlyExpenses = transactions
-        .filter((t) => {
-          const tDate = new Date(t.date);
-          return (
-            t.type === "expense" && tDate >= startOfMonth && tDate <= endOfMonth
-          );
-        })
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+        const monthlyExpenses = safeTransactions
+          .filter((t) => {
+            if (!t?.date) return false;
+            const tDate = new Date(t.date);
+            return (
+              t.type === "expense" && tDate >= startOfMonth && tDate <= endOfMonth
+            );
+          })
+          .reduce((sum, t) => sum + Number(t?.amount || 0), 0);
 
-      // Add subscription costs to expenses (converted)
-      const monthlySubCost = totalMonthlyCost;
+        // Add subscription costs to expenses (converted)
+        const monthlySubCost = totalMonthlyCost;
 
-      months.push({
-        month: monthStr,
-        income: monthlyIncome,
-        expenses: monthlyExpenses + monthlySubCost,
-      });
+        months.push({
+          month: monthStr,
+          income: isFinite(monthlyIncome) ? monthlyIncome : 0,
+          expenses: isFinite(monthlyExpenses + monthlySubCost) ? monthlyExpenses + monthlySubCost : 0,
+        });
+      }
+
+      return months;
+    } catch (e) {
+      return [];
     }
-
-    return months;
   };
 
   // Spending distribution for pie chart
   const getSpendingDistribution = () => {
-    const distribution: { name: string; value: number }[] = [];
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    try {
+      const distribution: { name: string; value: number }[] = [];
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Group transactions by category
-    const categoryTotals: Record<string, number> = {};
+      // Group transactions by category
+      const categoryTotals: Record<string, number> = {};
 
-    transactions
-      .filter((t) => t.type === "expense" && new Date(t.date) >= startOfMonth)
-      .forEach((t) => {
-        categoryTotals[t.category] =
-          (categoryTotals[t.category] || 0) + Number(t.amount);
+      safeTransactions
+        .filter((t) => t?.type === "expense" && t?.date && new Date(t.date) >= startOfMonth)
+        .forEach((t) => {
+          if (t?.category) {
+            categoryTotals[t.category] =
+              (categoryTotals[t.category] || 0) + Number(t?.amount || 0);
+          }
+        });
+
+      // Add subscriptions as "Subscriptions" category (converted)
+      if (totalMonthlyCost > 0) {
+        const subLabel = t?.finance?.subscriptions || "Subscriptions";
+        categoryTotals[subLabel] =
+          (categoryTotals[subLabel] || 0) + totalMonthlyCost;
+      }
+
+      Object.entries(categoryTotals).forEach(([name, value]) => {
+        if (value > 0) {
+          distribution.push({ name, value: isFinite(value) ? value : 0 });
+        }
       });
 
-    // Add subscriptions as "Subscriptions" category (converted)
-    if (totalMonthlyCost > 0) {
-      categoryTotals[t.finance.subscriptions] =
-        (categoryTotals[t.finance.subscriptions] || 0) + totalMonthlyCost;
+      return distribution;
+    } catch (e) {
+      return [];
     }
-
-    Object.entries(categoryTotals).forEach(([name, value]) => {
-      if (value > 0) {
-        distribution.push({ name, value });
-      }
-    });
-
-    return distribution;
   };
 
   // Redirect to login if not authenticated
@@ -178,54 +262,8 @@ const Finance = () => {
     );
   }
 
-  const spendingData = getSpendingDistribution();
   const cashFlowData = getMonthlyCashFlow();
-
-  // Financial Health Score Calculation
-  const financialHealth = useMemo(() => {
-    if (!totalIncome || totalIncome <= 0) {
-      return { score: null, label: "", emoji: "", color: "", description: "Add income to calculate financial health" };
-    }
-
-    const ratio = totalMonthlyCost / totalIncome;
-    let score = 0;
-    let label = "";
-    let emoji = "";
-    let color = "";
-
-    if (ratio < 0.05) {
-      score = Math.round(90 + (0.05 - ratio) * 200); // 90-100
-      label = "Excellent";
-      emoji = "🟢";
-      color = "text-success bg-success/10";
-    } else if (ratio < 0.10) {
-      score = Math.round(70 + (0.10 - ratio) * 400); // 70-89
-      label = "Healthy";
-      emoji = "🟢";
-      color = "text-success bg-success/10";
-    } else if (ratio < 0.20) {
-      score = Math.round(40 + (0.20 - ratio) * 300); // 40-69
-      label = "Warning";
-      emoji = "🟡";
-      color = "text-warning bg-warning/10";
-    } else {
-      score = Math.max(0, Math.round(40 - ratio * 100)); // 0-39
-      label = "Risky";
-      emoji = "🔴";
-      color = "text-destructive bg-destructive/10";
-    }
-
-    score = Math.min(100, Math.max(0, score));
-    const percentage = Math.round(ratio * 100);
-
-    return {
-      score,
-      label,
-      emoji,
-      color,
-      description: `Your subscriptions use ${percentage}% of your income.`,
-    };
-  }, [totalMonthlyCost, totalIncome]);
+  const spendingData = getSpendingDistribution();
 
   return (
     <div className="min-h-screen pb-20">
