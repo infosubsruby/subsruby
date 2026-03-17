@@ -139,26 +139,29 @@ const Dashboard = () => {
   // Calculate subscription vs income percentage
   const subscriptionPercentage = useMemo(() => {
     try {
-      // Use current monthly income if available, otherwise fallback to total income
-      const income = Number(currentMonthlyIncome) > 0 ? Number(currentMonthlyIncome) : Number(totalIncome);
-      const safeIncome = income || 0;
+      // Strictly use current monthly income as requested
+      const income = Number(currentMonthlyIncome) || 0;
       const safeMonthlySpend = Number(monthlySpend) || 0;
       
-      if (safeIncome <= 0 || !isFinite(safeIncome)) return 0;
-      if (safeMonthlySpend <= 0 || !isFinite(safeMonthlySpend)) return 0;
+      // Sanity check: income too low
+      if (income < 100) return null;
       
-      const percentage = (safeMonthlySpend / safeIncome) * 100;
+      if (!isFinite(income) || safeMonthlySpend <= 0 || !isFinite(safeMonthlySpend)) return 0;
+      
+      const percentage = (safeMonthlySpend / income) * 100;
       
       if (isNaN(percentage) || !isFinite(percentage)) return 0;
       
-      return Math.round(percentage);
+      // Cap at 200 for calculation (display will show 200%+)
+      return Math.min(Math.round(percentage), 201);
     } catch (error) {
       console.error("Error calculating subscription percentage:", error);
       return 0;
     }
-  }, [monthlySpend, totalIncome, currentMonthlyIncome]);
+  }, [monthlySpend, currentMonthlyIncome]);
 
-  const getStatusLabel = (percentage: number) => {
+  const getStatusLabel = (percentage: number | null) => {
+    if (percentage === null) return { label: "N/A", color: "text-muted-foreground" };
     const safePercentage = Number(percentage) || 0;
     if (safePercentage < 15) return { label: "Healthy", color: "text-green-500" };
     if (safePercentage <= 30) return { label: "Moderate", color: "text-amber-500" };
@@ -312,28 +315,37 @@ const Dashboard = () => {
                         return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">Loading income data...</p>;
                       }
 
-                      const safeIncome = Number(totalIncome) || 0;
-                      const income = Number(currentMonthlyIncome) > 0 ? Number(currentMonthlyIncome) : Number(totalIncome);
-                      const safeEffectiveIncome = income || 0;
+                      const income = Number(currentMonthlyIncome) || 0;
                       const safeMonthlySpend = Number(monthlySpend) || 0;
 
-                      if (safeIncome <= 0) {
+                      if (income <= 0) {
                         return (
                           <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                            Add income in Finance to see this metric
+                            Add income to see subscription ratio
+                          </p>
+                        );
+                      }
+
+                      if (income < 100) {
+                        return (
+                          <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                            Income data is too low to calculate accurately
                           </p>
                         );
                       }
                       
-                      const safePercentage = Number(subscriptionPercentage) || 0;
+                      const safePercentage = subscriptionPercentage;
+                      if (safePercentage === null) return null;
+
+                      const displayPercentage = safePercentage > 200 ? "200%+" : `${safePercentage}%`;
 
                       return (
                         <>
                           <h3 className="text-xl font-bold mt-0.5 truncate">
-                            {currencySymbol}{safeMonthlySpend.toFixed(0)} / {currencySymbol}{safeEffectiveIncome.toFixed(0)}
+                            {currencySymbol}{safeMonthlySpend.toFixed(0)} / {currencySymbol}{income.toFixed(0)}
                           </h3>
                           <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
-                            {safePercentage}% of your income
+                            {displayPercentage} of your income
                           </p>
                         </>
                       );
