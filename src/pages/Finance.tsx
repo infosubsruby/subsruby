@@ -25,6 +25,7 @@ import {
   Loader2,
   ArrowDownLeft,
   ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
 
 const Finance = () => {
@@ -177,8 +178,48 @@ const Finance = () => {
     );
   }
 
-  const cashFlowData = getMonthlyCashFlow();
   const spendingData = getSpendingDistribution();
+  const cashFlowData = getMonthlyCashFlow();
+
+  // Financial Health Score Calculation
+  const financialHealth = useMemo(() => {
+    if (!totalIncome || totalIncome <= 0) {
+      return { score: null, label: "", color: "", description: "Add income to calculate financial health" };
+    }
+
+    const ratio = totalMonthlyCost / totalIncome;
+    let score = 0;
+    let label = "";
+    let color = "";
+
+    if (ratio < 0.05) {
+      score = Math.round(90 + (0.05 - ratio) * 200); // 90-100
+      label = "Excellent";
+      color = "text-success bg-success/10";
+    } else if (ratio < 0.10) {
+      score = Math.round(70 + (0.10 - ratio) * 400); // 70-89
+      label = "Healthy";
+      color = "text-success bg-success/10";
+    } else if (ratio < 0.20) {
+      score = Math.round(40 + (0.20 - ratio) * 300); // 40-69
+      label = "Warning";
+      color = "text-warning bg-warning/10";
+    } else {
+      score = Math.max(0, Math.round(40 - ratio * 100)); // 0-39
+      label = "Risky";
+      color = "text-destructive bg-destructive/10";
+    }
+
+    score = Math.min(100, Math.max(0, score));
+    const percentage = Math.round(ratio * 100);
+
+    return {
+      score,
+      label,
+      color,
+      description: `Your subscriptions use ${percentage}% of your income.`,
+    };
+  }, [totalMonthlyCost, totalIncome]);
 
   return (
     <div className="min-h-screen pb-20">
@@ -234,59 +275,95 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
-                <ArrowDownLeft className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t.finance.income}</p>
-                <p className="font-display text-2xl font-bold text-success">
-                  {currencySymbol}{totalIncome.toFixed(2)}
-                </p>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-destructive/20 flex items-center justify-center">
-                <ArrowUpRight className="w-6 h-6 text-destructive" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t.finance.expenses}</p>
-                <p className="font-display text-2xl font-bold">
-                  {currencySymbol}{totalExpenses.toFixed(2)}
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
+                  <ArrowDownLeft className="w-6 h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.finance.income}</p>
+                  <p className="font-display text-2xl font-bold text-success">
+                    {currencySymbol}{totalIncome.toFixed(2)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                <TrendingDown className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t.finance.subscriptions}</p>
-                <p className="font-display text-2xl font-bold">
-                  {currencySymbol}{totalMonthlyCost.toFixed(2)}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    /mo
-                  </span>
-                </p>
+            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-destructive/20 flex items-center justify-center">
+                  <ArrowUpRight className="w-6 h-6 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.finance.expenses}</p>
+                  <p className="font-display text-2xl font-bold">
+                    {currencySymbol}{totalExpenses.toFixed(2)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-warning" />
+            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <TrendingDown className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.finance.subscriptions}</p>
+                  <p className="font-display text-2xl font-bold">
+                    {currencySymbol}{totalMonthlyCost.toFixed(2)}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /mo
+                    </span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t.finance.balance}</p>
-                <p
-                  className={`font-display text-2xl font-bold ${
-                    netWorth >= 0 ? "text-success" : "text-destructive"
-                  }`}
-                >
-                  {currencySymbol}{netWorth.toFixed(2)}
-                </p>
+            </div>
+
+            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.finance.balance}</p>
+                  <p
+                    className={`font-display text-2xl font-bold ${
+                      netWorth >= 0 ? "text-success" : "text-destructive"
+                    }`}
+                  >
+                    {currencySymbol}{netWorth.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Health Score</p>
+                  {financialHealth.score !== null ? (
+                    <>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-2xl font-bold">{financialHealth.score}/100</span>
+                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", financialHealth.color)}>
+                          {financialHealth.label}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 truncate">
+                        {financialHealth.description}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                      {financialHealth.description}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
