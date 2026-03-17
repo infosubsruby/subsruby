@@ -18,5 +18,16 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Check for onboarding completion
+  const hasCompletedOnboarding = localStorage.getItem("hasCompletedOnboarding") === "true";
+  
+  if (!hasCompletedOnboarding && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (hasCompletedOnboarding && location.pathname === "/onboarding") {
+    return <Navigate to="/control" replace />;
+  }
+
   return <>{children}</>;
 };

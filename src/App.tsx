@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Onboarding from "./pages/Onboarding";
 import Admin from "./pages/Admin";
 import Finance from "./pages/Finance";
 import Settings from "./pages/Settings";
@@ -35,6 +36,14 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <ProtectedRoute>
+                      <Onboarding />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/control"
                   element={
