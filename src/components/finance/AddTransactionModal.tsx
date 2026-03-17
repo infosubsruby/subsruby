@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { CATEGORIES, CreateTransactionData } from "@/hooks/useFinance";
@@ -34,40 +34,48 @@ interface AddTransactionModalProps {
   onCreateTransaction: (
     data: CreateTransactionData
   ) => Promise<{ success: boolean }>;
+  forcedType?: "income" | "expense";
 }
 
 export const AddTransactionModal = ({
   open,
   onOpenChange,
   onCreateTransaction,
+  forcedType,
 }: AddTransactionModalProps) => {
-  const [formData, setFormData] = useState<CreateTransactionData>({
-    amount: 0,
-    type: "expense",
-    category: CATEGORIES[0],
-    description: "",
-    date: format(new Date(), "yyyy-MM-dd"),
-  });
+  const initialType = forcedType ?? "expense";
+  const initialFormData = useMemo<CreateTransactionData>(
+    () => ({
+      amount: 0,
+      type: initialType,
+      category: CATEGORIES[0],
+      description: "",
+      date: format(new Date(), "yyyy-MM-dd"),
+    }),
+    [initialType]
+  );
+  const [formData, setFormData] = useState<CreateTransactionData>(initialFormData);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (!open) return;
+    setFormData(initialFormData);
+    setSelectedDate(new Date());
+  }, [open, initialFormData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.amount <= 0) return;
 
     // Reset + close instantly for optimistic UX
-    setFormData({
-      amount: 0,
-      type: "expense",
-      category: CATEGORIES[0],
-      description: "",
-      date: format(new Date(), "yyyy-MM-dd"),
-    });
+    setFormData(initialFormData);
     setSelectedDate(new Date());
     onOpenChange(false);
 
     // Persist in background (optimistic updates + rollback handled in hook)
     void onCreateTransaction({
       ...formData,
+      type: forcedType ?? formData.type,
       date: format(selectedDate, "yyyy-MM-dd"),
     });
   };
@@ -86,30 +94,32 @@ export const AddTransactionModal = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Type Selection */}
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant={formData.type === "income" ? "default" : "outline"}
-              className={cn(
-                formData.type === "income" &&
-                  "bg-success hover:bg-success/90 text-success-foreground"
-              )}
-              onClick={() => setFormData((prev) => ({ ...prev, type: "income" }))}
-            >
-              Income
-            </Button>
-            <Button
-              type="button"
-              variant={formData.type === "expense" ? "default" : "outline"}
-              className={cn(
-                formData.type === "expense" &&
-                  "ruby-gradient border-0"
-              )}
-              onClick={() => setFormData((prev) => ({ ...prev, type: "expense" }))}
-            >
-              Expense
-            </Button>
-          </div>
+          {!forcedType && (
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={formData.type === "income" ? "default" : "outline"}
+                className={cn(
+                  formData.type === "income" &&
+                    "bg-success hover:bg-success/90 text-success-foreground"
+                )}
+                onClick={() => setFormData((prev) => ({ ...prev, type: "income" }))}
+              >
+                Income
+              </Button>
+              <Button
+                type="button"
+                variant={formData.type === "expense" ? "default" : "outline"}
+                className={cn(
+                  formData.type === "expense" &&
+                    "ruby-gradient border-0"
+                )}
+                onClick={() => setFormData((prev) => ({ ...prev, type: "expense" }))}
+              >
+                Expense
+              </Button>
+            </div>
+          )}
 
           {/* Amount */}
           <div className="space-y-2">

@@ -11,11 +11,13 @@ import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
 import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
 import { toast } from "sonner";
 
+type OnboardingStep = "welcome" | "income" | "subscription" | "wow";
+
 const Onboarding = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const { createTransaction, transactions, currentMonthlyIncome } = useFinance();
-  const { subscriptions, isLoading: subsLoading } = useSubscriptions();
+  const [step, setStep] = useState<OnboardingStep>("welcome");
+  const { createTransaction } = useFinance();
+  const { subscriptions } = useSubscriptions();
   const { data: exchangeRatesList } = useExchangeRates();
 
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
@@ -30,23 +32,16 @@ const Onboarding = () => {
     }, {} as Record<string, number>);
   }, [exchangeRatesList]);
 
-  const handleCompleteStep1 = () => setStep(2);
-
-  const handleOpenIncomeModal = () => setIsIncomeModalOpen(true);
-  const handleOpenSubModal = () => setIsSubModalOpen(true);
-
-  // Automatically advance to next step when data is added
   useEffect(() => {
-    if (step === 2 && currentMonthlyIncome > 0) {
-      setStep(3);
+    if (step === "income") {
+      setIsIncomeModalOpen(true);
     }
-  }, [currentMonthlyIncome, step]);
+    if (step === "subscription") {
+      setIsSubModalOpen(true);
+    }
+  }, [step]);
 
-  useEffect(() => {
-    if (step === 3 && subscriptions.length > 0) {
-      setStep(4);
-    }
-  }, [subscriptions.length, step]);
+  const handleCompleteStep1 = () => setStep("income");
 
   const finishOnboarding = () => {
     localStorage.setItem("hasCompletedOnboarding", "true");
@@ -87,7 +82,7 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full flex justify-center">
-        {step === 1 && (
+        {step === "welcome" && (
           <div className="max-w-md w-full text-center animate-fade-in">
             <div className="mb-8 flex justify-center">
               <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center">
@@ -112,7 +107,7 @@ const Onboarding = () => {
           </div>
         )}
 
-        {step === 2 && (
+        {step === "income" && (
           <div className="max-w-md w-full text-center animate-fade-in">
             <div className="mb-8 flex justify-center">
               <div className="w-20 h-20 bg-green-500/10 rounded-3xl flex items-center justify-center">
@@ -125,7 +120,7 @@ const Onboarding = () => {
             </p>
             <Button 
               size="lg" 
-              onClick={handleOpenIncomeModal}
+              onClick={() => setIsIncomeModalOpen(true)}
               className="w-full h-14 text-lg font-semibold rounded-2xl transition-all"
             >
               Add Monthly Income
@@ -133,7 +128,7 @@ const Onboarding = () => {
           </div>
         )}
 
-        {step === 3 && (
+        {step === "subscription" && (
           <div className="max-w-md w-full text-center animate-fade-in">
             <div className="mb-8 flex justify-center">
               <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center">
@@ -146,7 +141,7 @@ const Onboarding = () => {
             </p>
             <Button 
               size="lg" 
-              onClick={handleOpenSubModal}
+              onClick={() => setIsSubModalOpen(true)}
               className="w-full h-14 text-lg font-semibold rounded-2xl transition-all"
             >
               Add First Subscription
@@ -154,7 +149,7 @@ const Onboarding = () => {
           </div>
         )}
 
-        {step === 4 && (
+        {step === "wow" && (
           <div className="max-w-lg w-full text-center animate-fade-in">
             <div className="mb-8 flex justify-center">
               <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
@@ -213,13 +208,17 @@ const Onboarding = () => {
       <AddTransactionModal
         open={isIncomeModalOpen}
         onOpenChange={setIsIncomeModalOpen}
+        forcedType="income"
         onCreateTransaction={async (data) => {
+          setStep("subscription");
+          setIsSubModalOpen(true);
           try {
             await createTransaction(data);
             toast.success("Income added successfully!");
             return { success: true };
           } catch (e) {
-            toast.error("Failed to add income");
+            console.error(e);
+            toast.error("Couldn't save income. You can continue and try again later.");
             return { success: false };
           }
         }}
@@ -228,6 +227,9 @@ const Onboarding = () => {
       <AddSubscriptionModal
         open={isSubModalOpen}
         onOpenChange={setIsSubModalOpen}
+        onCreated={() => {
+          setStep("wow");
+        }}
       />
     </div>
   );

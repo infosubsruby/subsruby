@@ -29,11 +29,12 @@ interface AddSubscriptionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultService?: string;
+  onCreated?: () => void;
 }
 
 type Step = "select" | "configure";
 
-export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: AddSubscriptionModalProps) => {
+export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCreated }: AddSubscriptionModalProps) => {
   const { createSubscription, canAddSubscription, subscriptions } = useSubscriptions();
   const { communityData } = useCommunityData();
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
@@ -300,6 +301,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       if (result.success) {
         resetForm();
         onOpenChange(false);
+        onCreated?.();
       } else {
         if (result.reason === "limit") {
           onOpenChange(false);
