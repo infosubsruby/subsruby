@@ -12,7 +12,7 @@ import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionM
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3, ArrowUp, ArrowDown, Info } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3, ArrowUp, ArrowDown, Info, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 import { 
@@ -170,6 +170,53 @@ const Dashboard = () => {
 
   const status = getStatusLabel(subscriptionPercentage);
 
+  // Smart Financial Insight Logic
+  const financialInsight = useMemo(() => {
+    const income = Number(currentMonthlyIncome) || 0;
+    const safeMonthlySpend = Number(monthlySpend) || 0;
+    
+    if (income <= 0) {
+      return {
+        icon: <Info className="w-5 h-5 text-blue-500" />,
+        title: "Personalized Insight",
+        message: "Add income to get personalized insights about your subscription health.",
+        color: "bg-blue-50 border-blue-100",
+        textColor: "text-blue-700",
+        cta: "Add Income"
+      };
+    }
+    
+    const ratio = safeMonthlySpend / income;
+    
+    if (ratio > 0.5) {
+      return {
+        icon: <AlertTriangle className="w-5 h-5 text-red-500" />,
+        title: "High Spending Alert",
+        message: "Your subscription spending is too high compared to your income. Consider reviewing your active plans.",
+        color: "bg-red-50 border-red-100",
+        textColor: "text-red-700",
+        cta: "Review Subs"
+      };
+    } else if (ratio >= 0.2) {
+      return {
+        icon: <AlertCircle className="w-5 h-5 text-amber-500" />,
+        title: "Moderate Spending",
+        message: "Your subscription spending is moderate. It's a good time to review if all these are still necessary.",
+        color: "bg-amber-50 border-amber-100",
+        textColor: "text-amber-700",
+        cta: "Review Plans"
+      };
+    } else {
+      return {
+        icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
+        title: "Healthy Spending",
+        message: "Your subscription spending is healthy and well within your budget. Great job!",
+        color: "bg-green-50 border-green-100",
+        textColor: "text-green-700"
+      };
+    }
+  }, [currentMonthlyIncome, monthlySpend]);
+
   // Calculate month-over-month spending change
   const spendingChange = useMemo(() => {
     try {
@@ -258,6 +305,40 @@ const Dashboard = () => {
                 {t.dashboard.addSubscription}
               </Button>
             </div>
+          </div>
+
+          {/* Smart Financial Insight Card */}
+          <div className={cn("mb-8 p-4 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm", financialInsight.color)}>
+            <div className="flex items-center gap-4">
+              <div className="shrink-0">
+                {financialInsight.icon}
+              </div>
+              <div className="flex flex-col">
+                <h4 className={cn("text-sm font-bold", financialInsight.textColor)}>
+                  {financialInsight.title}
+                </h4>
+                <p className={cn("text-xs", financialInsight.textColor, "opacity-90")}>
+                  {financialInsight.message}
+                </p>
+              </div>
+            </div>
+            {financialInsight.cta && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={cn("whitespace-nowrap bg-white/50 hover:bg-white border-current/20", financialInsight.textColor)}
+                onClick={() => {
+                  if (financialInsight.cta === "Add Income") {
+                    navigate("/finance");
+                  } else {
+                    // Scroll to subscriptions or open details
+                    window.scrollTo({ top: 500, behavior: 'smooth' });
+                  }
+                }}
+              >
+                {financialInsight.cta}
+              </Button>
+            )}
           </div>
 
           {/* Stats Cards */}
