@@ -12,7 +12,7 @@ import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionM
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3, ArrowUp, ArrowDown, Info } from "lucide-react";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 import { 
@@ -372,7 +372,16 @@ const Dashboard = () => {
                   {(() => {
                     try {
                       if (!spendingChange) return <p className="text-[10px] text-muted-foreground mt-1">Unable to calculate spending change</p>;
-                      if (!spendingChange.hasPreviousData) return <p className="text-[10px] text-muted-foreground mt-1">Not enough data to compare months</p>;
+                      if (!spendingChange.hasPreviousData) {
+                        return (
+                          <div className="flex items-start gap-1.5 mt-1">
+                            <Info className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                            <p className="text-[10px] text-muted-foreground leading-tight">
+                              Track your subscriptions over time to see spending trends
+                            </p>
+                          </div>
+                        );
+                      }
                       
                       const change = spendingChange.percentageChange;
                       const isIncrease = change > 0;
