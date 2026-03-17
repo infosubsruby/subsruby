@@ -321,44 +321,44 @@ const Finance = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
+            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner">
                   <ArrowDownLeft className="w-6 h-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">{t.finance.income}</p>
-                  <p className="font-display text-2xl font-bold text-success">
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.income}</p>
+                  <p className="font-display text-3xl font-bold text-success mt-1">
                     {currencySymbol}{totalIncome.toFixed(2)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-destructive/20 flex items-center justify-center">
+            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner">
                   <ArrowUpRight className="w-6 h-6 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">{t.finance.expenses}</p>
-                  <p className="font-display text-2xl font-bold">
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.expenses}</p>
+                  <p className="font-display text-3xl font-bold mt-1">
                     {currencySymbol}{totalExpenses.toFixed(2)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner">
                   <TrendingDown className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">{t.finance.subscriptions}</p>
-                  <p className="font-display text-2xl font-bold">
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.subscriptions}</p>
+                  <p className="font-display text-3xl font-bold mt-1">
                     {currencySymbol}{totalMonthlyCost.toFixed(2)}
-                    <span className="text-sm font-normal text-muted-foreground">
+                    <span className="text-sm font-normal text-muted-foreground ml-1">
                       /mo
                     </span>
                   </p>
@@ -366,15 +366,15 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
+            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner">
                   <TrendingUp className="w-6 h-6 text-warning" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">{t.finance.balance}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.balance}</p>
                   <p
-                    className={`font-display text-2xl font-bold ${
+                    className={`font-display text-3xl font-bold mt-1 ${
                       netWorth >= 0 ? "text-success" : "text-destructive"
                     }`}
                   >
@@ -384,32 +384,45 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-xl p-5 flex flex-col justify-center h-full min-h-[110px]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-primary" />
+            <div className="glass-card rounded-2xl p-6 flex flex-col items-center text-center justify-center h-full min-h-[180px] shadow-sm">
+              <p className="text-sm text-muted-foreground font-medium mb-2">Financial Health Score</p>
+              
+              {financialHealth.score !== null ? (
+                <div className="flex flex-col items-center gap-3 w-full">
+                  <div className="flex items-baseline justify-center">
+                    <span className="text-5xl font-bold tracking-tight">{financialHealth.score}</span>
+                    <span className="text-sm text-muted-foreground ml-1">/100</span>
+                  </div>
+
+                  <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
+                    <span>{financialHealth.emoji}</span>
+                    <span>{financialHealth.label}</span>
+                  </div>
+
+                  <div className="w-full max-w-[140px] bg-secondary rounded-full h-2 mt-1 overflow-hidden">
+                    <div 
+                      className={cn("h-full rounded-full transition-all duration-500", 
+                        financialHealth.label === "Excellent" || financialHealth.label === "Healthy" ? "bg-success" :
+                        financialHealth.label === "Warning" ? "bg-warning" : "bg-destructive"
+                      )}
+                      style={{ width: `${financialHealth.score}%` }}
+                    />
+                  </div>
+
+                  <p className="text-sm text-muted-foreground leading-tight mt-1 max-w-[200px]">
+                    {financialHealth.description}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground font-medium">Financial Health Score</p>
-                  {financialHealth.score !== null ? (
-                    <div className="mt-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold">{financialHealth.score} / 100</span>
-                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", financialHealth.color)}>
-                          {financialHealth.emoji} {financialHealth.label}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-1 truncate">
-                        {financialHealth.description}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                      {financialHealth.description}
-                    </p>
-                  )}
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-tight px-4">
+                    {financialHealth.description}
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
