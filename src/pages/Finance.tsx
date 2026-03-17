@@ -184,29 +184,34 @@ const Finance = () => {
   // Financial Health Score Calculation
   const financialHealth = useMemo(() => {
     if (!totalIncome || totalIncome <= 0) {
-      return { score: null, label: "", color: "", description: "Add income to calculate financial health" };
+      return { score: null, label: "", emoji: "", color: "", description: "Add income to calculate financial health" };
     }
 
     const ratio = totalMonthlyCost / totalIncome;
     let score = 0;
     let label = "";
+    let emoji = "";
     let color = "";
 
     if (ratio < 0.05) {
       score = Math.round(90 + (0.05 - ratio) * 200); // 90-100
       label = "Excellent";
+      emoji = "🟢";
       color = "text-success bg-success/10";
     } else if (ratio < 0.10) {
       score = Math.round(70 + (0.10 - ratio) * 400); // 70-89
       label = "Healthy";
+      emoji = "🟢";
       color = "text-success bg-success/10";
     } else if (ratio < 0.20) {
       score = Math.round(40 + (0.20 - ratio) * 300); // 40-69
       label = "Warning";
+      emoji = "🟡";
       color = "text-warning bg-warning/10";
     } else {
       score = Math.max(0, Math.round(40 - ratio * 100)); // 0-39
       label = "Risky";
+      emoji = "🔴";
       color = "text-destructive bg-destructive/10";
     }
 
@@ -216,6 +221,7 @@ const Finance = () => {
     return {
       score,
       label,
+      emoji,
       color,
       description: `Your subscriptions use ${percentage}% of your income.`,
     };
@@ -345,19 +351,19 @@ const Finance = () => {
                   <Sparkles className="w-6 h-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">Health Score</p>
+                  <p className="text-sm text-muted-foreground font-medium">Financial Health Score</p>
                   {financialHealth.score !== null ? (
-                    <>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-2xl font-bold">{financialHealth.score}/100</span>
+                    <div className="mt-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold">{financialHealth.score} / 100</span>
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider", financialHealth.color)}>
-                          {financialHealth.label}
+                          {financialHealth.emoji} {financialHealth.label}
                         </span>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-1 truncate">
                         {financialHealth.description}
                       </p>
-                    </>
+                    </div>
                   ) : (
                     <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
                       {financialHealth.description}
