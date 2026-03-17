@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -78,6 +79,9 @@ export const AddTransactionModal = ({
           <DialogTitle className="font-display text-xl">
             Add Transaction
           </DialogTitle>
+          <DialogDescription>
+            Record a new income or expense to track your finances.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

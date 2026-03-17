@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -57,6 +58,9 @@ export const AddBudgetModal = ({
           <DialogTitle className="font-display text-xl">
             Create Budget
           </DialogTitle>
+          <DialogDescription>
+            Set a monthly spending limit for a specific category.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
