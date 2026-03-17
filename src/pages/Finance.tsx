@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertCurrency, getCurrencySymbol } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 import {
   Plus,
   Wallet,
