@@ -9,6 +9,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { FlipCard } from "@/components/subscription/FlipCard";
 import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
+import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLimitModal";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,7 +30,7 @@ import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isUnlimited } = useAuth();
   const { isPro, loading: subStatusLoading } = useSubscription();
   const { t } = useLanguage();
   const { 
@@ -57,14 +58,16 @@ const Dashboard = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSavingsModalOpen, setIsSavingsModalOpen] = useState(false);
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>("TRY");
 
   const FREE_PLAN_LIMIT = 3;
-  const canAddSubscription = isPro || subscriptions.length < FREE_PLAN_LIMIT;
+  const isFreeLimited = !isPro && !isUnlimited;
+  const canAddSubscription = !isFreeLimited || subscriptions.length < FREE_PLAN_LIMIT;
 
   const handleAddSubscription = () => {
     if (!canAddSubscription) {
-      alert(`Ücretsiz planda maksimum ${FREE_PLAN_LIMIT} abonelik ekleyebilirsiniz. Sınırsız erişim için Pro'ya geçin.`);
+      setIsLimitModalOpen(true);
       return;
     }
     setIsModalOpen(true);
@@ -312,30 +315,45 @@ const Dashboard = () => {
                 {t.dashboard.subtitle}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Select
-                value={displayCurrency || "auto"}
-                onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
-              >
-                <SelectTrigger className="w-[140px] bg-background border-input hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">Auto ({autoDetectedCurrency})</SelectItem>
-                  {currencies.map((currency) => (
-                    <SelectItem key={currency.value} value={currency.value}>
-                      {currency.value} ({currency.symbol})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button 
-                onClick={handleAddSubscription}
-                className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                {t.dashboard.addSubscription}
-              </Button>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-3">
+                <Select
+                  value={displayCurrency || "auto"}
+                  onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
+                >
+                  <SelectTrigger className="w-[140px] bg-background border-input hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Auto ({autoDetectedCurrency})</SelectItem>
+                    {currencies.map((currency) => (
+                      <SelectItem key={currency.value} value={currency.value}>
+                        {currency.value} ({currency.symbol})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={handleAddSubscription}
+                  className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  {t.dashboard.addSubscription}
+                </Button>
+              </div>
+
+              {isFreeLimited && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-muted-foreground">
+                    {Math.min(subscriptions.length, FREE_PLAN_LIMIT)}/{FREE_PLAN_LIMIT} Free used
+                  </span>
+                  {subscriptions.length === FREE_PLAN_LIMIT - 1 && (
+                    <span className="text-[10px] font-medium text-amber-600 dark:text-amber-500">
+                      You're almost at your free limit (3 subscriptions)
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -611,6 +629,11 @@ const Dashboard = () => {
       <AddSubscriptionModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
+      />
+
+      <SubscriptionLimitModal
+        open={isLimitModalOpen}
+        onOpenChange={setIsLimitModalOpen}
       />
       
       <FeedbackButton />

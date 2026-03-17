@@ -21,6 +21,7 @@ import { calculateNextPaymentDate, calculateStartDate } from "@/lib/dateUtils";
 import { getCurrencySymbol } from "@/lib/currency";
 import { Search, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLimitModal";
 
 const GLOBAL_CURRENCIES = ['USD', 'TRY', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CNY', 'INR', 'BRL', 'MXN', 'RUB', 'CHF', 'SEK', 'NOK', 'DKK', 'SAR', 'AED', 'Other'];
 
@@ -35,6 +36,7 @@ type Step = "select" | "configure";
 export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: AddSubscriptionModalProps) => {
   const { createSubscription, canAddSubscription, subscriptions } = useSubscriptions();
   const { communityData } = useCommunityData();
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   
   // Step management
   const [step, setStep] = useState<Step>("select");
@@ -268,7 +270,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
     e.preventDefault();
     
     if (!name || !activePrice || !activeCurrency) return;
-    if (!canAddSubscription()) return;
+    if (!canAddSubscription()) {
+      onOpenChange(false);
+      setIsLimitModalOpen(true);
+      return;
+    }
 
     setIsLoading(true);
 
@@ -294,6 +300,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
       if (result.success) {
         resetForm();
         onOpenChange(false);
+      } else {
+        if (result.reason === "limit") {
+          onOpenChange(false);
+          setIsLimitModalOpen(true);
+        }
       }
     } catch (error) {
       console.error("Failed to create subscription:", error);
@@ -306,8 +317,9 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
   const accentColor = selectedPreset?.color || cardColor;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-card border-border p-0 gap-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg bg-card border-border p-0 gap-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         <DialogHeader 
           className="p-6 pb-4"
           style={{ 
@@ -603,8 +615,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService }: Add
             </Button>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <SubscriptionLimitModal open={isLimitModalOpen} onOpenChange={setIsLimitModalOpen} />
+    </>
   );
 };
 

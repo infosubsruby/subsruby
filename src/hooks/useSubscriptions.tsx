@@ -10,6 +10,8 @@ import { fetchSubscriptions, insertSubscription, patchSubscription, removeSubscr
 
 export type { CreateSubscriptionData, Subscription };
 
+type CreateSubscriptionResult = { success: true } | { success: false; reason?: "limit" | "auth" | "error" };
+
 export const useSubscriptions = () => {
   const { user, isTrialActive, isUnlimited } = useAuth();
   const { isPro } = useSubscription();
@@ -171,21 +173,20 @@ export const useSubscriptions = () => {
     },
   });
 
-  const createSubscription = async (payload: CreateSubscriptionData) => {
+  const createSubscription = async (payload: CreateSubscriptionData): Promise<CreateSubscriptionResult> => {
     if (!user) {
       toast.error("Please sign in to add subscriptions");
-      return { success: false };
+      return { success: false, reason: "auth" };
     }
     if (!canAddSubscription()) {
-      toast.error(`Ücretsiz planda maksimum ${MAX_TRIAL_SUBSCRIPTIONS} abonelik ekleyebilirsiniz. Sınırsız erişim için Pro'ya geçin.`);
-      return { success: false };
+      return { success: false, reason: "limit" };
     }
 
     try {
       await createMutation.mutateAsync(payload);
       return { success: true };
     } catch {
-      return { success: false };
+      return { success: false, reason: "error" };
     }
   };
 
