@@ -65,7 +65,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in">
             <Link to="/signup">
               <Button size="lg" className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2 text-lg px-8 py-6">
-                Start Free Trial
+                Get Started
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -78,7 +78,7 @@ const Index = () => {
 
           {/* Pricing hint */}
           <p className="mt-6 text-sm text-muted-foreground">
-            Lifetime Access for just <span className="text-primary font-semibold">$5.98</span> • One-time payment
+            Free Plan: track up to <span className="text-primary font-semibold">3</span> subscriptions • Upgrade to Pro for unlimited tracking
           </p>
         </div>
       </section>

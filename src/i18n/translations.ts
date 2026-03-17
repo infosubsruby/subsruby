@@ -41,7 +41,7 @@ export const translations = {
       noSubscriptions: "No subscriptions yet",
       noSubscriptionsDesc: "Add your first subscription to start tracking your recurring payments.",
       trialLimit: "Free trial limit reached",
-      getLifetime: "Get Lifetime Access for $5.98",
+      getLifetime: "Upgrade to Pro",
       auto: "Auto",
     },
     // Finance
@@ -174,7 +174,7 @@ export const translations = {
       noSubscriptions: "Henüz abonelik yok",
       noSubscriptionsDesc: "Düzenli ödemelerinizi takip etmeye başlamak için ilk aboneliğinizi ekleyin.",
       trialLimit: "Ücretsiz deneme limiti doldu",
-      getLifetime: "Ömür Boyu Erişim $5.98",
+      getLifetime: "Pro'ya Geç",
       auto: "Otomatik",
     },
     finance: {
@@ -300,7 +300,7 @@ export const translations = {
       noSubscriptions: "Noch keine Abonnements",
       noSubscriptionsDesc: "Fügen Sie Ihr erstes Abonnement hinzu, um Ihre wiederkehrenden Zahlungen zu verfolgen.",
       trialLimit: "Testlimit erreicht",
-      getLifetime: "Lebenslanger Zugang für $5.98",
+      getLifetime: "Upgrade auf Pro",
       auto: "Auto",
     },
     finance: {
@@ -426,7 +426,7 @@ export const translations = {
       noSubscriptions: "Aún no hay suscripciones",
       noSubscriptionsDesc: "Agrega tu primera suscripción para comenzar a rastrear tus pagos recurrentes.",
       trialLimit: "Límite de prueba alcanzado",
-      getLifetime: "Acceso de por vida por $5.98",
+      getLifetime: "Actualizar a Pro",
       auto: "Auto",
     },
     finance: {
@@ -552,7 +552,7 @@ export const translations = {
       noSubscriptions: "Pas encore d'abonnements",
       noSubscriptionsDesc: "Ajoutez votre premier abonnement pour commencer à suivre vos paiements récurrents.",
       trialLimit: "Limite d'essai atteinte",
-      getLifetime: "Accès à vie pour $5.98",
+      getLifetime: "Passer à Pro",
       auto: "Auto",
     },
     finance: {
