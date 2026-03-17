@@ -38,7 +38,7 @@ const Dashboard = () => {
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
-  const { totalIncome, currentMonthlyIncome, isLoading: financeLoading } = useFinance();
+  const { transactions, totalIncome, currentMonthlyIncome, isLoading: financeLoading } = useFinance();
 
   // Fetch dynamic exchange rates
   const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
@@ -170,52 +170,84 @@ const Dashboard = () => {
 
   const status = getStatusLabel(subscriptionPercentage);
 
-  // Smart Financial Insight Logic
+  // Smart Financial Insight Logic (Updated with safe calculations)
   const financialInsight = useMemo(() => {
-    const income = Number(currentMonthlyIncome) || 0;
-    const safeMonthlySpend = Number(monthlySpend) || 0;
-    
-    if (income <= 0) {
+    const safeSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
+    const safeTransactions = Array.isArray(transactions) ? transactions : [];
+    const now = new Date();
+
+    // 1. Monthly Income (current month only)
+    const monthlyIncome = safeTransactions
+      .filter(t => {
+        if (!t?.date) return false;
+        const d = new Date(t.date);
+        return (
+          t.type === "income" &&
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      })
+      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+    // 2. Monthly Subscriptions
+    const monthlySubscriptions = safeSubscriptions.reduce((sum, sub) => {
+      const price = Number(sub?.price) || 0;
+      if (sub?.billing_cycle === "yearly") {
+        return sum + price / 12;
+      }
+      return sum + price;
+    }, 0);
+
+    // 3. Ratio Calculation
+    let ratio = 0;
+    if (monthlyIncome > 0) {
+      ratio = monthlySubscriptions / monthlyIncome;
+    }
+
+    // Insight logic
+    if (monthlyIncome === 0) {
       return {
-        icon: <Info className="w-5 h-5 text-blue-500" />,
+        severity: "info",
+        icon: "🔵",
         title: "Personalized Insight",
-        message: "Add income to get personalized insights about your subscription health.",
-        color: "bg-blue-50 border-blue-100",
+        message: "Add income to get financial insights about your subscription health.",
+        color: "bg-blue-50 border-blue-200",
         textColor: "text-blue-700",
         cta: "Add Income"
       };
     }
-    
-    const ratio = safeMonthlySpend / income;
-    
+
     if (ratio > 0.5) {
       return {
-        icon: <AlertTriangle className="w-5 h-5 text-red-500" />,
-        title: "High Spending Alert",
-        message: "Your subscription spending is too high compared to your income. Consider reviewing your active plans.",
-        color: "bg-red-50 border-red-100",
+        severity: "danger",
+        icon: "⚠",
+        title: "You are spending too much on subscriptions",
+        message: "Your subscriptions take a large portion of your income. Consider reviewing your active plans.",
+        color: "bg-red-50 border-red-200",
         textColor: "text-red-700",
-        cta: "Review Subs"
+        cta: "Review subscriptions"
       };
     } else if (ratio >= 0.2) {
       return {
-        icon: <AlertCircle className="w-5 h-5 text-amber-500" />,
-        title: "Moderate Spending",
-        message: "Your subscription spending is moderate. It's a good time to review if all these are still necessary.",
-        color: "bg-amber-50 border-amber-100",
+        severity: "warning",
+        icon: "🟡",
+        title: "Your subscription spending is moderate",
+        message: "Consider reviewing your subscriptions to optimize your budget.",
+        color: "bg-amber-50 border-amber-200",
         textColor: "text-amber-700",
-        cta: "Review Plans"
+        cta: "Review subscriptions"
       };
     } else {
       return {
-        icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
-        title: "Healthy Spending",
-        message: "Your subscription spending is healthy and well within your budget. Great job!",
-        color: "bg-green-50 border-green-100",
+        severity: "good",
+        icon: "✅",
+        title: "Your subscription spending is healthy",
+        message: "You are managing your subscriptions well and staying within a safe range.",
+        color: "bg-green-50 border-green-200",
         textColor: "text-green-700"
       };
     }
-  }, [currentMonthlyIncome, monthlySpend]);
+  }, [subscriptions, transactions]);
 
   // Calculate month-over-month spending change
   const spendingChange = useMemo(() => {
@@ -308,16 +340,16 @@ const Dashboard = () => {
           </div>
 
           {/* Smart Financial Insight Card */}
-          <div className={cn("mb-8 p-4 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm", financialInsight.color)}>
+          <div className={cn("mb-8 p-5 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm", financialInsight.color)}>
             <div className="flex items-center gap-4">
-              <div className="shrink-0">
+              <div className="text-2xl shrink-0">
                 {financialInsight.icon}
               </div>
               <div className="flex flex-col">
-                <h4 className={cn("text-sm font-bold", financialInsight.textColor)}>
+                <h4 className={cn("text-base font-bold", financialInsight.textColor)}>
                   {financialInsight.title}
                 </h4>
-                <p className={cn("text-xs", financialInsight.textColor, "opacity-90")}>
+                <p className={cn("text-sm opacity-80", financialInsight.textColor)}>
                   {financialInsight.message}
                 </p>
               </div>
@@ -326,13 +358,13 @@ const Dashboard = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className={cn("whitespace-nowrap bg-white/50 hover:bg-white border-current/20", financialInsight.textColor)}
+                className={cn("whitespace-nowrap bg-white/50 hover:bg-white border-current/20 font-medium", financialInsight.textColor)}
                 onClick={() => {
                   if (financialInsight.cta === "Add Income") {
                     navigate("/finance");
                   } else {
-                    // Scroll to subscriptions or open details
-                    window.scrollTo({ top: 500, behavior: 'smooth' });
+                    // Scroll to subscriptions
+                    window.scrollTo({ top: 600, behavior: 'smooth' });
                   }
                 }}
               >
