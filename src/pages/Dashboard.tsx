@@ -435,11 +435,20 @@ const Dashboard = () => {
 
               {/* Bottom row */}
               <div>
-                <p className="text-[11px] text-muted-foreground leading-snug">
-                  {potentialSavings > 0 
-                    ? "You could save this by cancelling unused subscriptions" 
-                    : "No unused subscriptions detected"}
-                </p>
+                {potentialSavings > 0 ? (
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    You could save this by cancelling unused subscriptions
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[11px] font-medium text-muted-foreground leading-tight">
+                      You're managing your subscriptions well 🎉
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/70 leading-tight">
+                      Review your subscriptions to find hidden savings
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
