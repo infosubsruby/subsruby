@@ -19,7 +19,7 @@ export default function Upgrade() {
       }
 
       const { data, error } = await supabase.functions.invoke(
-        "lemonsqueezy-create-checkout",
+        "create-checkout",
         {
           body: {
             user_id: user.id,
