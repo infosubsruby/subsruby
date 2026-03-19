@@ -3,16 +3,23 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const crypto = globalThis.crypto;
 
+const timingSafeEqualHex = (a: string, b: string) => {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+};
+
 serve(async (req: Request) => {
   try {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    // 1. Secret Key Kontrolü
-    const secret = Deno.env.get("LEMONSQUEEZY_WEBHOOK_SECRET");
+    const secret = Deno.env.get("LEMON_SQUEEZY_WEBHOOK_SECRET");
     if (!secret) {
-      console.error("LEMONSQUEEZY_WEBHOOK_SECRET tanımlanmamış!");
       return new Response("Webhook secret not configured", { status: 500 });
     }
 
@@ -43,8 +50,7 @@ serve(async (req: Request) => {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    if (hexSignature !== signature) {
-      console.error("Geçersiz imza! Beklenen:", hexSignature, "Gelen:", signature);
+    if (!timingSafeEqualHex(hexSignature, signature)) {
       return new Response("Invalid signature", { status: 401 });
     }
 
@@ -77,53 +83,38 @@ serve(async (req: Request) => {
     }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let dbError = null;
+    const isSubscriptionEvent =
+      eventName === "subscription_created" ||
+      eventName === "subscription_updated" ||
+      eventName === "subscription_cancelled";
 
-    // 5. Olaylara Göre İşlem Yapma
-    
-    // SENARYO A: Tek Seferlik Ödeme (Lifetime Access) -> 'order_created'
-    if (eventName === "order_created") {
-       const { error: upsertError } = await supabase
-         .from("user_subscriptions")
-         .upsert({
-           user_id: userId,
-           customer_id: data.attributes.customer_id.toString(),
-           variant_id: data.attributes.first_order_item.variant_id.toString(),
-           status: "active", // Ömür boyu erişim 'active' kabul edilir
-           renews_at: null,  // Yenilenmez
-           ends_at: null     // Bitmez
-         }, { onConflict: "user_id" });
-       dbError = upsertError;
-    } 
-    // SENARYO B: Abonelik Başlatma/Güncelleme -> 'subscription_created', 'subscription_updated'
-    else if (eventName === "subscription_created" || eventName === "subscription_updated") {
-       const { error: upsertError } = await supabase
-         .from("user_subscriptions")
-         .upsert({
-           user_id: userId,
-           customer_id: data.attributes.customer_id.toString(),
-           subscription_id: data.id,
-           variant_id: data.attributes.variant_id.toString(),
-           status: data.attributes.status,
-           renews_at: data.attributes.renews_at,
-           ends_at: data.attributes.ends_at
-         }, { onConflict: "user_id" });
-       dbError = upsertError;
-    } 
-    // SENARYO C: Abonelik İptali/Bitmesi -> 'subscription_cancelled', 'subscription_expired'
-    else if (eventName === "subscription_cancelled" || eventName === "subscription_expired") {
-        const { error: updateError } = await supabase
-         .from("user_subscriptions")
-         .update({
-            status: data.attributes.status,
-            ends_at: data.attributes.ends_at
-         })
-         .eq("subscription_id", data.id);
-        dbError = updateError;
+    if (!isSubscriptionEvent) {
+      return new Response("Ignored", { status: 200 });
     }
 
-    if (dbError) {
-      console.error("Supabase veritabanı hatası:", dbError);
+    const attributes = data?.attributes ?? {};
+    const lemonCustomerId = attributes?.customer_id ? String(attributes.customer_id) : null;
+    const subscriptionId = data?.id ? String(data.id) : null;
+    const variantId = attributes?.variant_id ? String(attributes.variant_id) : null;
+    const subscriptionStatus = attributes?.status ? String(attributes.status) : null;
+    const currentPeriodEnd =
+      attributes?.current_period_end ??
+      attributes?.renews_at ??
+      attributes?.ends_at ??
+      null;
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        lemon_squeezy_customer_id: lemonCustomerId,
+        subscription_id: subscriptionId,
+        variant_id: variantId,
+        subscription_status: subscriptionStatus,
+        current_period_end: currentPeriodEnd,
+      })
+      .eq("id", userId);
+
+    if (updateError) {
       return new Response("Database error", { status: 500 });
     }
 

@@ -25,7 +25,11 @@ CREATE TABLE public.profiles (
   last_name TEXT,
   phone TEXT,
   avatar_url TEXT,
-  has_lifetime_access BOOLEAN NOT NULL DEFAULT false,
+  lemon_squeezy_customer_id TEXT,
+  subscription_id TEXT,
+  variant_id TEXT,
+  subscription_status TEXT,
+  current_period_end TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc'::text, now())
 );
 

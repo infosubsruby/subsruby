@@ -39,7 +39,6 @@ const PaymentSuccess = () => {
 
     frame();
 
-    // Refresh profile to get updated has_lifetime_access status
     refreshProfile();
   }, [refreshProfile]);
 
@@ -66,7 +65,7 @@ const PaymentSuccess = () => {
         </p>
         
         <p className="text-muted-foreground mb-8">
-          {t.paymentSuccess?.message || "Your Pro features will be activated shortly. You now have unlimited access to all premium features."}
+          {t.paymentSuccess?.message || "Your Pro subscription will be activated shortly. You’ll have access to all premium features."}
         </p>
 
         {/* Status Card */}
@@ -74,7 +73,7 @@ const PaymentSuccess = () => {
           <div className="flex items-center justify-center gap-3 text-success">
             <CheckCircle2 className="w-5 h-5" />
             <span className="font-medium">
-              {t.paymentSuccess?.status || "Lifetime Pro Access Activated"}
+              {t.paymentSuccess?.status || "Pro subscription activated"}
             </span>
           </div>
         </div>

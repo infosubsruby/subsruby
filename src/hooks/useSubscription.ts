@@ -14,19 +14,17 @@ export const useSubscription = () => {
           return;
         }
 
-        // 'as any' ekleyerek TypeScript hatasını çözüyoruz
         const { data, error } = await supabase
-          .from('user_subscriptions' as any)
-          .select('status')
-          .eq('user_id', user.id)
-          .in('status', ['active', 'trialing'])
+          .from("profiles")
+          .select("subscription_status")
+          .eq("id", user.id)
           .maybeSingle();
 
         if (error) {
           console.error("Supabase error:", error);
           setIsPro(false);
-        } else if (data) {
-          setIsPro(true);
+        } else if (data?.subscription_status) {
+          setIsPro(["active", "trialing"].includes(String(data.subscription_status)));
         } else {
           setIsPro(false);
         }

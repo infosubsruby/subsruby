@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useAuth } from "./useAuth";
 import { useSubscription } from "./useSubscription";
 import { subscriptionsKeys } from "./subscriptions/keys";
@@ -13,7 +14,7 @@ export type { CreateSubscriptionData, Subscription };
 type CreateSubscriptionResult = { success: true } | { success: false; reason?: "limit" | "auth" | "error" };
 
 export const useSubscriptions = () => {
-  const { user, isTrialActive, isUnlimited } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { isPro } = useSubscription();
   const queryClient = useQueryClient();
 
@@ -46,31 +47,31 @@ export const useSubscriptions = () => {
           table: "subscriptions",
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<Subscription>) => {
           queryClient.setQueryData(listKey, (old) => {
             const prev = (old ?? []) as Subscription[];
             if (payload.eventType === "INSERT") {
-              const incoming = payload.new as any;
+              const incoming = payload.new as Subscription;
               const normalized: Subscription = {
-                ...(incoming as Subscription),
-                currency: incoming?.currency ?? "USD",
-                card_color: incoming?.card_color ?? "#E50914",
+                ...incoming,
+                currency: incoming.currency ?? "USD",
+                card_color: incoming.card_color ?? "#E50914",
               };
               if (prev.some((s) => s.id === normalized.id)) return prev;
               return [normalized, ...prev];
             }
             if (payload.eventType === "UPDATE") {
-              const incoming = payload.new as any;
+              const incoming = payload.new as Subscription;
               const normalized: Subscription = {
-                ...(incoming as Subscription),
-                currency: incoming?.currency ?? "USD",
-                card_color: incoming?.card_color ?? "#E50914",
+                ...incoming,
+                currency: incoming.currency ?? "USD",
+                card_color: incoming.card_color ?? "#E50914",
               };
               return prev.map((s) => (s.id === normalized.id ? normalized : s));
             }
             if (payload.eventType === "DELETE") {
-              const deleted = payload.old as any;
-              return prev.filter((s) => s.id !== (deleted?.id as number));
+              const deleted = payload.old as Subscription;
+              return prev.filter((s) => s.id !== deleted.id);
             }
             return prev;
           });
@@ -84,8 +85,7 @@ export const useSubscriptions = () => {
   }, [user, queryClient, listKey]);
 
   const canAddSubscription = (): boolean => {
-    // Unlimited users (admins or lifetime access) or Pro users have no limits
-    if (isUnlimited || isPro) return true;
+    if (isAdmin || isPro) return true;
     
     // All other users are limited
     return subscriptions.length < MAX_TRIAL_SUBSCRIPTIONS;

@@ -22,6 +22,7 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { Search, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLimitModal";
+import type { Database } from "@/integrations/supabase/types";
 
 const GLOBAL_CURRENCIES = ['USD', 'TRY', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CNY', 'INR', 'BRL', 'MXN', 'RUB', 'CHF', 'SEK', 'NOK', 'DKK', 'SAR', 'AED', 'Other'];
 
@@ -69,9 +70,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
   // --- NEW ARCHITECTURE STATE ---
   type SelectedServiceState = { id: number; name: string } | null;
   const [selectedService, setSelectedService] = useState<SelectedServiceState>(null); // Used to fetch plans
-  const [allPlans, setAllPlans] = useState<any[]>([]); // Raw plans from DB
-  const [filteredPlans, setFilteredPlans] = useState<any[]>([]); // Plans for current currency + billing
-  const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
+  type SubscriptionPlanRow = Database["public"]["Tables"]["subscription_plans"]["Row"];
+  const [allPlans, setAllPlans] = useState<SubscriptionPlanRow[]>([]); // Raw plans from DB
+  const [filteredPlans, setFilteredPlans] = useState<SubscriptionPlanRow[]>([]); // Plans for current currency + billing
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanRow | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
   const [plansLoading, setPlansLoading] = useState(false);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>([]);
@@ -197,8 +199,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
     try {
       let svcId: number | null = null;
       // Try by slug first if available
-      // @ts-ignore - some presets may not have slug
-      const presetSlug = (preset as any).slug as string | undefined;
+      const presetSlug = (preset as SubscriptionPreset & { slug?: string }).slug;
       if (presetSlug) {
         const { data: bySlug } = await supabase.from('services').select('id,name').eq('slug', presetSlug).maybeSingle();
         if (bySlug) {

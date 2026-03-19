@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 
 export const TrialBanner = () => {
   const navigate = useNavigate();
-  const { isUnlimited } = useAuth();
+  const { isAdmin } = useAuth();
   const { isPro } = useSubscription();
   const { subscriptions } = useSubscriptions();
 
   const FREE_PLAN_LIMIT = 3;
   const used = Math.min(Array.isArray(subscriptions) ? subscriptions.length : 0, FREE_PLAN_LIMIT);
 
-  if (isUnlimited || isPro) return null;
+  if (isAdmin || isPro) return null;
 
   return (
     <div className="trial-banner px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl mb-6 animate-fade-in">

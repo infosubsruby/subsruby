@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, isUnlimited } = useAuth();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const { isPro, loading: subStatusLoading } = useSubscription();
   const { t } = useLanguage();
   const { 
@@ -62,7 +62,7 @@ const Dashboard = () => {
   const [displayCurrency, setDisplayCurrency] = useState<string | null>("TRY");
 
   const FREE_PLAN_LIMIT = 3;
-  const isFreeLimited = !isPro && !isUnlimited;
+  const isFreeLimited = !isPro && !isAdmin;
   const canAddSubscription = !isFreeLimited || subscriptions.length < FREE_PLAN_LIMIT;
 
   const handleAddSubscription = () => {

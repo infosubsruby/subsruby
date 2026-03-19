@@ -33,7 +33,7 @@ const PaymentCancel = () => {
             <li>• {t.paymentCancel?.reason1 || "Unlimited subscription tracking"}</li>
             <li>• {t.paymentCancel?.reason2 || "Advanced analytics and insights"}</li>
             <li>• {t.paymentCancel?.reason3 || "Priority support"}</li>
-            <li>• {t.paymentCancel?.reason4 || "One-time payment, lifetime access"}</li>
+            <li>• {t.paymentCancel?.reason4 || "Cancel anytime"}</li>
           </ul>
         </div>
 

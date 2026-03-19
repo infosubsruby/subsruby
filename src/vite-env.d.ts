@@ -5,6 +5,6 @@ interface Window {
     Url: {
       Open: (url: string) => void;
     };
-    Setup: (options: { eventHandler?: (event: any) => void }) => void;
+    Setup: (options: { eventHandler?: (event: unknown) => void }) => void;
   };
 }

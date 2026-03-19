@@ -77,8 +77,8 @@ export const NewSubscriptionModal = ({ open, onOpenChange }: NewSubscriptionModa
   const filteredPlans = useMemo(() => {
     return plans.filter(
       p =>
-        (!!selectedCurrency ? p.currency === selectedCurrency : true) &&
-        (!!billingCycle ? p.billing_cycle === billingCycle : true)
+        (selectedCurrency ? p.currency === selectedCurrency : true) &&
+        (billingCycle ? p.billing_cycle === billingCycle : true)
     );
   }, [plans, selectedCurrency, billingCycle]);
 

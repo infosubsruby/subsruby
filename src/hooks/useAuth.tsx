@@ -10,7 +10,11 @@ interface Profile {
   email: string | null;
   avatar_url: string | null;
   created_at: string;
-  has_lifetime_access: boolean;
+  lemon_squeezy_customer_id: string | null;
+  subscription_id: string | null;
+  variant_id: string | null;
+  subscription_status: string | null;
+  current_period_end: string | null;
 }
 
 interface AuthContextType {
@@ -18,7 +22,6 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   isAdmin: boolean;
-  isUnlimited: boolean;
   isLoading: boolean;
   signUp: (
     email: string,
@@ -28,8 +31,6 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  trialDaysLeft: number;
-  isTrialActive: boolean;
   refreshProfile: () => Promise<void>;
 }
 
@@ -41,24 +42,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Calculate trial days
-  const calculateTrialDays = (): number => {
-    if (!profile?.created_at) return 7;
-    const createdDate = new Date(profile.created_at);
-    const now = new Date();
-    const diffTime = now.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, 7 - diffDays);
-  };
-
-  const trialDaysLeft = calculateTrialDays();
-  
-  // User is unlimited if they have lifetime access OR are an admin
-  const isUnlimited = Boolean(profile?.has_lifetime_access) || isAdmin;
-  
-  // Trial is only active for non-unlimited users
-  const isTrialActive = !isUnlimited && trialDaysLeft > 0;
 
   // Fetch profile data and sync OAuth info if needed
   const fetchProfile = async (userId: string, currentSession?: Session | null) => {
@@ -211,14 +194,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         profile,
         isAdmin,
-        isUnlimited,
         isLoading,
         signUp,
         signIn,
         signInWithGoogle,
         signOut,
-        trialDaysLeft,
-        isTrialActive,
         refreshProfile,
       }}
     >

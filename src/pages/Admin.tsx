@@ -24,7 +24,6 @@ import {
 import { AdminFeedbackPanel } from "@/components/admin/AdminFeedbackPanel";
 import { AdminAddSubscriptionModal } from "@/components/admin/AdminAddSubscriptionModal";
 import { AdminSubscriptionManagement } from "@/components/admin/AdminSubscriptionManagement";
-import { GrantLifetimeAccessModal } from "@/components/admin/GrantLifetimeAccessModal";
 import {
   Shield, 
   Users, 
@@ -32,15 +31,13 @@ import {
   AlertTriangle, 
   Loader2, 
   CreditCard, 
-  Clock, 
   MessageSquare,
   Plus,
   Settings2,
-  Crown,
   CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 
 interface UserData {
   id: string;
@@ -49,7 +46,7 @@ interface UserData {
   email: string | null;
   phone: string | null;
   created_at: string;
-  has_lifetime_access: boolean;
+  subscription_status: string | null;
   subscription_count: number;
 }
 
@@ -61,8 +58,6 @@ const Admin = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddSubModalOpen, setIsAddSubModalOpen] = useState(false);
-  const [isGrantAccessModalOpen, setIsGrantAccessModalOpen] = useState(false);
-  const [grantingAccessUserId, setGrantingAccessUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -105,16 +100,6 @@ const Admin = () => {
     setIsLoading(false);
   };
 
-  const getTrialStatus = (createdAt: string): { status: string; daysLeft: number } => {
-    const daysSinceCreated = differenceInDays(new Date(), new Date(createdAt));
-    const daysLeft = Math.max(0, 7 - daysSinceCreated);
-    
-    if (daysLeft > 0) {
-      return { status: "Trial", daysLeft };
-    }
-    return { status: "Expired", daysLeft: 0 };
-  };
-
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
@@ -136,25 +121,6 @@ const Admin = () => {
     setIsDeleting(false);
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
-  };
-
-  const handleGrantAccess = async (userId: string) => {
-    setGrantingAccessUserId(userId);
-    
-    const { error } = await supabase
-      .from("profiles")
-      .update({ has_lifetime_access: true })
-      .eq("id", userId);
-
-    if (error) {
-      toast.error("Failed to grant access");
-      console.error(error);
-    } else {
-      toast.success("Lifetime access granted!");
-      fetchUsers();
-    }
-
-    setGrantingAccessUserId(null);
   };
 
   // Redirect to login if not authenticated
@@ -195,14 +161,6 @@ const Admin = () => {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => setIsGrantAccessModalOpen(true)}
-                variant="outline"
-                className="gap-2"
-              >
-                <Crown className="w-5 h-5" />
-                Grant Lifetime Access
-              </Button>
-              <Button
                 onClick={() => setIsAddSubModalOpen(true)}
                 className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong gap-2"
               >
@@ -213,7 +171,7 @@ const Admin = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div className="glass-card rounded-xl p-5 flex items-center gap-4">
               <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
                 <Users className="w-6 h-6 text-primary" />
@@ -221,18 +179,6 @@ const Admin = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Users</p>
                 <p className="font-display text-2xl font-bold">{users.length}</p>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
-                <Clock className="w-6 h-6 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">On Trial</p>
-                <p className="font-display text-2xl font-bold">
-                  {users.filter((u) => getTrialStatus(u.created_at).daysLeft > 0).length}
-                </p>
               </div>
             </div>
 
@@ -282,7 +228,6 @@ const Admin = () => {
                   </TableHeader>
                   <TableBody>
                     {users.map((userData) => {
-                      const trial = getTrialStatus(userData.created_at);
                       return (
                         <TableRow key={userData.id} className="border-border">
                           <TableCell className="font-medium">
@@ -295,20 +240,9 @@ const Admin = () => {
                             {format(new Date(userData.created_at), "MMM d, yyyy")}
                           </TableCell>
                           <TableCell>
-                            {userData.has_lifetime_access ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary gap-1">
-                                <Crown className="w-3 h-3" />
-                                Unlimited
-                              </span>
-                            ) : trial.daysLeft > 0 ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning/20 text-warning">
-                                Trial - {trial.daysLeft}d left
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                                Expired
-                              </span>
-                            )}
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                              {userData.subscription_status || "free"}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <span className="inline-flex items-center gap-1">
@@ -318,21 +252,6 @@ const Admin = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
-                              {!userData.has_lifetime_access && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-primary hover:text-primary hover:bg-primary/10"
-                                  onClick={() => handleGrantAccess(userData.id)}
-                                  disabled={grantingAccessUserId === userData.id}
-                                >
-                                  {grantingAccessUserId === userData.id ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Crown className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -406,13 +325,6 @@ const Admin = () => {
       <AdminAddSubscriptionModal
         open={isAddSubModalOpen}
         onOpenChange={setIsAddSubModalOpen}
-        onSuccess={fetchUsers}
-      />
-
-      {/* Grant Lifetime Access Modal */}
-      <GrantLifetimeAccessModal
-        open={isGrantAccessModalOpen}
-        onOpenChange={setIsGrantAccessModalOpen}
         onSuccess={fetchUsers}
       />
     </div>

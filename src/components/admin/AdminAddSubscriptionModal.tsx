@@ -34,6 +34,15 @@ interface AdminAddSubscriptionModalProps {
   onSuccess: () => void;
 }
 
+type SubscriptionPlan = {
+  id: number;
+  price: number;
+  currency: string;
+  plan_name: string;
+  name: string;
+  billing_cycle: string | null;
+};
+
 export const AdminAddSubscriptionModal = ({
   open,
   onOpenChange,
@@ -44,7 +53,7 @@ export const AdminAddSubscriptionModal = ({
   const [websiteUrl, setWebsiteUrl] = useState("");
   
   // Plan & Price State
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [customPrice, setCustomPrice] = useState("");
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");

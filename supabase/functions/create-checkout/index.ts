@@ -22,22 +22,27 @@ serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("LEMONSQUEEZY_API_KEY");
-    const storeId = Deno.env.get("LEMONSQUEEZY_STORE_ID");
-    const monthlyVariantId = Deno.env.get("LEMONSQUEEZY_VARIANT_ID_MONTHLY");
-    const yearlyVariantId = Deno.env.get("LEMONSQUEEZY_VARIANT_ID_YEARLY");
+    const apiKey = Deno.env.get("LEMON_SQUEEZY_API_KEY");
+    const storeId = Deno.env.get("LEMON_SQUEEZY_STORE_ID");
+    const variantId = Deno.env.get("LEMON_SQUEEZY_VARIANT_ID");
 
-    if (!apiKey || !storeId || !monthlyVariantId || !yearlyVariantId) {
-      console.error("Missing required env vars for Lemon Squeezy checkout");
+    if (!apiKey || !storeId || !variantId) {
       throw new Error("Missing server configuration.");
     }
 
     const body = await req.json();
     const userId = body?.user_id ? String(body.user_id) : null;
-    const billingCycleRaw = body?.billing_cycle ?? body?.plan ?? "monthly";
-    const billingCycle = billingCycleRaw === "yearly" ? "yearly" : "monthly";
 
-    const variantId = billingCycle === "yearly" ? yearlyVariantId : monthlyVariantId
+    if (!userId) {
+      return new Response(JSON.stringify({ message: "Missing user_id" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const shouldRedirect =
+      body?.redirect === true ||
+      (typeof body?.redirect === "string" && body.redirect === "true");
 
     const payload = {
       data: {
@@ -45,7 +50,7 @@ serve(async (req) => {
         attributes: {
           checkout_data: {
             custom: {
-              user_id: userId ?? undefined,
+              user_id: userId,
             },
           },
         },
@@ -69,36 +74,44 @@ serve(async (req) => {
     const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
       method: "POST",
       headers: {
-        "Accept": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-        console.error("Lemon Squeezy API Error:", data);
-        const errorMessage = data.errors?.[0]?.detail || "Lemon Squeezy API Error";
-        throw new Error(errorMessage);
+      const errorMessage = data?.errors?.[0]?.detail || "Lemon Squeezy API Error";
+      throw new Error(errorMessage);
     }
 
     const checkoutUrl = data?.data?.attributes?.url ?? null;
+
+    if (shouldRedirect && checkoutUrl) {
+      return new Response(null, {
+        status: 303,
+        headers: {
+          ...corsHeaders,
+          Location: String(checkoutUrl),
+          "Content-Type": "application/json",
+        },
+      });
+    }
 
     return new Response(JSON.stringify({ checkoutUrl, data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-
   } catch (error) {
-    console.error("Checkout Function Error:", error);
     return new Response(
-      JSON.stringify({ 
-        message: error.message || "Internal Server Error",
-        error: String(error)
+      JSON.stringify({
+        message: error instanceof Error ? error.message : "Internal Server Error",
+        error: String(error),
       }),
-      { 
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       }

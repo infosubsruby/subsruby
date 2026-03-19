@@ -24,8 +24,12 @@ export interface Profile {
   last_name: string | null;
   phone: string | null;
   avatar_url: string | null;
-  has_lifetime_access: boolean;
   created_at: string; // timestamp with time zone
+  lemon_squeezy_customer_id: string | null;
+  subscription_id: string | null;
+  variant_id: string | null;
+  subscription_status: string | null;
+  current_period_end: string | null;
 }
 
 export interface ProfileInsert {
@@ -35,8 +39,12 @@ export interface ProfileInsert {
   last_name?: string | null;
   phone?: string | null;
   avatar_url?: string | null;
-  has_lifetime_access?: boolean;
   created_at?: string;
+  lemon_squeezy_customer_id?: string | null;
+  subscription_id?: string | null;
+  variant_id?: string | null;
+  subscription_status?: string | null;
+  current_period_end?: string | null;
 }
 
 export interface ProfileUpdate {
@@ -46,8 +54,12 @@ export interface ProfileUpdate {
   last_name?: string | null;
   phone?: string | null;
   avatar_url?: string | null;
-  has_lifetime_access?: boolean;
   created_at?: string;
+  lemon_squeezy_customer_id?: string | null;
+  subscription_id?: string | null;
+  variant_id?: string | null;
+  subscription_status?: string | null;
+  current_period_end?: string | null;
 }
 
 // USER_ROLES

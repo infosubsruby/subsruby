@@ -102,32 +102,44 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          current_period_end: string | null
           email: string | null
           first_name: string | null
-          has_lifetime_access: boolean
           id: string
           last_name: string | null
+          lemon_squeezy_customer_id: string | null
           phone: string | null
+          subscription_id: string | null
+          subscription_status: string | null
+          variant_id: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          current_period_end?: string | null
           email?: string | null
           first_name?: string | null
-          has_lifetime_access?: boolean
           id: string
           last_name?: string | null
+          lemon_squeezy_customer_id?: string | null
           phone?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          variant_id?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          current_period_end?: string | null
           email?: string | null
           first_name?: string | null
-          has_lifetime_access?: boolean
           id?: string
           last_name?: string | null
+          lemon_squeezy_customer_id?: string | null
           phone?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          variant_id?: string | null
         }
         Relationships: []
       }

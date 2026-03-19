@@ -4,13 +4,14 @@ import type { CreateSubscriptionData, Subscription } from "./types";
 const DEFAULT_CURRENCY = "USD";
 const DEFAULT_CARD_COLOR = "#E50914";
 
-function normalizeSubscription(row: any): Subscription {
+function normalizeSubscription(row: unknown): Subscription {
+  const sub = row as Subscription & { is_marked_unused?: boolean | null };
   return {
-    ...(row as Subscription),
-    currency: (row?.currency ?? DEFAULT_CURRENCY) as string,
-    card_color: (row?.card_color ?? DEFAULT_CARD_COLOR) as string,
-    country_code: row?.country_code ?? null,
-    is_marked_unused: !!(row?.is_marked_unused),
+    ...(sub as Subscription),
+    currency: (sub.currency ?? DEFAULT_CURRENCY) as string,
+    card_color: (sub.card_color ?? DEFAULT_CARD_COLOR) as string,
+    country_code: sub.country_code ?? null,
+    is_marked_unused: Boolean(sub.is_marked_unused),
   };
 }
 
