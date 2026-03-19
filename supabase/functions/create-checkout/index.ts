@@ -24,9 +24,10 @@ serve(async (req) => {
 
     const apiKey = Deno.env.get("LEMON_SQUEEZY_API_KEY");
     const storeId = Deno.env.get("LEMON_SQUEEZY_STORE_ID");
-    const variantId = Deno.env.get("LEMON_SQUEEZY_VARIANT_ID");
+    const monthlyVariantId = Deno.env.get("LEMON_VARIANT_MONTHLY");
+    const yearlyVariantId = Deno.env.get("LEMON_VARIANT_YEARLY");
 
-    if (!apiKey || !storeId || !variantId) {
+    if (!apiKey || !storeId || !monthlyVariantId || !yearlyVariantId) {
       throw new Error("Missing server configuration.");
     }
 
@@ -39,6 +40,10 @@ serve(async (req) => {
         status: 400,
       });
     }
+
+    const planRaw = body?.plan ?? body?.billing_cycle ?? "monthly";
+    const plan = planRaw === "yearly" ? "yearly" : "monthly";
+    const variantId = plan === "yearly" ? yearlyVariantId : monthlyVariantId;
 
     const shouldRedirect =
       body?.redirect === true ||

@@ -23,6 +23,7 @@ export default function Upgrade() {
         {
           body: {
             user_id: user.id,
+            plan: billingCycle,
             billing_cycle: billingCycle,
           },
         }
