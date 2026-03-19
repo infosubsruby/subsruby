@@ -75,6 +75,15 @@ function safeStringifyError(error: unknown) {
   };
 }
 
+function getBaseUrl(req: IncomingMessage): string | null {
+  const protoHeader = req.headers["x-forwarded-proto"];
+  const proto = Array.isArray(protoHeader) ? protoHeader[0] : protoHeader;
+  const hostHeader = req.headers["x-forwarded-host"] ?? req.headers.host;
+  const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+  if (!host) return null;
+  return `${proto === "https" ? "https" : "http"}://${host}`;
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const requestId = `ls_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {
@@ -154,11 +163,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const shouldRedirect = body.redirect === true || body.redirect === "true";
+    const baseUrl = getBaseUrl(req);
+    const redirectUrl =
+      typeof body.redirect_url === "string"
+        ? body.redirect_url
+        : baseUrl
+          ? `${baseUrl}/dashboard`
+          : null;
 
     const payload = {
       data: {
         type: "checkouts",
         attributes: {
+          checkout_options: redirectUrl ? { redirect_url: redirectUrl } : undefined,
           checkout_data: {
             custom: {
               user_id: userId,

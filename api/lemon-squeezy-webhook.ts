@@ -35,8 +35,14 @@ function timingSafeEqualHex(aHex: string, bHex: string): boolean {
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
+    if (req.method === "HEAD" || req.method === "GET") {
+      sendText(res, 200, "OK");
+      return;
+    }
+
     if (req.method !== "POST") {
-      sendText(res, 405, "Method not allowed");
+      res.setHeader("Allow", "POST");
+      sendText(res, 405, `Method not allowed: ${req.method ?? "unknown"}`);
       return;
     }
 
@@ -138,4 +144,3 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     sendText(res, 500, message);
   }
 }
-
