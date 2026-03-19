@@ -18,21 +18,21 @@ export default function Upgrade() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke(
-        "create-checkout",
-        {
-          body: {
-            user_id: user.id,
-            plan: billingCycle,
-            billing_cycle: billingCycle,
-          },
-        }
-      );
-
-      if (error) {
-        throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
       }
+      const response = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          user_id: user.id,
+          plan: billingCycle,
+        }),
+      });
 
+      const data = await response.json();
       const checkoutUrl = data?.checkoutUrl;
       if (!checkoutUrl) {
         throw new Error("Checkout URL not returned");

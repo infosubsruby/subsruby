@@ -304,7 +304,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
         onOpenChange(false);
         onCreated?.();
       } else {
-        if (result.reason === "limit") {
+        if (!result.success && result.reason === "limit") {
           onOpenChange(false);
           setIsLimitModalOpen(true);
         }

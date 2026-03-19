@@ -11,7 +11,9 @@ import { fetchSubscriptions, insertSubscription, patchSubscription, removeSubscr
 
 export type { CreateSubscriptionData, Subscription };
 
-type CreateSubscriptionResult = { success: true } | { success: false; reason?: "limit" | "auth" | "error" };
+export type CreateSubscriptionResult =
+  | { success: true; reason?: undefined }
+  | { success: false; reason: "limit" | "auth" | "error" };
 
 export const useSubscriptions = () => {
   const { user, isAdmin } = useAuth();
