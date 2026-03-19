@@ -64,8 +64,17 @@ serve(async (req: Request) => {
     }
 
     // 4. Supabase Bağlantısı
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("MY_SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("MY_SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl =
+      Deno.env.get("SUPABASE_URL") ?? Deno.env.get("MY_SUPABASE_URL") ?? "";
+    const supabaseKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+      Deno.env.get("MY_SUPABASE_SERVICE_ROLE_KEY") ??
+      "";
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing Supabase configuration for webhook");
+      return new Response("Supabase not configured", { status: 500 });
+    }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     let dbError = null;
