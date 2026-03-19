@@ -1,15 +1,30 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
+const baseCorsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const withCors = (req: Request) => {
+  const requestedHeaders = req.headers.get("access-control-request-headers");
+  return {
+    ...baseCorsHeaders,
+    ...(requestedHeaders
+      ? { "Access-Control-Allow-Headers": requestedHeaders }
+      : null),
+  };
+};
+
 serve(async (req) => {
-  // Handle CORS preflight
+  const corsHeaders = withCors(req);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders, status: 200 });
+  }
+
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { headers: corsHeaders, status: 405 });
   }
 
   try {
