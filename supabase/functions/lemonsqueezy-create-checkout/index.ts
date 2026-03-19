@@ -1,33 +1,27 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const baseCorsHeaders = {
+const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const withCors = (req: Request) => {
-  const requestedHeaders = req.headers.get("access-control-request-headers");
-  return {
-    ...baseCorsHeaders,
-    ...(requestedHeaders
-      ? { "Access-Control-Allow-Headers": requestedHeaders }
-      : null),
-  };
-};
-
 serve(async (req) => {
-  const corsHeaders = withCors(req);
-
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders, status: 200 });
-  }
-
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { headers: corsHeaders, status: 405 });
-  }
-
   try {
+    if (req.method === "OPTIONS") {
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ message: "Method not allowed" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 405,
+      });
+    }
+
     const apiKey = Deno.env.get("LEMONSQUEEZY_API_KEY");
     const storeId = Deno.env.get("LEMONSQUEEZY_STORE_ID");
     const monthlyVariantId = Deno.env.get("LEMONSQUEEZY_VARIANT_ID_MONTHLY");
