@@ -175,7 +175,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       data: {
         type: "checkouts",
         attributes: {
-          checkout_options: redirectUrl ? { redirect_url: redirectUrl } : undefined,
+          product_options: redirectUrl ? { redirect_url: redirectUrl } : undefined,
           checkout_data: {
             custom: {
               user_id: userId,
