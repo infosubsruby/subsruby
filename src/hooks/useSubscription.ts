@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { errorMessageOrValue } from '@/lib/error';
 
 export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,7 @@ export const useSubscription = () => {
           .maybeSingle();
 
         if (error) {
-          console.error("Supabase error:", error);
+          console.error("Supabase Çekme Hatası:", errorMessageOrValue(error));
           setIsPro(false);
         } else if (data?.status) {
           setIsPro(["active", "trialing"].includes(String(data.status)));
@@ -29,7 +30,7 @@ export const useSubscription = () => {
           setIsPro(false);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Supabase Çekme Hatası:", errorMessageOrValue(error));
         setIsPro(false);
       } finally {
         setLoading(false);

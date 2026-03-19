@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { currencies } from "@/data/subscriptionPresets";
+import { errorMessageOrValue } from "@/lib/error";
 
 interface SubscriptionData {
   id: number;
@@ -101,7 +102,7 @@ export const AdminSubscriptionManagement = () => {
 
     if (error) {
       toast.error("Failed to fetch subscriptions");
-      console.error(error);
+      console.error("Supabase Çekme Hatası:", errorMessageOrValue(error));
       setIsLoading(false);
       return;
     }
@@ -245,7 +246,7 @@ export const AdminSubscriptionManagement = () => {
       setIsEditDialogOpen(false);
       fetchSubscriptions();
     } catch (error) {
-      console.error(error);
+      console.error("Supabase Çekme Hatası:", errorMessageOrValue(error));
       toast.error("Failed to update subscriptions");
     } finally {
       setIsSaving(false);

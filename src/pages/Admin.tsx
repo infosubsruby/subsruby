@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { errorMessageOrValue } from "@/lib/error";
 
 interface UserData {
   id: string;
@@ -76,7 +77,7 @@ const Admin = () => {
 
     if (profilesError) {
       toast.error("Failed to fetch users");
-      console.error(profilesError);
+      console.error("Supabase Çekme Hatası:", errorMessageOrValue(profilesError));
       setIsLoading(false);
       return;
     }
@@ -112,7 +113,7 @@ const Admin = () => {
 
     if (error) {
       toast.error("Failed to delete user");
-      console.error(error);
+      console.error("Supabase Çekme Hatası:", errorMessageOrValue(error));
     } else {
       toast.success("User deleted successfully");
       fetchUsers();

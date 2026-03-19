@@ -8,6 +8,7 @@ import { useSubscription } from "./useSubscription";
 import { subscriptionsKeys } from "./subscriptions/keys";
 import type { CreateSubscriptionData, Subscription } from "./subscriptions/types";
 import { fetchSubscriptions, insertSubscription, patchSubscription, removeSubscription } from "./subscriptions/api";
+import { errorMessageOrValue } from "@/lib/error";
 
 export type { CreateSubscriptionData, Subscription };
 
@@ -131,7 +132,7 @@ export const useSubscriptions = () => {
     },
     onError: (err, _payload, ctx) => {
       if (ctx?.previous) queryClient.setQueryData(listKey, ctx.previous);
-      console.error(err);
+      console.error("Supabase Çekme Hatası:", errorMessageOrValue(err));
       toast.error("Failed to create subscription");
     },
     onSuccess: (created, _payload, ctx) => {
@@ -152,7 +153,7 @@ export const useSubscriptions = () => {
       await patchSubscription(id, payload);
     },
     onError: (err) => {
-      console.error(err);
+      console.error("Supabase Çekme Hatası:", errorMessageOrValue(err));
       toast.error("Failed to update subscription");
     },
     onSuccess: () => {
@@ -166,7 +167,7 @@ export const useSubscriptions = () => {
       await removeSubscription(id);
     },
     onError: (err) => {
-      console.error(err);
+      console.error("Supabase Çekme Hatası:", errorMessageOrValue(err));
       toast.error("Failed to delete subscription");
     },
     onSuccess: () => {
