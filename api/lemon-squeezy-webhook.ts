@@ -49,6 +49,22 @@ function timingSafeEqualHex(aHex: string, bHex: string): boolean {
   return crypto.timingSafeEqual(a, b);
 }
 
+function errorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    return typeof message === "string" ? message : String(message ?? "");
+  }
+  return "";
+}
+
+function isMissingColumn(error: unknown, column: string): boolean {
+  const message = errorMessage(error);
+  if (!message) return false;
+  return (
+    message.includes(`column "${column}"`) && message.includes("does not exist")
+  ) || message.includes(`profiles.${column} does not exist`);
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
     if (req.method === "HEAD" || req.method === "GET") {
@@ -138,16 +154,27 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         ? String(attrs.current_period_end ?? attrs.renews_at ?? attrs.ends_at)
         : null;
 
-    const { error } = await supabase
+    const baseUpdate = {
+      lemon_squeezy_customer_id: lemonCustomerId,
+      subscription_id: subscriptionId,
+      variant_id: variantId,
+      current_period_end: currentPeriodEnd,
+    };
+
+    const first = await supabase
       .from("profiles")
-      .update({
-        lemon_squeezy_customer_id: lemonCustomerId,
-        subscription_id: subscriptionId,
-        variant_id: variantId,
-        status: subscriptionStatus,
-        current_period_end: currentPeriodEnd,
-      })
+      .update({ ...baseUpdate, subscription_status: subscriptionStatus })
       .eq("id", userId);
+
+    const second =
+      first.error && isMissingColumn(first.error, "subscription_status")
+        ? await supabase
+            .from("profiles")
+            .update({ ...baseUpdate, status: subscriptionStatus })
+            .eq("id", userId)
+        : null;
+
+    const error = second?.error ?? first.error;
 
     if (error) {
       sendText(res, 500, "Database error");
