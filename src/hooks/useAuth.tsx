@@ -13,7 +13,7 @@ interface Profile {
   lemon_squeezy_customer_id: string | null;
   subscription_id: string | null;
   variant_id: string | null;
-  subscription_status: string | null;
+  status: string | null;
   current_period_end: string | null;
 }
 

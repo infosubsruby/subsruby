@@ -26,6 +26,22 @@ function safeString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
 
+function getNestedSubscriptionId(data: Record<string, unknown>, attrs: Record<string, unknown>): string | null {
+  const directId = data.id;
+  if (directId != null) return String(directId);
+
+  const firstItem = attrs.first_subscription_item;
+  if (isRecord(firstItem)) {
+    const nested = firstItem.subscription_id ?? firstItem.id;
+    if (nested != null) return String(nested);
+  }
+
+  const nested = attrs.subscription_id;
+  if (nested != null) return String(nested);
+
+  return null;
+}
+
 function timingSafeEqualHex(aHex: string, bHex: string): boolean {
   const a = Buffer.from(aHex, "hex");
   const b = Buffer.from(bHex, "hex");
@@ -114,7 +130,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const attrs = isRecord(attributes) ? attributes : {};
 
     const lemonCustomerId = attrs.customer_id != null ? String(attrs.customer_id) : null;
-    const subscriptionId = data.id != null ? String(data.id) : null;
+    const subscriptionId = getNestedSubscriptionId(data, attrs);
     const variantId = attrs.variant_id != null ? String(attrs.variant_id) : null;
     const subscriptionStatus = attrs.status != null ? String(attrs.status) : null;
     const currentPeriodEnd =
@@ -128,7 +144,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         lemon_squeezy_customer_id: lemonCustomerId,
         subscription_id: subscriptionId,
         variant_id: variantId,
-        subscription_status: subscriptionStatus,
+        status: subscriptionStatus,
         current_period_end: currentPeriodEnd,
       })
       .eq("id", userId);

@@ -16,15 +16,15 @@ export const useSubscription = () => {
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("subscription_status")
+          .select("status")
           .eq("id", user.id)
           .maybeSingle();
 
         if (error) {
           console.error("Supabase error:", error);
           setIsPro(false);
-        } else if (data?.subscription_status) {
-          setIsPro(["active", "trialing"].includes(String(data.subscription_status)));
+        } else if (data?.status) {
+          setIsPro(["active", "trialing"].includes(String(data.status)));
         } else {
           setIsPro(false);
         }

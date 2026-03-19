@@ -168,8 +168,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       typeof body.redirect_url === "string"
         ? body.redirect_url
         : baseUrl
-          ? `${baseUrl}/dashboard`
-          : null;
+          ? `${baseUrl}/`
+          : "https://www.subsruby.com/";
 
     const payload = {
       data: {

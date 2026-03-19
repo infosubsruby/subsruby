@@ -46,7 +46,7 @@ interface UserData {
   email: string | null;
   phone: string | null;
   created_at: string;
-  subscription_status: string | null;
+  status: string | null;
   subscription_count: number;
 }
 
@@ -241,7 +241,7 @@ const Admin = () => {
                           </TableCell>
                           <TableCell>
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                              {userData.subscription_status || "free"}
+                              {userData.status || "free"}
                             </span>
                           </TableCell>
                           <TableCell>
