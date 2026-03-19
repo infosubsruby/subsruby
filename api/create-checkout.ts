@@ -61,7 +61,22 @@ function pickCheckoutUrl(payload: JsonRecord): string | null {
   return typeof url === "string" ? url : null;
 }
 
+function safeStringifyError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+  }
+  return {
+    message: typeof error === "string" ? error : "Unknown error",
+    error,
+  };
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  const requestId = `ls_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {
     if (req.method === "OPTIONS") {
       Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
@@ -71,12 +86,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (req.method !== "POST") {
-      sendJson(res, 405, { message: "Method not allowed" });
+      sendJson(res, 405, { message: "Method not allowed", error: { requestId } });
       return;
     }
 
     const rawBody = await readRawBody(req);
-    const body = (rawBody.length ? JSON.parse(rawBody.toString("utf8")) : {}) as JsonRecord;
+    let body: JsonRecord = {};
+    try {
+      body = (rawBody.length ? JSON.parse(rawBody.toString("utf8")) : {}) as JsonRecord;
+    } catch (error) {
+      console.error("[create-checkout] invalid JSON body", { requestId, error: safeStringifyError(error) });
+      sendJson(res, 400, { message: "Invalid JSON body", error: safeStringifyError(error) });
+      return;
+    }
 
     const apiKey = process.env.LEMON_SQUEEZY_API_KEY;
     const storeId = process.env.LEMON_SQUEEZY_STORE_ID;
@@ -84,7 +106,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const yearlyVariantId = process.env.LEMON_VARIANT_YEARLY;
 
     if (!apiKey || !storeId || !monthlyVariantId || !yearlyVariantId) {
-      sendJson(res, 500, { message: "Missing server configuration" });
+      const missing = [
+        !apiKey ? "LEMON_SQUEEZY_API_KEY" : null,
+        !storeId ? "LEMON_SQUEEZY_STORE_ID" : null,
+        !monthlyVariantId ? "LEMON_VARIANT_MONTHLY" : null,
+        !yearlyVariantId ? "LEMON_VARIANT_YEARLY" : null,
+      ].filter(Boolean);
+      console.error("[create-checkout] missing env", { requestId, missing });
+      sendJson(res, 500, { message: "Missing server configuration", error: { requestId, missing } });
       return;
     }
 
@@ -103,18 +132,24 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
       const { data, error } = await supabase.auth.getUser(token);
       if (error || !data.user) {
-        sendJson(res, 401, { message: "Unauthorized" });
+        console.error("[create-checkout] unauthorized token", {
+          requestId,
+          error: safeStringifyError(error),
+        });
+        sendJson(res, 401, { message: "Unauthorized", error: { requestId } });
         return;
       }
       userId = data.user.id;
       if (bodyUserId && bodyUserId !== userId) {
-        sendJson(res, 401, { message: "Unauthorized" });
+        console.error("[create-checkout] user_id mismatch", { requestId, bodyUserId, userId });
+        sendJson(res, 401, { message: "Unauthorized", error: { requestId } });
         return;
       }
     }
 
     if (!userId) {
-      sendJson(res, 400, { message: "Missing user_id" });
+      console.error("[create-checkout] missing user_id", { requestId, bodyKeys: Object.keys(body) });
+      sendJson(res, 400, { message: "Missing user_id", error: { requestId } });
       return;
     }
 
@@ -147,19 +182,56 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       },
     };
 
-    const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.api+json",
-        "Content-Type": "application/vnd.api+json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    let response: Response;
+    try {
+      response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+        method: "POST",
+        headers: {
+          Accept: "application/vnd.api+json",
+          "Content-Type": "application/vnd.api+json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      console.error("[create-checkout] fetch failed", {
+        requestId,
+        plan,
+        storeId,
+        variantId,
+        error: safeStringifyError(error),
+      });
+      sendJson(res, 502, { message: "Failed to reach Lemon Squeezy", error: safeStringifyError(error) });
+      return;
+    }
 
-    const data = (await response.json()) as JsonRecord;
+    const responseText = await response.text();
+    let data: JsonRecord = {};
+    try {
+      data = responseText ? (JSON.parse(responseText) as JsonRecord) : {};
+    } catch {
+      data = { raw: responseText };
+    }
+
     if (!response.ok) {
-      sendJson(res, 502, { message: pickFirstErrorDetail(data) ?? "Lemon Squeezy API Error" });
+      const detail = pickFirstErrorDetail(data) ?? "Lemon Squeezy API Error";
+      console.error("[create-checkout] Lemon error", {
+        requestId,
+        plan,
+        storeId,
+        variantId,
+        status: response.status,
+        detail,
+        data,
+      });
+      sendJson(res, 502, {
+        message: detail,
+        error: {
+          requestId,
+          status: response.status,
+          data,
+        },
+      });
       return;
     }
 
@@ -170,9 +242,23 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
+    if (!checkoutUrl) {
+      console.error("[create-checkout] missing checkout url", {
+        requestId,
+        plan,
+        storeId,
+        variantId,
+        status: response.status,
+        data,
+      });
+      sendJson(res, 502, { message: "Checkout URL not returned", error: { requestId, data } });
+      return;
+    }
+
     sendJson(res, 200, { checkoutUrl });
   } catch (error) {
+    console.error("[create-checkout] unhandled error", { requestId, error: safeStringifyError(error) });
     const message = error instanceof Error ? error.message : "Internal Server Error";
-    sendJson(res, 500, { message });
+    sendJson(res, 500, { message, error: safeStringifyError(error) });
   }
 }
