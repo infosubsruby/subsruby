@@ -93,6 +93,8 @@ function extractUserIdFromMeta(meta: Record<string, unknown>): string | null {
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
+    console.log("1. WEBHOOK TETİKLENDİ");
+
     if (req.method === "HEAD" || req.method === "GET") {
       sendText(res, 200, "OK");
       return;
@@ -136,6 +138,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     const eventName = safeString(meta.event_name);
     const userId = extractUserIdFromMeta(meta);
+
+    console.log("2. İMZA DOĞRULANDI, Payload:", eventName);
+    console.log("3. ALINAN USER ID:", userId);
 
     if (!eventName) {
       sendText(res, 400, "Missing event_name");
@@ -195,6 +200,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       current_period_end: currentPeriodEnd,
     };
 
+    console.log("4. SUPABASE'E YAZILIYOR...");
     const first = await supabaseAdmin.from("user_subscriptions").upsert(
       {
         user_id: userId,
@@ -217,8 +223,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
+    console.log("5. SUPABASE BAŞARILI");
     sendText(res, 200, "OK");
   } catch (error) {
+    console.error("WEBHOOK FATAL ERROR:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     sendText(res, 500, message);
   }
