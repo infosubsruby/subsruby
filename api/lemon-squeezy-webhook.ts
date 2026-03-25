@@ -26,6 +26,12 @@ function safeString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
 
+function safeStringId(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
 function getNestedSubscriptionId(data: Record<string, unknown>, attrs: Record<string, unknown>): string | null {
   const directId = data.id;
   if (directId != null) return String(directId);
@@ -61,6 +67,28 @@ function isMissingRelation(error: unknown, relation: string): boolean {
   const message = errorMessage(error);
   if (!message) return false;
   return message.includes(relation) && message.includes("does not exist");
+}
+
+function extractUserIdFromMeta(meta: Record<string, unknown>): string | null {
+  const customData = meta.custom_data;
+  if (isRecord(customData)) {
+    const fromSnake = safeStringId(customData.user_id);
+    if (fromSnake) return fromSnake;
+    const fromCamel = safeStringId(customData.userId);
+    if (fromCamel) return fromCamel;
+    const fromUid = safeStringId(customData.uid);
+    if (fromUid) return fromUid;
+  }
+
+  const custom = meta.custom;
+  if (isRecord(custom)) {
+    const fromSnake = safeStringId(custom.user_id);
+    if (fromSnake) return fromSnake;
+    const fromCamel = safeStringId(custom.userId);
+    if (fromCamel) return fromCamel;
+  }
+
+  return null;
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
@@ -107,9 +135,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const eventName = safeString(meta.event_name);
-    const customData = meta.custom_data;
-    const userId =
-      isRecord(customData) && typeof customData.user_id === "string" ? customData.user_id : null;
+    const userId = extractUserIdFromMeta(meta);
 
     if (!eventName) {
       sendText(res, 400, "Missing event_name");
@@ -127,7 +153,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (!userId) {
-      sendText(res, 200, "No user_id provided");
+      console.error("[lemon-webhook] Missing user_id in meta.custom_data", {
+        eventName,
+        meta,
+      });
+      sendText(res, 400, "Missing meta.custom_data.user_id");
       return;
     }
 
