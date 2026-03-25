@@ -162,14 +162,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL ?? "";
+    const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
     if (!supabaseUrl || !serviceRoleKey) {
       sendText(res, 500, "Supabase not configured");
       return;
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -195,7 +195,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       current_period_end: currentPeriodEnd,
     };
 
-    const first = await supabase.from("user_subscriptions").upsert(
+    const first = await supabaseAdmin.from("user_subscriptions").upsert(
       {
         user_id: userId,
         status: subscriptionStatus,
@@ -208,11 +208,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     if (error) {
       if (isMissingRelation(error, "user_subscriptions")) {
-        console.error("Webhook Supabase Yazma Hatası:", error);
+        console.error("Webhook DB Yazma Hatası:", error);
         sendText(res, 500, "user_subscriptions table not found");
         return;
       }
-      console.error("Webhook Supabase Yazma Hatası:", error);
+      console.error("Webhook DB Yazma Hatası:", error);
       sendText(res, 500, "Database error");
       return;
     }
