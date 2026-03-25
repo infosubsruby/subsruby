@@ -22,6 +22,7 @@ export const useSubscription = () => {
           .maybeSingle();
 
         if (!subscriptionError) {
+          console.log(" SUPABASE'DEN GELEN VERİ:", subscriptionRow);
           const status = subscriptionRow?.status ? String(subscriptionRow.status) : null;
           setIsPro(status === "active" || status === "trialing");
           return;
