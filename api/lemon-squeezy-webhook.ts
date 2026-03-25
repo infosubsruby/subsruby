@@ -155,20 +155,26 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (!userId) {
       console.error("[lemon-webhook] Missing user_id in meta.custom_data", {
         eventName,
-        meta,
+        type: data.type,
+        id: data.id,
       });
       sendText(res, 400, "Missing meta.custom_data.user_id");
       return;
     }
 
     const supabaseUrl = process.env.SUPABASE_URL ?? "";
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-    if (!supabaseUrl || !serviceKey) {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+    if (!supabaseUrl || !serviceRoleKey) {
       sendText(res, 500, "Supabase not configured");
       return;
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
 
     const attributes = data.attributes;
     const attrs = isRecord(attributes) ? attributes : {};
@@ -202,9 +208,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     if (error) {
       if (isMissingRelation(error, "user_subscriptions")) {
+        console.error("Webhook Supabase Yazma Hatası:", error);
         sendText(res, 500, "user_subscriptions table not found");
         return;
       }
+      console.error("Webhook Supabase Yazma Hatası:", error);
       sendText(res, 500, "Database error");
       return;
     }
