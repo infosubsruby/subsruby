@@ -65,6 +65,12 @@ function isMissingColumn(error: unknown, column: string): boolean {
   ) || message.includes(`profiles.${column} does not exist`);
 }
 
+function isMissingRelation(error: unknown, relation: string): boolean {
+  const message = errorMessage(error);
+  if (!message) return false;
+  return message.includes(relation) && message.includes("does not exist");
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
     if (req.method === "HEAD" || req.method === "GET") {
@@ -161,20 +167,32 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       current_period_end: currentPeriodEnd,
     };
 
-    const first = await supabase
-      .from("profiles")
-      .update({ ...baseUpdate, subscription_status: subscriptionStatus })
-      .eq("id", userId);
+    const first = await supabase.from("user_subscriptions").upsert(
+      {
+        user_id: userId,
+        status: subscriptionStatus,
+        ...baseUpdate,
+      },
+      { onConflict: "user_id" }
+    );
 
     const second =
-      first.error && isMissingColumn(first.error, "subscription_status")
+      first.error && isMissingRelation(first.error, "user_subscriptions")
+        ? await supabase
+            .from("profiles")
+            .update({ ...baseUpdate, subscription_status: subscriptionStatus })
+            .eq("id", userId)
+        : null;
+
+    const third =
+      second?.error && isMissingColumn(second.error, "subscription_status")
         ? await supabase
             .from("profiles")
             .update({ ...baseUpdate, status: subscriptionStatus })
             .eq("id", userId)
         : null;
 
-    const error = second?.error ?? first.error;
+    const error = third?.error ?? second?.error ?? first.error;
 
     if (error) {
       sendText(res, 500, "Database error");

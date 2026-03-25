@@ -143,6 +143,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          user_id: string
+          status: string | null
+          subscription_id: string | null
+          variant_id: string | null
+          lemon_squeezy_customer_id: string | null
+          current_period_end: string | null
+          created_at: string | null
+        }
+        Insert: {
+          user_id: string
+          status?: string | null
+          subscription_id?: string | null
+          variant_id?: string | null
+          lemon_squeezy_customer_id?: string | null
+          current_period_end?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          user_id?: string
+          status?: string | null
+          subscription_id?: string | null
+          variant_id?: string | null
+          lemon_squeezy_customer_id?: string | null
+          current_period_end?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           id: number
