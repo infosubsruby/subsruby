@@ -15,14 +15,20 @@ export const useSubscription = () => {
           return;
         }
 
+        const { data: sessionData } = await supabase.auth.getSession();
+        const sessionUserId = sessionData.session?.user?.id ?? null;
+        console.log("1. Aktif Kullanıcı ID:", user?.id || sessionUserId);
+
         const { data: subscriptionRow, error: subscriptionError } = await supabase
           .from("user_subscriptions")
           .select("status")
           .eq("user_id", user.id)
           .maybeSingle();
 
+        console.log("2. Supabase Veri:", subscriptionRow, "3. Supabase Hata:", subscriptionError);
+        if (subscriptionError) console.log("3b. Supabase Hata Obj:", subscriptionError);
+
         if (!subscriptionError) {
-          console.log(" SUPABASE'DEN GELEN VERİ:", subscriptionRow);
           const status = subscriptionRow?.status ? String(subscriptionRow.status) : null;
           setIsPro(status === "active" || status === "trialing");
           return;
