@@ -57,14 +57,6 @@ function errorMessage(error: unknown): string {
   return "";
 }
 
-function isMissingColumn(error: unknown, column: string): boolean {
-  const message = errorMessage(error);
-  if (!message) return false;
-  return (
-    message.includes(`column "${column}"`) && message.includes("does not exist")
-  ) || message.includes(`profiles.${column} does not exist`);
-}
-
 function isMissingRelation(error: unknown, relation: string): boolean {
   const message = errorMessage(error);
   if (!message) return false;
@@ -176,25 +168,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       { onConflict: "user_id" }
     );
 
-    const second =
-      first.error && isMissingRelation(first.error, "user_subscriptions")
-        ? await supabase
-            .from("profiles")
-            .update({ ...baseUpdate, subscription_status: subscriptionStatus })
-            .eq("id", userId)
-        : null;
-
-    const third =
-      second?.error && isMissingColumn(second.error, "subscription_status")
-        ? await supabase
-            .from("profiles")
-            .update({ ...baseUpdate, status: subscriptionStatus })
-            .eq("id", userId)
-        : null;
-
-    const error = third?.error ?? second?.error ?? first.error;
+    const error = first.error;
 
     if (error) {
+      if (isMissingRelation(error, "user_subscriptions")) {
+        sendText(res, 500, "user_subscriptions table not found");
+        return;
+      }
       sendText(res, 500, "Database error");
       return;
     }
