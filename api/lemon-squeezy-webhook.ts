@@ -1,16 +1,10 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 type JsonRecord = Record<string, unknown>;
 
-function sendText(res: ServerResponse, status: number, body: string) {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "text/plain; charset=utf-8");
-  res.end(body);
-}
-
-async function readRawBody(req: IncomingMessage): Promise<Buffer> {
+async function readRawBody(req: VercelRequest): Promise<Buffer> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -97,40 +91,35 @@ export const config = {
   },
 };
 
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     console.log("1. WEBHOOK TETİKLENDİ");
 
     if (req.method === "HEAD" || req.method === "GET") {
-      sendText(res, 200, "OK");
-      return;
+      return res.status(200).json({ message: "OK" });
     }
 
     if (req.method !== "POST") {
       res.setHeader("Allow", "POST");
-      sendText(res, 405, `Method not allowed: ${req.method ?? "unknown"}`);
-      return;
+      return res.status(405).json({ error: `Method not allowed: ${req.method ?? "unknown"}` });
     }
 
     const secret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
     if (!secret) {
-      sendText(res, 500, "Webhook secret not configured");
-      return;
+      return res.status(500).json({ error: "Webhook secret not configured" });
     }
 
     const signatureHeader = req.headers["x-signature"];
     const signature = safeString(Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader);
     if (!signature) {
-      sendText(res, 401, "No signature provided");
-      return;
+      return res.status(401).json({ error: "No signature provided" });
     }
 
     const rawBody = await readRawBody(req);
     const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
 
     if (!timingSafeEqualHex(expected, signature)) {
-      sendText(res, 401, "Invalid signature");
-      return;
+      return res.status(401).json({ error: "Invalid signature" });
     }
 
     const payload = JSON.parse(rawBody.toString("utf8")) as JsonRecord;
@@ -138,8 +127,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const meta = payload.meta;
     const data = payload.data;
     if (!isRecord(meta) || !isRecord(data)) {
-      sendText(res, 400, "Invalid payload");
-      return;
+      return res.status(400).json({ error: "Invalid payload" });
     }
 
     const eventName = safeString(meta.event_name);
@@ -149,8 +137,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     console.log("3. ALINAN USER ID:", userId);
 
     if (!eventName) {
-      sendText(res, 400, "Missing event_name");
-      return;
+      return res.status(400).json({ error: "Missing event_name" });
     }
 
     const isSubscriptionEvent =
@@ -159,8 +146,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       eventName === "subscription_cancelled";
 
     if (!isSubscriptionEvent) {
-      sendText(res, 200, "Ignored");
-      return;
+      return res.status(200).json({ message: "Ignored" });
     }
 
     if (!userId) {
@@ -169,15 +155,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         type: data.type,
         id: data.id,
       });
-      sendText(res, 400, "Missing meta.custom_data.user_id");
-      return;
+      return res.status(400).json({ error: "Missing meta.custom_data.user_id" });
     }
 
     const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
     if (!supabaseUrl || !serviceRoleKey) {
-      sendText(res, 500, "Supabase not configured");
-      return;
+      return res.status(500).json({ error: "Supabase not configured" });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
@@ -221,19 +205,17 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (error) {
       if (isMissingRelation(error, "user_subscriptions")) {
         console.error("Webhook DB Yazma Hatası:", error);
-        sendText(res, 500, "user_subscriptions table not found");
-        return;
+        return res.status(500).json({ error: "user_subscriptions table not found" });
       }
       console.error("Webhook DB Yazma Hatası:", error);
-      sendText(res, 500, "Database error");
-      return;
+      return res.status(500).json({ error: "Database error" });
     }
 
     console.log("5. SUPABASE BAŞARILI");
-    sendText(res, 200, "OK");
+    return res.status(200).json({ message: "Webhook başarılı" });
   } catch (error) {
     console.error("WEBHOOK FATAL ERROR:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
-    sendText(res, 500, message);
+    return res.status(500).json({ error: message });
   }
 }
