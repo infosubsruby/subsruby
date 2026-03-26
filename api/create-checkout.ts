@@ -84,6 +84,12 @@ function getBaseUrl(req: IncomingMessage): string | null {
   return `${proto === "https" ? "https" : "http"}://${host}`;
 }
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const requestId = `ls_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {

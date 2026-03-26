@@ -91,6 +91,12 @@ function extractUserIdFromMeta(meta: Record<string, unknown>): string | null {
   return null;
 }
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
     console.log("1. WEBHOOK TETİKLENDİ");
