@@ -1,10 +1,30 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 type JsonRecord = Record<string, unknown>;
 
-async function readRawBody(req: VercelRequest): Promise<Buffer> {
+const corsHeaders: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, content-type, x-signature",
+  "Access-Control-Allow-Methods": "POST, OPTIONS, HEAD, GET",
+};
+
+function sendJson(res: ServerResponse, status: number, payload: unknown) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json");
+  Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+  res.end(JSON.stringify(payload));
+}
+
+function sendText(res: ServerResponse, status: number, body: string) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+  res.end(body);
+}
+
+async function readRawBody(req: IncomingMessage): Promise<Buffer> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -91,35 +111,46 @@ export const config = {
   },
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
     console.log("1. WEBHOOK TETİKLENDİ");
 
+    if (req.method === "OPTIONS") {
+      Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+      res.statusCode = 200;
+      res.end();
+      return;
+    }
+
     if (req.method === "HEAD" || req.method === "GET") {
-      return res.status(200).json({ message: "OK" });
+      sendJson(res, 200, { message: "OK" });
+      return;
     }
 
     if (req.method !== "POST") {
-      res.setHeader("Allow", "POST");
-      return res.status(405).json({ error: `Method not allowed: ${req.method ?? "unknown"}` });
+      sendJson(res, 405, { error: `Method not allowed: ${req.method ?? "unknown"}` });
+      return;
     }
 
     const secret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
     if (!secret) {
-      return res.status(500).json({ error: "Webhook secret not configured" });
+      sendJson(res, 500, { error: "Webhook secret not configured" });
+      return;
     }
 
     const signatureHeader = req.headers["x-signature"];
     const signature = safeString(Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader);
     if (!signature) {
-      return res.status(401).json({ error: "No signature provided" });
+      sendJson(res, 401, { error: "No signature provided" });
+      return;
     }
 
     const rawBody = await readRawBody(req);
     const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
 
     if (!timingSafeEqualHex(expected, signature)) {
-      return res.status(401).json({ error: "Invalid signature" });
+      sendJson(res, 401, { error: "Invalid signature" });
+      return;
     }
 
     const payload = JSON.parse(rawBody.toString("utf8")) as JsonRecord;
@@ -127,7 +158,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const meta = payload.meta;
     const data = payload.data;
     if (!isRecord(meta) || !isRecord(data)) {
-      return res.status(400).json({ error: "Invalid payload" });
+      sendJson(res, 400, { error: "Invalid payload" });
+      return;
     }
 
     const eventName = safeString(meta.event_name);
@@ -137,7 +169,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("3. ALINAN USER ID:", userId);
 
     if (!eventName) {
-      return res.status(400).json({ error: "Missing event_name" });
+      sendJson(res, 400, { error: "Missing event_name" });
+      return;
     }
 
     const isSubscriptionEvent =
@@ -146,7 +179,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       eventName === "subscription_cancelled";
 
     if (!isSubscriptionEvent) {
-      return res.status(200).json({ message: "Ignored" });
+      sendJson(res, 200, { message: "Ignored" });
+      return;
     }
 
     if (!userId) {
@@ -155,13 +189,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: data.type,
         id: data.id,
       });
-      return res.status(400).json({ error: "Missing meta.custom_data.user_id" });
+      sendJson(res, 400, { error: "Missing meta.custom_data.user_id" });
+      return;
     }
 
     const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
     if (!supabaseUrl || !serviceRoleKey) {
-      return res.status(500).json({ error: "Supabase not configured" });
+      sendJson(res, 500, { error: "Supabase not configured" });
+      return;
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
@@ -205,17 +241,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (error) {
       if (isMissingRelation(error, "user_subscriptions")) {
         console.error("Webhook DB Yazma Hatası:", error);
-        return res.status(500).json({ error: "user_subscriptions table not found" });
+        sendJson(res, 500, { error: "user_subscriptions table not found" });
+        return;
       }
       console.error("Webhook DB Yazma Hatası:", error);
-      return res.status(500).json({ error: "Database error" });
+      sendJson(res, 500, { error: "Database error" });
+      return;
     }
 
     console.log("5. SUPABASE BAŞARILI");
-    return res.status(200).json({ message: "Webhook başarılı" });
+    sendJson(res, 200, { message: "Webhook başarılı" });
   } catch (error) {
     console.error("WEBHOOK FATAL ERROR:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
-    return res.status(500).json({ error: message });
+    sendJson(res, 500, { error: message });
   }
 }
