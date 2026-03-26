@@ -84,6 +84,7 @@ function isMissingRelation(error: unknown, relation: string): boolean {
 }
 
 function extractUserIdFromMeta(meta: Record<string, unknown>): string | null {
+  // Try custom_data first (new standard)
   const customData = meta.custom_data;
   if (isRecord(customData)) {
     const fromSnake = safeStringId(customData.user_id);
@@ -94,6 +95,7 @@ function extractUserIdFromMeta(meta: Record<string, unknown>): string | null {
     if (fromUid) return fromUid;
   }
 
+  // Fallback for older webhooks or different structures
   const custom = meta.custom;
   if (isRecord(custom)) {
     const fromSnake = safeStringId(custom.user_id);
@@ -101,6 +103,10 @@ function extractUserIdFromMeta(meta: Record<string, unknown>): string | null {
     const fromCamel = safeStringId(custom.userId);
     if (fromCamel) return fromCamel;
   }
+
+  // Check if it's placed directly in meta
+  const fromSnakeMeta = safeStringId(meta.user_id);
+  if (fromSnakeMeta) return fromSnakeMeta;
 
   return null;
 }
@@ -163,10 +169,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const eventName = safeString(meta.event_name);
-    const userId = extractUserIdFromMeta(meta);
+    const customData = isRecord(meta.custom_data) ? meta.custom_data : null;
+    let userId = extractUserIdFromMeta(meta);
+
+    // If userId is still missing, try directly from the payload structure we know LemonSqueezy sends
+    if (!userId && customData) {
+      const directUserId = customData.user_id || customData.userId || customData.uid;
+      if (typeof directUserId === 'string' || typeof directUserId === 'number') {
+        userId = String(directUserId);
+      }
+    }
 
     console.log("2. İMZA DOĞRULANDI, Payload:", eventName);
-    console.log("3. ALINAN USER ID:", userId);
+    console.log("3. ALINAN USER ID:", userId, "| Gelen Custom Data:", customData);
 
     if (!eventName) {
       sendJson(res, 400, { error: "Missing event_name" });
