@@ -169,19 +169,27 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const eventName = safeString(meta.event_name);
+    
+    // Doğrudan payload üzerinden istenen yollarla çekimi
+    let userId: string | null = null;
     const customData = isRecord(meta.custom_data) ? meta.custom_data : null;
-    let userId = extractUserIdFromMeta(meta);
-
-    // If userId is still missing, try directly from the payload structure we know LemonSqueezy sends
-    if (!userId && customData) {
-      const directUserId = customData.user_id || customData.userId || customData.uid;
-      if (typeof directUserId === 'string' || typeof directUserId === 'number') {
-        userId = String(directUserId);
-      }
+    if (customData && customData.user_id) {
+      userId = String(customData.user_id);
     }
 
+    // Fallback if needed, but prefer the direct path
+    if (!userId) {
+      userId = extractUserIdFromMeta(meta);
+    }
+
+    const attributes = data.attributes;
+    const attrs = isRecord(attributes) ? attributes : {};
+    
+    // Doğrudan payload üzerinden status çekimi
+    const subscriptionStatus = attrs.status != null ? String(attrs.status) : null;
+
     console.log("2. İMZA DOĞRULANDI, Payload:", eventName);
-    console.log("3. ALINAN USER ID:", userId, "| Gelen Custom Data:", customData);
+    console.log("3. ALINAN USER ID:", userId, "| Gelen Custom Data:", customData, "| Status:", subscriptionStatus);
 
     if (!eventName) {
       sendJson(res, 400, { error: "Missing event_name" });
@@ -222,13 +230,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       },
     });
 
-    const attributes = data.attributes;
-    const attrs = isRecord(attributes) ? attributes : {};
-
     const lemonCustomerId = attrs.customer_id != null ? String(attrs.customer_id) : null;
     const subscriptionId = getNestedSubscriptionId(data, attrs);
     const variantId = attrs.variant_id != null ? String(attrs.variant_id) : null;
-    const subscriptionStatus = attrs.status != null ? String(attrs.status) : null;
     const currentPeriodEnd =
       (attrs.current_period_end ?? attrs.renews_at ?? attrs.ends_at ?? null) != null
         ? String(attrs.current_period_end ?? attrs.renews_at ?? attrs.ends_at)
