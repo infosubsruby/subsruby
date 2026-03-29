@@ -230,27 +230,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       },
     });
 
-    const lemonCustomerId = attrs.customer_id != null ? String(attrs.customer_id) : null;
-    const subscriptionId = getNestedSubscriptionId(data, attrs);
-    const variantId = attrs.variant_id != null ? String(attrs.variant_id) : null;
-    const currentPeriodEnd =
-      (attrs.current_period_end ?? attrs.renews_at ?? attrs.ends_at ?? null) != null
-        ? String(attrs.current_period_end ?? attrs.renews_at ?? attrs.ends_at)
-        : null;
-
-    const baseUpdate = {
-      lemon_squeezy_customer_id: lemonCustomerId,
-      subscription_id: subscriptionId,
-      variant_id: variantId,
-      current_period_end: currentPeriodEnd,
-    };
-
     console.log("4. SUPABASE'E YAZILIYOR...");
     const first = await supabaseAdmin.from("user_subscriptions").upsert(
       {
         user_id: userId,
         status: subscriptionStatus,
-        ...baseUpdate,
       },
       { onConflict: "user_id" }
     );
