@@ -15,6 +15,7 @@ import Onboarding from "./pages/Onboarding";
 import Admin from "./pages/Admin";
 import Finance from "./pages/Finance";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import Upgrade from "./pages/Upgrade";
 import Success from "./pages/Success";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -73,6 +74,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
                     </ProtectedRoute>
                   }
                 />

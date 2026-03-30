@@ -60,9 +60,6 @@ const Settings = () => {
     setNotificationSetting 
   } = useSettings();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [accountEmail, setAccountEmail] = useState<string | null>(null);
-  const [accountName, setAccountName] = useState<string | null>(null);
-  const [accountAvatarUrl, setAccountAvatarUrl] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [customerPortalUrl, setCustomerPortalUrl] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
@@ -72,29 +69,6 @@ const Settings = () => {
       if (!user?.id) return;
       setAccountLoading(true);
       try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.error("Supabase Çekme Hatası:", userError);
-        }
-
-        const authUser = userData?.user ?? null;
-        setAccountEmail(authUser?.email ?? user.email ?? null);
-
-        const meta = authUser?.user_metadata ?? {};
-        const metaName =
-          typeof (meta as { full_name?: unknown }).full_name === "string"
-            ? String((meta as { full_name?: unknown }).full_name)
-            : typeof (meta as { name?: unknown }).name === "string"
-              ? String((meta as { name?: unknown }).name)
-              : null;
-        setAccountName(metaName);
-
-        const metaAvatar =
-          typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
-            ? String((meta as { avatar_url?: unknown }).avatar_url)
-            : null;
-        setAccountAvatarUrl(metaAvatar);
-
         const { data: subRow, error: subError } = await supabase
           .from("user_subscriptions")
           .select("status, customer_portal_url")
@@ -125,7 +99,7 @@ const Settings = () => {
     };
 
     fetchAccount();
-  }, [user?.id, user?.email]);
+  }, [user?.id]);
 
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
@@ -202,33 +176,6 @@ const Settings = () => {
             {/* General Settings */}
             <TabsContent value="general" className="space-y-6">
               <div className="glass-card rounded-xl p-6 space-y-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    {accountAvatarUrl ? (
-                      <img
-                        src={accountAvatarUrl}
-                        alt="Avatar"
-                        className="w-10 h-10 rounded-lg object-cover shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                        <span className="text-sm font-medium">
-                          {(accountEmail?.[0] ?? "U").toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <Label className="text-base font-medium">Account Details</Label>
-                      <p className="text-sm text-muted-foreground">{accountName ?? accountEmail ?? ""}</p>
-                      {accountName && accountEmail ? (
-                        <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t border-border" />
-
                 {/* Language */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
