@@ -28,9 +28,11 @@ const Profile = () => {
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
   const [accountAvatarUrl, setAccountAvatarUrl] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(null);
+  const [memberSince, setMemberSince] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
   const [formEmail, setFormEmail] = useState<string>("");
-  const [formFullName, setFormFullName] = useState<string>("");
+  const [fullName, setFullName] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [currentPassword, setCurrentPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
@@ -50,14 +52,20 @@ const Profile = () => {
         const authUser = userData?.user ?? null;
         setAccountEmail(authUser?.email ?? user.email ?? null);
         setFormEmail(authUser?.email ?? user.email ?? "");
+        setAccountId(authUser?.id ?? user.id);
+
+        const createdAt = authUser?.created_at ?? null;
+        if (createdAt) {
+          const d = new Date(createdAt);
+          const monthYear = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(d);
+          setMemberSince(`Member since ${monthYear}`);
+        } else {
+          setMemberSince(null);
+        }
 
         const meta = authUser?.user_metadata ?? {};
-        const metaName =
-          typeof (meta as { full_name?: unknown }).full_name === "string"
-            ? String((meta as { full_name?: unknown }).full_name)
-            : typeof (meta as { name?: unknown }).name === "string"
-              ? String((meta as { name?: unknown }).name)
-              : null;
+        const metaFullNameRaw = (meta as { full_name?: unknown }).full_name;
+        const metaFullName = typeof metaFullNameRaw === "string" ? metaFullNameRaw : null;
         const { data: profileRow, error: profileError } = await supabase
           .from("profiles")
           .select("first_name, last_name, avatar_url")
@@ -80,9 +88,10 @@ const Profile = () => {
             .concat(typeof profileLastName === "string" && profileLastName ? ` ${profileLastName}` : "")
             .trim() || null;
 
-        const resolvedName = metaName ?? profileFullName;
+        setFullName(metaFullName ?? "");
+
+        const resolvedName = metaFullName ?? profileFullName;
         setAccountName(resolvedName);
-        setFormFullName(resolvedName ?? "");
 
         const metaAvatar =
           typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
@@ -99,8 +108,10 @@ const Profile = () => {
         console.error("Supabase Çekme Hatası:", error);
         setAccountEmail(user?.email ?? null);
         setFormEmail(user?.email ?? "");
+        setAccountId(user?.id ?? null);
+        setMemberSince(null);
         setAccountName(null);
-        setFormFullName("");
+        setFullName("");
         setAccountAvatarUrl(null);
       } finally {
         setAccountLoading(false);
@@ -114,7 +125,7 @@ const Profile = () => {
     if (!user?.id) return;
     setSaving(true);
     try {
-      const nextName = formFullName.trim();
+      const nextName = fullName.trim();
       const { error } = await supabase.auth.updateUser({
         data: {
           full_name: nextName,
@@ -146,7 +157,7 @@ const Profile = () => {
       const refreshedName = typeof refreshedNameRaw === "string" ? refreshedNameRaw : nextName || null;
 
       setAccountName(refreshedName);
-      setFormFullName(refreshedName ?? "");
+      setFullName(refreshedName ?? "");
       toast.success("Profile updated");
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
@@ -285,6 +296,8 @@ const Profile = () => {
                     {accountName && accountEmail ? (
                       <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p>
                     ) : null}
+                  {memberSince ? <p className="text-xs text-muted-foreground mt-1">{memberSince}</p> : null}
+                  {accountId ? <p className="text-xs text-muted-foreground mt-1">Account ID: {accountId}</p> : null}
                   </div>
                 </div>
 
@@ -298,8 +311,8 @@ const Profile = () => {
                 <div className="space-y-2">
                   <Label>Full Name</Label>
                   <Input
-                    value={formFullName}
-                    onChange={(e) => setFormFullName(e.target.value)}
+                  value={fullName || ""}
+                  onChange={(e) => setFullName(e.target.value)}
                     placeholder="Your name"
                   />
                 </div>
