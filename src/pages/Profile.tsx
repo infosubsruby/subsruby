@@ -32,6 +32,7 @@ const Profile = () => {
   const [formEmail, setFormEmail] = useState<string>("");
   const [formFullName, setFormFullName] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,14 +58,43 @@ const Profile = () => {
             : typeof (meta as { name?: unknown }).name === "string"
               ? String((meta as { name?: unknown }).name)
               : null;
-        setAccountName(metaName);
-        setFormFullName(metaName ?? "");
+        const { data: profileRow, error: profileError } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (profileError) {
+          console.error("Supabase Çekme Hatası:", profileError);
+        }
+
+        const profileFirstName =
+          profileRow && typeof profileRow === "object" && "first_name" in profileRow
+            ? (profileRow as { first_name?: unknown }).first_name
+            : null;
+        const profileLastName =
+          profileRow && typeof profileRow === "object" && "last_name" in profileRow
+            ? (profileRow as { last_name?: unknown }).last_name
+            : null;
+        const profileFullName =
+          (typeof profileFirstName === "string" ? profileFirstName : "")
+            .concat(typeof profileLastName === "string" && profileLastName ? ` ${profileLastName}` : "")
+            .trim() || null;
+
+        const resolvedName = metaName ?? profileFullName;
+        setAccountName(resolvedName);
+        setFormFullName(resolvedName ?? "");
 
         const metaAvatar =
           typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
             ? String((meta as { avatar_url?: unknown }).avatar_url)
             : null;
-        setAccountAvatarUrl(metaAvatar);
+        const profileAvatarUrl =
+          profileRow && typeof profileRow === "object" && "avatar_url" in profileRow
+            ? (profileRow as { avatar_url?: unknown }).avatar_url
+            : null;
+        setAccountAvatarUrl(
+          metaAvatar ?? (typeof profileAvatarUrl === "string" ? profileAvatarUrl : null)
+        );
       } catch (error) {
         console.error("Supabase Çekme Hatası:", error);
         setAccountEmail(user?.email ?? null);
@@ -84,18 +114,42 @@ const Profile = () => {
     if (!user?.id) return;
     setSaving(true);
     try {
+      const nextName = formFullName.trim();
       const { error } = await supabase.auth.updateUser({
         data: {
-          full_name: formFullName,
+          full_name: nextName,
         },
       });
       if (error) {
+        console.error("Supabase Güncelleme Hatası:", error);
         toast.error("Failed to update profile");
         return;
       }
-      setAccountName(formFullName);
+      if (nextName) {
+        const parts = nextName.split(/\s+/).filter(Boolean);
+        const firstName = parts[0] ?? null;
+        const lastName = parts.length > 1 ? parts.slice(1).join(" ") : null;
+        const { error: profileUpdateError } = await supabase
+          .from("profiles")
+          .update({ first_name: firstName, last_name: lastName })
+          .eq("id", user.id);
+        if (profileUpdateError) {
+          console.error("Supabase Güncelleme Hatası:", profileUpdateError);
+        }
+      }
+
+      const { data: refreshed, error: refreshError } = await supabase.auth.getUser();
+      if (refreshError) {
+        console.error("Supabase Çekme Hatası:", refreshError);
+      }
+      const refreshedNameRaw = refreshed.user?.user_metadata?.full_name;
+      const refreshedName = typeof refreshedNameRaw === "string" ? refreshedNameRaw : nextName || null;
+
+      setAccountName(refreshedName);
+      setFormFullName(refreshedName ?? "");
       toast.success("Profile updated");
     } catch (error) {
+      console.error("Supabase Güncelleme Hatası:", error);
       toast.error("Failed to update profile");
     } finally {
       setSaving(false);
@@ -103,20 +157,41 @@ const Profile = () => {
   };
 
   const handleUpdatePassword = async () => {
+    const email = formEmail || accountEmail || "";
+    if (!email) {
+      toast.error("Email not found");
+      return;
+    }
+    if (!currentPassword) {
+      toast.error("Please enter your current password");
+      return;
+    }
     if (!newPassword) {
       toast.error("Please enter a new password");
       return;
     }
     setUpdatingPassword(true);
     try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (signInError) {
+        toast.error("Current password is incorrect");
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
+        console.error("Supabase Güncelleme Hatası:", error);
         toast.error("Failed to update password");
         return;
       }
+      setCurrentPassword("");
       setNewPassword("");
       toast.success("Password updated");
     } catch (error) {
+      console.error("Supabase Güncelleme Hatası:", error);
       toast.error("Failed to update password");
     } finally {
       setUpdatingPassword(false);
@@ -254,6 +329,15 @@ const Profile = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label>Current Password</Label>
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="********"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label>New Password</Label>
                   <Input
