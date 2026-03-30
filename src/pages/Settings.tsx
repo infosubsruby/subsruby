@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings } from "@/hooks/useSettings";
-import { useSubscription } from "@/hooks/useSubscription";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -52,7 +51,6 @@ const Settings = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { language, setLanguage, t, languages } = useLanguage();
-  const { isPro, customerPortalUrl, loading: subLoading } = useSubscription();
   const { 
     defaultCurrency, 
     setDefaultCurrency, 
@@ -62,6 +60,72 @@ const Settings = () => {
     setNotificationSetting 
   } = useSettings();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [accountName, setAccountName] = useState<string | null>(null);
+  const [accountAvatarUrl, setAccountAvatarUrl] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [customerPortalUrl, setCustomerPortalUrl] = useState<string | null>(null);
+  const [accountLoading, setAccountLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchAccount = async () => {
+      if (!user?.id) return;
+      setAccountLoading(true);
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error("Supabase Çekme Hatası:", userError);
+        }
+
+        const authUser = userData?.user ?? null;
+        setAccountEmail(authUser?.email ?? user.email ?? null);
+
+        const meta = authUser?.user_metadata ?? {};
+        const metaName =
+          typeof (meta as { full_name?: unknown }).full_name === "string"
+            ? String((meta as { full_name?: unknown }).full_name)
+            : typeof (meta as { name?: unknown }).name === "string"
+              ? String((meta as { name?: unknown }).name)
+              : null;
+        setAccountName(metaName);
+
+        const metaAvatar =
+          typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
+            ? String((meta as { avatar_url?: unknown }).avatar_url)
+            : null;
+        setAccountAvatarUrl(metaAvatar);
+
+        const { data: subRow, error: subError } = await supabase
+          .from("user_subscriptions")
+          .select("status, customer_portal_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (subError) {
+          console.error("Supabase Çekme Hatası:", subError);
+          setSubscriptionStatus(null);
+          setCustomerPortalUrl(null);
+        } else {
+          const statusRaw = subRow && typeof subRow === "object" && "status" in subRow ? (subRow as { status?: unknown }).status : null;
+          setSubscriptionStatus(statusRaw != null ? String(statusRaw) : null);
+
+          const portalRaw =
+            subRow && typeof subRow === "object" && "customer_portal_url" in subRow
+              ? (subRow as { customer_portal_url?: unknown }).customer_portal_url
+              : null;
+          setCustomerPortalUrl(typeof portalRaw === "string" ? portalRaw : null);
+        }
+      } catch (error) {
+        console.error("Supabase Çekme Hatası:", error);
+        setSubscriptionStatus(null);
+        setCustomerPortalUrl(null);
+      } finally {
+        setAccountLoading(false);
+      }
+    };
+
+    fetchAccount();
+  }, [user?.id, user?.email]);
 
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
@@ -138,6 +202,33 @@ const Settings = () => {
             {/* General Settings */}
             <TabsContent value="general" className="space-y-6">
               <div className="glass-card rounded-xl p-6 space-y-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    {accountAvatarUrl ? (
+                      <img
+                        src={accountAvatarUrl}
+                        alt="Avatar"
+                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                        <span className="text-sm font-medium">
+                          {(accountEmail?.[0] ?? "U").toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-base font-medium">Account Details</Label>
+                      <p className="text-sm text-muted-foreground">{accountName ?? accountEmail ?? ""}</p>
+                      {accountName && accountEmail ? (
+                        <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border" />
+
                 {/* Language */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -245,27 +336,29 @@ const Settings = () => {
                       <CreditCard className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <Label className="text-base font-medium">Abonelik</Label>
-                      <p className="text-sm text-muted-foreground">Pro üyeliğinizi yönetin veya iptal edin</p>
+                      <Label className="text-base font-medium">Subscription</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Current Plan: {subscriptionStatus === "active" || subscriptionStatus === "trialing" ? "Pro" : "Free"}
+                      </p>
                     </div>
                   </div>
-                  {subLoading ? (
+                  {accountLoading ? (
                     <Button disabled size="sm">
                       <Loader2 className="w-4 h-4 animate-spin" />
                     </Button>
-                  ) : isPro ? (
+                  ) : subscriptionStatus === "active" || subscriptionStatus === "trialing" ? (
                     <Button
                       size="sm"
                       className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
                       onClick={() => {
                         if (!customerPortalUrl) {
-                          toast.error("Abonelik yönetim linki bulunamadı.");
+                          toast.error("Customer portal link not found.");
                           return;
                         }
                         window.open(customerPortalUrl, "_blank", "noopener,noreferrer");
                       }}
                     >
-                      Aboneliği Yönet / İptal Et
+                      Manage Subscription
                     </Button>
                   ) : (
                     <Button
@@ -273,7 +366,7 @@ const Settings = () => {
                       className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
                       onClick={() => navigate("/upgrade")}
                     >
-                      Pro'ya Geç
+                      Upgrade to Pro
                     </Button>
                   )}
                 </div>
