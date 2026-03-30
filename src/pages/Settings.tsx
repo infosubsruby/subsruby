@@ -337,9 +337,7 @@ const Settings = () => {
                     </div>
                     <div>
                       <Label className="text-base font-medium">Subscription</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Current Plan: {subscriptionStatus === "active" || subscriptionStatus === "trialing" ? "Pro" : "Free"}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Manage your Pro plan</p>
                     </div>
                   </div>
                   {accountLoading ? (
@@ -347,24 +345,49 @@ const Settings = () => {
                       <Loader2 className="w-4 h-4 animate-spin" />
                     </Button>
                   ) : subscriptionStatus === "active" || subscriptionStatus === "trialing" ? (
-                    <Button
-                      size="sm"
-                      className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-                      onClick={() => {
-                        if (!customerPortalUrl) {
-                          toast.error("Customer portal link not found.");
-                          return;
-                        }
-                        window.open(customerPortalUrl, "_blank", "noopener,noreferrer");
-                      }}
-                    >
-                      Manage Subscription
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm text-muted-foreground">Current Plan: Pro</p>
+                      <Button
+                        size="sm"
+                        className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                        onClick={() => {
+                          if (!customerPortalUrl) {
+                            toast.error("Customer portal link not found.");
+                            return;
+                          }
+                          window.open(customerPortalUrl, "_blank", "noopener,noreferrer");
+                        }}
+                      >
+                        Manage Subscription
+                      </Button>
+                    </div>
                   ) : (
                     <Button
                       size="sm"
                       className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-                      onClick={() => navigate("/upgrade")}
+                      onClick={async () => {
+                        try {
+                          const { data: sessionData } = await supabase.auth.getSession();
+                          const headers: Record<string, string> = { "Content-Type": "application/json" };
+                          if (sessionData.session?.access_token) {
+                            headers.Authorization = `Bearer ${sessionData.session.access_token}`;
+                          }
+                          const response = await fetch("/api/create-checkout", {
+                            method: "POST",
+                            headers,
+                            body: JSON.stringify({ plan: "monthly", redirect: false }),
+                          });
+                          const data = await response.json();
+                          const checkoutUrl = data?.checkoutUrl;
+                          if (!checkoutUrl) {
+                            throw new Error("Checkout URL not returned");
+                          }
+                          window.location.href = checkoutUrl;
+                        } catch (error) {
+                          console.error(error);
+                          toast.error("Failed to start checkout. Please try again.");
+                        }
+                      }}
                     >
                       Upgrade to Pro
                     </Button>
