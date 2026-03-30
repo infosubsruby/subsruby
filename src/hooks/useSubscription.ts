@@ -5,6 +5,7 @@ import { errorMessageOrValue } from '@/lib/error';
 export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -30,14 +31,17 @@ export const useSubscription = () => {
 
         if (!subscriptionError) {
           const status = subscriptionRow?.status ? String(subscriptionRow.status) : null;
+          setStatus(status);
           setIsPro(status === "active" || status === "trialing");
           return;
         }
 
         console.error("Supabase Çekme Hatası:", errorMessageOrValue(subscriptionError));
+        setStatus(null);
         setIsPro(false);
       } catch (error) {
         console.error("Supabase Çekme Hatası:", errorMessageOrValue(error));
+        setStatus(null);
         setIsPro(false);
       } finally {
         setLoading(false);
@@ -47,5 +51,5 @@ export const useSubscription = () => {
     checkSubscription();
   }, []);
 
-  return { isPro, loading };
+  return { isPro, status, loading };
 };

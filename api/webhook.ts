@@ -252,6 +252,38 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
+    const isCancelledOrExpired = subscriptionStatus === "cancelled" || subscriptionStatus === "expired";
+    if (isCancelledOrExpired) {
+      const { data: trackedSubs, error: trackedError } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
+
+      if (trackedError) {
+        console.error("Webhook DB Yazma Hatası:", trackedError);
+        sendJson(res, 500, { error: "Failed to load user subscriptions" });
+        return;
+      }
+
+      const rows = Array.isArray(trackedSubs) ? trackedSubs : [];
+      const idsToDelete = rows.slice(3).map((r) => (r as { id: unknown }).id).filter((id) => id != null);
+
+      if (idsToDelete.length > 0) {
+        const { error: deleteError } = await supabaseAdmin
+          .from("subscriptions")
+          .delete()
+          .eq("user_id", userId)
+          .in("id", idsToDelete as (string | number)[]);
+
+        if (deleteError) {
+          console.error("Webhook DB Yazma Hatası:", deleteError);
+          sendJson(res, 500, { error: "Failed to delete extra subscriptions" });
+          return;
+        }
+      }
+    }
+
     console.log("5. SUPABASE BAŞARILI");
     sendJson(res, 200, { message: "Webhook başarılı" });
   } catch (error) {

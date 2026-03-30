@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -14,6 +14,7 @@ import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3, ArrowUp, ArrowDown, Info, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 import { 
@@ -31,7 +32,7 @@ import { cn } from "@/lib/utils";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, isAdmin } = useAuth();
-  const { isPro, loading: subStatusLoading } = useSubscription();
+  const { isPro, status: proStatus, loading: subStatusLoading } = useSubscription();
   const { t } = useLanguage();
   const { 
     subscriptions, 
@@ -64,6 +65,19 @@ const Dashboard = () => {
   const FREE_PLAN_LIMIT = 3;
   const isFreeLimited = !isPro && !isAdmin;
   const canAddSubscription = !isFreeLimited || subscriptions.length < FREE_PLAN_LIMIT;
+
+  useEffect(() => {
+    if (!user) return;
+    if (subStatusLoading) return;
+    if (proStatus !== "cancelled" && proStatus !== "expired") return;
+
+    const key = `subsruby.pro_cleanup_notice.${user.id}`;
+    const lastShownFor = localStorage.getItem(key);
+    if (lastShownFor === proStatus) return;
+
+    toast.error("Pro üyeliğiniz sona erdiği için 3 limitini aşan abonelik kayıtlarınız sistemden silinmiştir.");
+    localStorage.setItem(key, proStatus);
+  }, [user, proStatus, subStatusLoading]);
 
   const handleAddSubscription = () => {
     if (!canAddSubscription) {
