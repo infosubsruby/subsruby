@@ -1,16 +1,28 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Navbar } from "@/components/layout/Navbar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, User } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { AlertTriangle, Loader2, Lock, LogOut, Trash2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const Profile = () => {
+  const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
@@ -20,6 +32,9 @@ const Profile = () => {
   const [formEmail, setFormEmail] = useState<string>("");
   const [formFullName, setFormFullName] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -86,6 +101,58 @@ const Profile = () => {
       setSaving(false);
     }
   };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword) {
+      toast.error("Please enter a new password");
+      return;
+    }
+    setUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast.error("Failed to update password");
+        return;
+      }
+      setNewPassword("");
+      toast.success("Password updated");
+    } catch (error) {
+      toast.error("Failed to update password");
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      navigate("/", { replace: true });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const userId = user?.id;
+      if (userId) {
+        await supabase.from("subscriptions").delete().eq("user_id", userId);
+        await supabase.from("transactions").delete().eq("user_id", userId);
+        await supabase.from("budgets").delete().eq("user_id", userId);
+        await supabase.from("feedbacks").delete().eq("user_id", userId);
+        await supabase.from("profiles").delete().eq("id", userId);
+      }
+
+      await supabase.auth.signOut();
+      toast.success("Account deleted successfully");
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error("Failed to delete account");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
   }
@@ -105,62 +172,154 @@ const Profile = () => {
       <main className="pt-24 px-4">
         <div className="container mx-auto max-w-3xl">
           <div className="mb-8">
-            <h1 className="font-display text-3xl font-bold flex items-center gap-3">
-              <User className="w-8 h-8 text-primary" />
-              {t.nav.profile}
-            </h1>
-            <p className="text-muted-foreground mt-1">{t.nav.account}</p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="font-display text-3xl font-bold flex items-center gap-3">
+                  <User className="w-8 h-8 text-primary" />
+                  {t.nav.profile}
+                </h1>
+                <p className="text-muted-foreground mt-1">{t.nav.account}</p>
+              </div>
+              <Button variant="outline" className="gap-2" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
 
-          <div className="glass-card rounded-xl p-6 space-y-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                {accountAvatarUrl ? (
-                  <img
-                    src={accountAvatarUrl}
-                    alt="Avatar"
-                    className="w-10 h-10 rounded-lg object-cover shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                    <span className="text-sm font-medium">
-                      {(accountEmail?.[0] ?? "U").toUpperCase()}
-                    </span>
+          <div className="space-y-6">
+            <div className="glass-card rounded-xl p-6 space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  {accountAvatarUrl ? (
+                    <img
+                      src={accountAvatarUrl}
+                      alt="Avatar"
+                      className="w-10 h-10 rounded-lg object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                      <span className="text-sm font-medium">
+                        {(accountEmail?.[0] ?? "U").toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-base font-medium">Account Details</Label>
+                    <p className="text-sm text-muted-foreground">{accountName ?? accountEmail ?? ""}</p>
+                    {accountName && accountEmail ? (
+                      <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p>
+                    ) : null}
                   </div>
-                )}
-                <div>
-                  <Label className="text-base font-medium">Account Details</Label>
-                  <p className="text-sm text-muted-foreground">{accountName ?? accountEmail ?? ""}</p>
-                  {accountName && accountEmail ? (
-                    <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p>
-                  ) : null}
+                </div>
+
+                {accountLoading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : null}
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input value={formEmail} readOnly disabled />
+                </div>
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input
+                    value={formFullName}
+                    onChange={(e) => setFormFullName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving || accountLoading}
+                    className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Save Changes
+                  </Button>
                 </div>
               </div>
-
-              {accountLoading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : null}
             </div>
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={formEmail} readOnly disabled />
+
+            <div className="glass-card rounded-xl p-6 space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                    <Lock className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <Label className="text-base font-medium">Security</Label>
+                    <p className="text-sm text-muted-foreground">Update your password</p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input
-                  value={formFullName}
-                  onChange={(e) => setFormFullName(e.target.value)}
-                  placeholder="Your name"
-                />
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="********"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleUpdatePassword}
+                    disabled={updatingPassword || accountLoading}
+                    className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                  >
+                    {updatingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Update Password
+                  </Button>
+                </div>
               </div>
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSave}
-                  disabled={saving || accountLoading}
-                  className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Save Changes
-                </Button>
+            </div>
+
+            <div className="glass-card rounded-xl p-6 border-destructive/30">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-destructive/20 flex items-center justify-center shrink-0">
+                    <Trash2 className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div>
+                    <Label className="text-base font-medium text-destructive">{t.settings.deleteAccount}</Label>
+                    <p className="text-sm text-muted-foreground">{t.settings.deleteAccountDesc}</p>
+                  </div>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      {t.settings.delete}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-card border-border">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                        {t.settings.deleteAccount}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>{t.settings.deleteConfirm}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t.settings.cancel}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isDeleting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t.common.loading}
+                          </>
+                        ) : (
+                          t.settings.delete
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </div>
