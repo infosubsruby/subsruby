@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings } from "@/hooks/useSettings";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -39,6 +40,7 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  CreditCard,
   Sun,
   Moon,
   Monitor
@@ -47,8 +49,10 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
+  const navigate = useNavigate();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { language, setLanguage, t, languages } = useLanguage();
+  const { isPro, customerPortalUrl, loading: subLoading } = useSubscription();
   const { 
     defaultCurrency, 
     setDefaultCurrency, 
@@ -231,6 +235,47 @@ const Settings = () => {
                       <span className="hidden sm:inline">{t.settings.systemMode}</span>
                     </Button>
                   </div>
+                </div>
+
+                <div className="border-t border-border" />
+
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                      <CreditCard className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <Label className="text-base font-medium">Abonelik</Label>
+                      <p className="text-sm text-muted-foreground">Pro üyeliğinizi yönetin veya iptal edin</p>
+                    </div>
+                  </div>
+                  {subLoading ? (
+                    <Button disabled size="sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </Button>
+                  ) : isPro ? (
+                    <Button
+                      size="sm"
+                      className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                      onClick={() => {
+                        if (!customerPortalUrl) {
+                          toast.error("Abonelik yönetim linki bulunamadı.");
+                          return;
+                        }
+                        window.open(customerPortalUrl, "_blank", "noopener,noreferrer");
+                      }}
+                    >
+                      Aboneliği Yönet / İptal Et
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                      onClick={() => navigate("/upgrade")}
+                    >
+                      Pro'ya Geç
+                    </Button>
+                  )}
                 </div>
               </div>
             </TabsContent>

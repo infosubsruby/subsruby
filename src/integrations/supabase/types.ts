@@ -150,6 +150,7 @@ export type Database = {
           subscription_id: string | null
           variant_id: string | null
           lemon_squeezy_customer_id: string | null
+          customer_portal_url: string | null
           current_period_end: string | null
           created_at: string | null
         }
@@ -159,6 +160,7 @@ export type Database = {
           subscription_id?: string | null
           variant_id?: string | null
           lemon_squeezy_customer_id?: string | null
+          customer_portal_url?: string | null
           current_period_end?: string | null
           created_at?: string | null
         }
@@ -168,6 +170,7 @@ export type Database = {
           subscription_id?: string | null
           variant_id?: string | null
           lemon_squeezy_customer_id?: string | null
+          customer_portal_url?: string | null
           current_period_end?: string | null
           created_at?: string | null
         }

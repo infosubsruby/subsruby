@@ -6,6 +6,7 @@ export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [customerPortalUrl, setCustomerPortalUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -22,7 +23,7 @@ export const useSubscription = () => {
 
         const { data: subscriptionRow, error: subscriptionError } = await supabase
           .from("user_subscriptions")
-          .select("status")
+          .select("status, customer_portal_url")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -32,16 +33,23 @@ export const useSubscription = () => {
         if (!subscriptionError) {
           const status = subscriptionRow?.status ? String(subscriptionRow.status) : null;
           setStatus(status);
+          const portalUrlRaw =
+            subscriptionRow && typeof subscriptionRow === "object" && "customer_portal_url" in subscriptionRow
+              ? (subscriptionRow as { customer_portal_url?: unknown }).customer_portal_url
+              : null;
+          setCustomerPortalUrl(typeof portalUrlRaw === "string" ? portalUrlRaw : null);
           setIsPro(status === "active" || status === "trialing");
           return;
         }
 
         console.error("Supabase Çekme Hatası:", errorMessageOrValue(subscriptionError));
         setStatus(null);
+        setCustomerPortalUrl(null);
         setIsPro(false);
       } catch (error) {
         console.error("Supabase Çekme Hatası:", errorMessageOrValue(error));
         setStatus(null);
+        setCustomerPortalUrl(null);
         setIsPro(false);
       } finally {
         setLoading(false);
@@ -51,5 +59,5 @@ export const useSubscription = () => {
     checkSubscription();
   }, []);
 
-  return { isPro, status, loading };
+  return { isPro, status, customerPortalUrl, loading };
 };

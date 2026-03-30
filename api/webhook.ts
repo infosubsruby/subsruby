@@ -187,6 +187,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     
     // Doğrudan payload üzerinden status çekimi
     const subscriptionStatus = attrs.status != null ? String(attrs.status) : null;
+    const urls = isRecord(attrs.urls) ? attrs.urls : null;
+    const customerPortalUrlRaw = urls ? urls.customer_portal : null;
+    const customerPortalUrl = typeof customerPortalUrlRaw === "string" ? customerPortalUrlRaw : null;
 
     console.log("2. İMZA DOĞRULANDI, Payload:", eventName);
     console.log("3. ALINAN USER ID:", userId, "| Gelen Custom Data:", customData, "| Status:", subscriptionStatus);
@@ -231,11 +234,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     });
 
     console.log("4. SUPABASE'E YAZILIYOR...");
+    const upsertPayload: Record<string, unknown> = {
+      user_id: userId,
+      status: subscriptionStatus,
+    };
+    if (customerPortalUrl) {
+      upsertPayload.customer_portal_url = customerPortalUrl;
+    }
     const first = await supabaseAdmin.from("user_subscriptions").upsert(
-      {
-        user_id: userId,
-        status: subscriptionStatus,
-      },
+      upsertPayload,
       { onConflict: "user_id" }
     );
 
