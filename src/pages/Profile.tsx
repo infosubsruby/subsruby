@@ -4,8 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Navbar } from "@/components/layout/Navbar";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Loader2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -14,6 +17,9 @@ const Profile = () => {
   const [accountName, setAccountName] = useState<string | null>(null);
   const [accountAvatarUrl, setAccountAvatarUrl] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
+  const [formEmail, setFormEmail] = useState<string>("");
+  const [formFullName, setFormFullName] = useState<string>("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -27,6 +33,7 @@ const Profile = () => {
 
         const authUser = userData?.user ?? null;
         setAccountEmail(authUser?.email ?? user.email ?? null);
+        setFormEmail(authUser?.email ?? user.email ?? "");
 
         const meta = authUser?.user_metadata ?? {};
         const metaName =
@@ -36,6 +43,7 @@ const Profile = () => {
               ? String((meta as { name?: unknown }).name)
               : null;
         setAccountName(metaName);
+        setFormFullName(metaName ?? "");
 
         const metaAvatar =
           typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
@@ -45,7 +53,9 @@ const Profile = () => {
       } catch (error) {
         console.error("Supabase Çekme Hatası:", error);
         setAccountEmail(user?.email ?? null);
+        setFormEmail(user?.email ?? "");
         setAccountName(null);
+        setFormFullName("");
         setAccountAvatarUrl(null);
       } finally {
         setAccountLoading(false);
@@ -55,6 +65,27 @@ const Profile = () => {
     fetchAccount();
   }, [user?.id, user?.email]);
 
+  const handleSave = async () => {
+    if (!user?.id) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: formFullName,
+        },
+      });
+      if (error) {
+        toast.error("Failed to update profile");
+        return;
+      }
+      setAccountName(formFullName);
+      toast.success("Profile updated");
+    } catch (error) {
+      toast.error("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
   }
@@ -108,6 +139,30 @@ const Profile = () => {
 
               {accountLoading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : null}
             </div>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input value={formEmail} readOnly disabled />
+              </div>
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <Input
+                  value={formFullName}
+                  onChange={(e) => setFormFullName(e.target.value)}
+                  placeholder="Your name"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSave}
+                  disabled={saving || accountLoading}
+                  className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -116,4 +171,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
