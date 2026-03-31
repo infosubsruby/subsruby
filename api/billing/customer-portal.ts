@@ -34,28 +34,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function pickCustomerPortalUrlFromLemonData(data: unknown): string | null {
-  if (!isRecord(data)) return null;
-  const attributes = data.attributes;
-  if (!isRecord(attributes)) return null;
-  const urls = attributes.urls;
-  if (!isRecord(urls)) return null;
-  const portal = urls.customer_portal;
-  return typeof portal === "string" ? portal : null;
-}
-
-function pickCustomerPortalUrlFromJsonApiResponse(payload: unknown): string | null {
-  if (!isRecord(payload)) return null;
-  const data = payload.data;
-  if (!isRecord(data)) return null;
-  const attributes = data.attributes;
-  if (!isRecord(attributes)) return null;
-  const urls = attributes.urls;
-  if (!isRecord(urls)) return null;
-  const portal = urls.customer_portal;
-  return typeof portal === "string" ? portal : null;
-}
-
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const requestId = `portal_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {
@@ -106,47 +84,56 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const userId = authData.user.id;
-    console.log("2. Supabase'den ID çekiliyor");
-    const { data: subscriptionRow, error: subscriptionError } = await supabaseAdmin
+    console.log("2. Supabase'den ID çekiliyor...");
+    const { data: subData, error: subError } = await supabaseAdmin
       .from("user_subscriptions")
       .select("customer_id")
       .eq("user_id", userId)
-      .maybeSingle();
+      .single();
 
-    if (subscriptionError) {
-      console.error("[customer-portal] subscription query failed", {
-        requestId,
-        subscriptionError: safeStringifyError(subscriptionError),
-      });
-      sendJson(res, 500, { error: "Bilinmeyen bir sunucu hatası oluştu" });
-      return;
-    }
-
-    const customerIdRaw = subscriptionRow?.customer_id;
-    const customerId =
-      typeof customerIdRaw === "string" || typeof customerIdRaw === "number" ? customerIdRaw : null;
-
-    if (!customerId) {
+    if (subError || !subData || !subData.customer_id) {
       sendJson(res, 400, { error: "Müşteri ID'si bulunamadı. Aktif bir ödeme kaydınız yok." });
       return;
     }
 
-    console.log("3. Lemon Squeezy'ye istek atılıyor");
-    const { statusCode, error: lemonError, data } = await getCustomer(customerId);
-    if (lemonError || !data) {
-      console.error("[customer-portal] lemon customer error", {
-        requestId,
-        statusCode,
-        lemonError: safeStringifyError(lemonError),
-      });
-      sendJson(res, 500, { error: `Lemon Squeezy API error (HTTP ${statusCode ?? "unknown"})` });
+    const customerId = subData.customer_id;
+    console.log("3. Lemon Squeezy'ye istek atılıyor. Bulunan ID:", customerId);
+    const lemonResponse = await getCustomer(customerId);
+    const lemonData = (lemonResponse as unknown as { data?: unknown }).data ?? null;
+    const lemonError = (lemonResponse as unknown as { error?: unknown }).error ?? null;
+
+    if (lemonError || !lemonData) {
+      console.error("[customer-portal] lemon customer error", { requestId, lemonError: safeStringifyError(lemonError) });
+      sendJson(res, 500, { error: "Lemon Squeezy API error" });
       return;
     }
 
-    const portalUrl = pickCustomerPortalUrlFromJsonApiResponse(data) ?? pickCustomerPortalUrlFromLemonData(data);
-    console.log("Bulunan Portal URL:", portalUrl);
+    const portalUrl = isRecord(lemonData)
+      ? (lemonData as { data?: unknown }).data &&
+        isRecord((lemonData as { data?: unknown }).data) &&
+        isRecord(((lemonData as { data?: unknown }).data as { attributes?: unknown }).attributes) &&
+        isRecord(
+          (((lemonData as { data?: unknown }).data as { attributes?: unknown }).attributes as { urls?: unknown }).urls
+        ) &&
+        typeof (
+          (((lemonData as { data?: unknown }).data as { attributes?: unknown }).attributes as { urls?: unknown }).urls as {
+            customer_portal?: unknown;
+          }
+        ).customer_portal === "string"
+        ? String(
+            (
+              (
+                (((lemonData as { data?: unknown }).data as { attributes?: unknown }).attributes as { urls?: unknown })
+                  .urls as { customer_portal?: unknown }
+              ).customer_portal
+            ) ?? ""
+          )
+        : null
+      : null;
+
+    console.log("4. Bulunan Portal URL:", portalUrl);
     if (!portalUrl) {
-      sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
+      sendJson(res, 400, { error: "Portal linki üretilemedi." });
       return;
     }
 
