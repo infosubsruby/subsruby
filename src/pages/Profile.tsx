@@ -69,19 +69,18 @@ const Profile = () => {
 
         const { data: profileRow, error: profileError } = await supabase
           .from("profiles")
-          .select("first_name, last_name, email, avatar_url")
+          .select("first_name, last_name, avatar_url")
           .eq("id", user.id)
-          .maybeSingle();
+          .single();
         if (profileError) {
-          console.error("Supabase Çekme Hatası:", profileError);
+          const status = (profileError as unknown as { status?: number }).status;
+          const code = (profileError as unknown as { code?: string }).code;
+          if (status !== 406 && code !== "PGRST116") {
+            console.error("Supabase Çekme Hatası:", profileError);
+          }
         }
 
-        const profileEmail =
-          profileRow && typeof profileRow === "object" && "email" in profileRow
-            ? (profileRow as { email?: unknown }).email
-            : null;
-        const resolvedEmail =
-          typeof profileEmail === "string" ? profileEmail : authUser?.email ?? user.email ?? null;
+        const resolvedEmail = authUser?.email ?? user.email ?? null;
         setAccountEmail(resolvedEmail);
         setFormEmail(resolvedEmail ?? "");
 
@@ -112,7 +111,7 @@ const Profile = () => {
             ? (profileRow as { avatar_url?: unknown }).avatar_url
             : null;
         setAccountAvatarUrl(
-          metaAvatar ?? (typeof profileAvatarUrl === "string" ? profileAvatarUrl : null)
+          (typeof profileAvatarUrl === "string" ? profileAvatarUrl : null) ?? metaAvatar
         );
 
         const { data: subRow, error: subError } = await supabase
@@ -384,27 +383,27 @@ const Profile = () => {
                       <button
                         type="button"
                         onClick={handleAvatarPick}
-                        className="group relative w-10 h-10 rounded-lg overflow-hidden"
+                        className="group relative w-20 h-20 rounded-full overflow-hidden"
                         aria-label="Change avatar"
                       >
                         {accountAvatarUrl ? (
                           <img
                             src={accountAvatarUrl}
                             alt="Avatar"
-                            className="w-10 h-10 object-cover"
+                            className="w-20 h-20 object-cover"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
-                            <span className="text-sm font-medium">
+                          <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center">
+                            <span className="text-xl font-medium">
                               {(accountEmail?.[0] ?? "U").toUpperCase()}
                             </span>
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           {avatarUploading ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                            <Loader2 className="w-6 h-6 animate-spin text-white" />
                           ) : (
-                            <Camera className="w-4 h-4 text-white" />
+                            <Camera className="w-6 h-6 text-white" />
                           )}
                         </div>
                       </button>
@@ -412,7 +411,6 @@ const Profile = () => {
                     <div>
                       <Label className="text-base font-medium">Account Details</Label>
                       <p className="text-sm text-muted-foreground">{accountName ? accountName : "İsim belirtilmedi"}</p>
-                      {accountEmail ? <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p> : null}
                       {memberSince ? <p className="text-xs text-muted-foreground mt-1">{memberSince}</p> : null}
                       {accountId ? <p className="text-xs text-muted-foreground mt-1">Account ID: {accountId}</p> : null}
                     </div>
@@ -515,28 +513,20 @@ const Profile = () => {
                     </div>
                     <div>
                       <Label className="text-base font-medium">Current Plan</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {subscriptionStatus === "active" || subscriptionStatus === "trialing" ? "Pro Plan" : "Free Plan"}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Free Plan</p>
                     </div>
                   </div>
                   <Button
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => {
-                      if (subscriptionStatus === "active" || subscriptionStatus === "trialing") {
-                        if (!customerPortalUrl) {
-                          toast.error("Customer portal link not found.");
-                          return;
-                        }
-                        window.open(customerPortalUrl, "_blank", "noopener,noreferrer");
+                      if (!customerPortalUrl) {
+                        toast.error("Customer portal link not found.");
                         return;
                       }
-                      navigate("/upgrade");
+                      window.open(customerPortalUrl, "_blank", "noopener,noreferrer");
                     }}
                   >
-                    {subscriptionStatus === "active" || subscriptionStatus === "trialing"
-                      ? "Manage Subscription"
-                      : "Upgrade Plan"}
+                    Manage Subscription
                   </Button>
                 </div>
               </div>
