@@ -58,12 +58,17 @@ const Profile = () => {
         .from("user_subscriptions")
         .select("status, current_period_end")
         .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (subError) {
         console.error("Supabase Çekme Hatası:", subError);
         setSubscriptionStatus(null);
         setCurrentPeriodEnd(null);
         return;
+      }
+      if (import.meta.env.DEV) {
+        console.log("Supabase Abonelik Verisi:", subRow, "Hata:", subError);
       }
       const statusRaw =
         subRow && typeof subRow === "object" && "status" in subRow ? (subRow as { status?: unknown }).status : null;
@@ -404,7 +409,7 @@ const Profile = () => {
     }
   };
 
-  const isPro = ["active", "trialing", "past_due"].includes(subscriptionStatus ?? "");
+  const isPro = ["active", "trialing"].includes(subscriptionStatus ?? "");
   const formattedRenews =
     currentPeriodEnd && !Number.isNaN(new Date(currentPeriodEnd).getTime())
       ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(

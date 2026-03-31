@@ -60,6 +60,8 @@ const Settings = () => {
         .from("user_subscriptions")
         .select("status, current_period_end")
         .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (subError) {
@@ -67,6 +69,10 @@ const Settings = () => {
         setSubscriptionStatus(null);
         setCurrentPeriodEnd(null);
         return;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log("Supabase Abonelik Verisi:", subRow, "Hata:", subError);
       }
 
       const statusRaw =
@@ -131,7 +137,7 @@ const Settings = () => {
     };
   }, [user?.id, refreshSubscription]);
 
-  const isActive = ["active", "trialing", "past_due"].includes(subscriptionStatus ?? "");
+  const isActive = ["active", "trialing"].includes(subscriptionStatus ?? "");
 
   const formatRenewsAt = (iso: string) => {
     const d = new Date(iso);
