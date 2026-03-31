@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -52,44 +52,86 @@ const Settings = () => {
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchAccount = async () => {
-      if (!user?.id) return;
-      setAccountLoading(true);
-      try {
-        const { data: subRow, error: subError } = await supabase
-          .from("user_subscriptions")
-          .select("status, current_period_end")
-          .eq("user_id", user.id)
-          .maybeSingle();
+  const refreshSubscription = useCallback(async () => {
+    if (!user?.id) return;
+    setAccountLoading(true);
+    try {
+      const { data: subRow, error: subError } = await supabase
+        .from("user_subscriptions")
+        .select("status, current_period_end")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-        if (subError) {
-          console.error("Supabase Çekme Hatası:", subError);
-          setSubscriptionStatus(null);
-          setCurrentPeriodEnd(null);
-        } else {
-          const statusRaw = subRow && typeof subRow === "object" && "status" in subRow ? (subRow as { status?: unknown }).status : null;
-          setSubscriptionStatus(statusRaw != null ? String(statusRaw) : null);
-
-          const endRaw =
-            subRow && typeof subRow === "object" && "current_period_end" in subRow
-              ? (subRow as { current_period_end?: unknown }).current_period_end
-              : null;
-          setCurrentPeriodEnd(typeof endRaw === "string" ? endRaw : null);
-        }
-      } catch (error) {
-        console.error("Supabase Çekme Hatası:", error);
+      if (subError) {
+        console.error("Supabase Çekme Hatası:", subError);
         setSubscriptionStatus(null);
         setCurrentPeriodEnd(null);
-      } finally {
-        setAccountLoading(false);
+        return;
       }
-    };
 
-    fetchAccount();
+      const statusRaw =
+        subRow && typeof subRow === "object" && "status" in subRow ? (subRow as { status?: unknown }).status : null;
+      setSubscriptionStatus(statusRaw != null ? String(statusRaw) : null);
+
+      const endRaw =
+        subRow && typeof subRow === "object" && "current_period_end" in subRow
+          ? (subRow as { current_period_end?: unknown }).current_period_end
+          : null;
+      setCurrentPeriodEnd(typeof endRaw === "string" ? endRaw : null);
+    } catch (error) {
+      console.error("Supabase Çekme Hatası:", error);
+      setSubscriptionStatus(null);
+      setCurrentPeriodEnd(null);
+    } finally {
+      setAccountLoading(false);
+    }
   }, [user?.id]);
 
-  const isActive = subscriptionStatus === "active";
+  useEffect(() => {
+    void refreshSubscription();
+  }, [refreshSubscription]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel("user-subscriptions-settings")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_subscriptions",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const row = (payload as unknown as { new?: Record<string, unknown> }).new ?? null;
+          const status = row?.status != null ? String(row.status) : null;
+          setSubscriptionStatus(status);
+          const end = row?.current_period_end;
+          setCurrentPeriodEnd(typeof end === "string" ? end : null);
+        }
+      )
+      .subscribe();
+
+    const onFocus = () => {
+      void refreshSubscription();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refreshSubscription();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, refreshSubscription]);
+
+  const isActive = ["active", "trialing", "past_due"].includes(subscriptionStatus ?? "");
 
   const formatRenewsAt = (iso: string) => {
     const d = new Date(iso);
