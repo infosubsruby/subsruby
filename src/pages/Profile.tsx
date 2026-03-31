@@ -23,7 +23,7 @@ import { toast } from "sonner";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, refreshProfile } = useAuth();
   const { t } = useLanguage();
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
@@ -146,6 +146,7 @@ const Profile = () => {
       setAccountName(displayName || null);
       setFirstName(nextFirstName);
       setLastName(nextLastName);
+      await refreshProfile();
       toast.success("Profil güncellendi");
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
