@@ -291,7 +291,15 @@ const Profile = () => {
         body: JSON.stringify({}),
       });
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        let backendMessage: string | null = null;
+        try {
+          const errorData = (await response.json()) as { error?: unknown };
+          backendMessage = typeof errorData?.error === "string" ? errorData.error : null;
+        } catch {
+          backendMessage = null;
+        }
+        toast.error(backendMessage || "Bilinmeyen bir hata oluştu");
+        return;
       }
       const data = (await response.json()) as { url?: unknown };
       const url = typeof data?.url === "string" ? data.url : null;
@@ -301,7 +309,9 @@ const Profile = () => {
       window.location.href = url;
     } catch (error) {
       console.error("Customer portal error:", error);
-      toast.error("Müşteri portalı açılamadı. Lütfen daha sonra tekrar deneyin.");
+      const message = error instanceof Error ? error.message : "Bilinmeyen bir hata oluştu";
+      toast.error(message);
+    } finally {
       setIsPortalLoading(false);
     }
   };
