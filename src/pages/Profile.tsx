@@ -26,7 +26,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, refreshProfile } = useAuth();
   const { t } = useLanguage();
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
   const [accountAvatarUrl, setAccountAvatarUrl] = useState<string | null>(null);
@@ -179,7 +179,7 @@ const Profile = () => {
 
   const handleAvatarPick = () => {
     if (avatarUploading) return;
-    avatarInputRef.current?.click();
+    fileInputRef.current?.click();
   };
 
   const extractAvatarFilePath = (publicUrl: string) => {
@@ -401,13 +401,16 @@ const Profile = () => {
 
             <TabsContent value="account" className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-8">
-                <div className="flex flex-col items-center sm:items-start gap-2">
+                <div className="flex flex-col items-center gap-3">
                   <div className="relative shrink-0">
                     <input
-                      ref={avatarInputRef}
+                      ref={fileInputRef}
                       type="file"
                       accept="image/*"
                       className="hidden"
+                      style={{ display: "none" }}
+                      aria-hidden="true"
+                      tabIndex={-1}
                       onChange={async (e) => {
                         const file = e.target.files?.[0] ?? null;
                         e.target.value = "";
@@ -445,24 +448,24 @@ const Profile = () => {
                   <div className="flex items-center gap-4">
                     <Button
                       type="button"
-                      variant="link"
+                      variant="outline"
                       size="sm"
-                      className="px-0 text-muted-foreground hover:text-foreground"
+                      className="h-9"
                       onClick={handleAvatarPick}
                       disabled={avatarUploading || avatarDeleting}
                     >
-                      Fotoğrafı Değiştir
+                      Değiştir
                     </Button>
                     {dbAvatarUrl ? (
                       <Button
                         type="button"
-                        variant="link"
+                        variant="ghost"
                         size="sm"
-                        className="px-0 text-red-500 hover:text-red-600"
+                        className="h-9 px-0 text-red-500 hover:text-red-400 hover:bg-transparent font-medium text-sm"
                         onClick={handleDeletePhoto}
                         disabled={avatarUploading || avatarDeleting}
                       >
-                        Fotoğrafı Sil
+                        Sil
                       </Button>
                     ) : null}
                   </div>
