@@ -89,23 +89,22 @@ export const Navbar = () => {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="p-0 rounded-full hover:bg-transparent hover:opacity-90 hover:ring-2 hover:ring-muted-foreground/20 hover:ring-offset-2 hover:ring-offset-background"
+                  >
                     {profile?.avatar_url ? (
                       <img
                         src={profile.avatar_url}
                         alt="Avatar"
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-10 h-10 rounded-full object-cover object-center"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                        <span className="text-xs font-medium">
-                          {(profile?.first_name?.[0] ?? user?.email?.[0] ?? "U").toUpperCase()}
-                        </span>
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                        <User className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}
-                    <span className="hidden sm:inline">
-                      {profile?.first_name || t.nav.account}
-                    </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
