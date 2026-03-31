@@ -358,63 +358,79 @@ const Profile = () => {
             </div>
 
             <TabsContent value="account" className="space-y-6">
-              <div className="glass-card rounded-xl p-6 space-y-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative shrink-0">
-                      <input
-                        ref={avatarInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0] ?? null;
-                          e.target.value = "";
-                          await handleAvatarChange(file);
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAvatarPick}
-                        className="group relative w-20 h-20 rounded-full overflow-hidden"
-                        aria-label="Change avatar"
-                      >
-                        {accountAvatarUrl ? (
-                          <img
-                            src={accountAvatarUrl}
-                            alt="Avatar"
-                            className="w-20 h-20 object-cover"
-                          />
-                        ) : (
-                          <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center">
-                            <span className="text-xl font-medium">
-                              {(accountEmail?.[0] ?? "U").toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          {avatarUploading ? (
-                            <Loader2 className="w-6 h-6 animate-spin text-white" />
-                          ) : (
-                            <Camera className="w-6 h-6 text-white" />
-                          )}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-8">
+                <div className="flex flex-col items-center sm:items-start gap-2">
+                  <div className="relative shrink-0">
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        e.target.value = "";
+                        await handleAvatarChange(file);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAvatarPick}
+                      className="group relative w-28 h-28 rounded-full overflow-hidden"
+                      aria-label="Change avatar"
+                    >
+                      {accountAvatarUrl ? (
+                        <img
+                          src={accountAvatarUrl}
+                          alt="Avatar"
+                          className="w-28 h-28 object-cover object-top"
+                        />
+                      ) : (
+                        <div className="w-28 h-28 rounded-full bg-secondary flex items-center justify-center">
+                          <span className="text-3xl font-medium">
+                            {(accountEmail?.[0] ?? "U").toUpperCase()}
+                          </span>
                         </div>
-                      </button>
-                    </div>
-                    <div>
-                      <Label className="text-base font-medium">Account Details</Label>
-                      <p className="text-sm text-muted-foreground">{accountName ? accountName : "İsim belirtilmedi"}</p>
-                      {memberSince ? <p className="text-xs text-muted-foreground mt-1">{memberSince}</p> : null}
-                      {accountId ? <p className="text-xs text-muted-foreground mt-1">Account ID: {accountId}</p> : null}
-                    </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        {avatarUploading ? (
+                          <Loader2 className="w-7 h-7 animate-spin text-white" />
+                        ) : (
+                          <Camera className="w-7 h-7 text-white" />
+                        )}
+                      </div>
+                    </button>
                   </div>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="px-0 text-muted-foreground hover:text-foreground"
+                    onClick={handleAvatarPick}
+                    disabled={avatarUploading}
+                  >
+                    Fotoğrafı Değiştir
+                  </Button>
+                </div>
 
+                <div className="min-w-0">
+                  <p className="text-lg font-medium leading-tight">
+                    {accountName ? accountName : "İsim belirtilmedi"}
+                  </p>
+                  {accountEmail ? <p className="text-sm text-muted-foreground mt-1">{accountEmail}</p> : null}
+                  {memberSince ? <p className="text-xs text-muted-foreground mt-3">{memberSince}</p> : null}
+                  {accountId ? <p className="text-xs text-muted-foreground mt-1">Account ID: {accountId}</p> : null}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Account Details</Label>
                   {accountLoading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : null}
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label>Email</Label>
-                    <Input value={formEmail} readOnly disabled className="bg-muted text-muted-foreground" />
+                    <Input value={formEmail} readOnly disabled className="bg-muted text-muted-foreground h-9" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -423,7 +439,7 @@ const Profile = () => {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="First name"
-                        className="focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                        className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                       />
                     </div>
                     <div className="space-y-2">
@@ -432,7 +448,7 @@ const Profile = () => {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Last name"
-                        className="focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                        className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                       />
                     </div>
                   </div>
@@ -440,7 +456,7 @@ const Profile = () => {
                     <Button
                       onClick={handleSave}
                       disabled={saving || accountLoading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     >
                       {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       {saving ? "Kaydediliyor..." : "Save Changes"}
@@ -449,7 +465,7 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="glass-card rounded-xl p-6 border-destructive/30">
+              <div className="rounded-xl border border-destructive/30 bg-transparent p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-destructive/20 flex items-center justify-center shrink-0">
@@ -462,7 +478,7 @@ const Profile = () => {
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
+                      <Button variant="destructive" size="sm" className="bg-destructive/80 hover:bg-destructive">
                         {t.settings.delete}
                       </Button>
                     </AlertDialogTrigger>
@@ -479,7 +495,7 @@ const Profile = () => {
                         <AlertDialogAction
                           onClick={handleDeleteAccount}
                           disabled={isDeleting}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="bg-destructive/80 text-destructive-foreground hover:bg-destructive"
                         >
                           {isDeleting ? (
                             <>
@@ -498,7 +514,7 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="billing" className="space-y-6">
-              <div className="glass-card rounded-xl p-6 space-y-6">
+              <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
@@ -510,7 +526,7 @@ const Profile = () => {
                     </div>
                   </div>
                   <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     onClick={() => {
                       if (!customerPortalUrl) {
                         toast.error("Customer portal link not found.");
@@ -526,7 +542,7 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="security" className="space-y-6">
-              <div className="glass-card rounded-xl p-6 space-y-6">
+              <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
@@ -546,6 +562,7 @@ const Profile = () => {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="********"
+                      className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -555,13 +572,14 @@ const Profile = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="********"
+                      className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
                   <div className="flex justify-end">
                     <Button
                       onClick={handleUpdatePassword}
                       disabled={updatingPassword || accountLoading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     >
                       {updatingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       Update Password
