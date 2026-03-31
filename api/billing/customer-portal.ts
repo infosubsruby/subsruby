@@ -59,6 +59,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
+    const lemonApiKey = process.env.LEMON_SQUEEZY_API_KEY;
+    if (!lemonApiKey) {
+      sendJson(res, 500, {
+        message: "Missing Lemon Squeezy API key",
+        error: { requestId, missing: "LEMON_SQUEEZY_API_KEY" },
+      });
+      return;
+    }
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authData.user) {
@@ -70,7 +79,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const userId = authData.user.id;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
     if (!serviceRoleKey) {
-      sendJson(res, 200, { url: "https://subsruby.lemonsqueezy.com/billing" });
+      sendJson(res, 500, { message: "Missing Supabase service role", error: { requestId } });
       return;
     }
 
@@ -117,13 +126,21 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         : null;
     const customerId = typeof customerIdRaw === "string" ? customerIdRaw : null;
 
-    const fallbackUrl = customerId
-      ? `https://subsruby.lemonsqueezy.com/billing?customer_id=${encodeURIComponent(customerId)}`
-      : "https://subsruby.lemonsqueezy.com/billing";
+    if (!customerId) {
+      sendJson(res, 400, { message: "Aktif bir aboneliğiniz bulunmuyor." });
+      return;
+    }
 
-    sendJson(res, 200, { url: fallbackUrl });
+    // Normally you would call Lemon Squeezy API to create a portal session using lemonApiKey & customerId.
+    // For now, return a placeholder customer portal URL tied to customer id.
+    const url = `https://subsruby.lemonsqueezy.com/billing?customer_id=${encodeURIComponent(customerId)}`;
+    sendJson(res, 200, { url });
   } catch (error) {
-    console.error("[customer-portal] unhandled error", { requestId, error: safeStringifyError(error) });
-    sendJson(res, 500, { message: "Internal Server Error", error: { requestId } });
+    console.error("[Billing API Error]:", error);
+    const message =
+      error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string"
+        ? (error as { message: string }).message
+        : "Bilinmeyen bir sunucu hatası oluştu";
+    sendJson(res, 500, { error: message });
   }
 }
