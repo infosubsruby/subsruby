@@ -90,7 +90,19 @@ export const Navbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
-                    <User className="w-4 h-4" />
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <span className="text-xs font-medium">
+                          {(profile?.first_name?.[0] ?? user?.email?.[0] ?? "U").toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                     <span className="hidden sm:inline">
                       {profile?.first_name || t.nav.account}
                     </span>
