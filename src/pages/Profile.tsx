@@ -50,8 +50,6 @@ const Profile = () => {
         }
 
         const authUser = userData?.user ?? null;
-        setAccountEmail(authUser?.email ?? user.email ?? null);
-        setFormEmail(authUser?.email ?? user.email ?? "");
         setAccountId(authUser?.id ?? user.id);
 
         const createdAt = authUser?.created_at ?? null;
@@ -63,35 +61,34 @@ const Profile = () => {
           setMemberSince(null);
         }
 
-        const meta = authUser?.user_metadata ?? {};
-        const metaFullNameRaw = (meta as { full_name?: unknown }).full_name;
-        const metaFullName = typeof metaFullNameRaw === "string" ? metaFullNameRaw : null;
         const { data: profileRow, error: profileError } = await supabase
           .from("profiles")
-          .select("first_name, last_name, avatar_url")
+          .select("full_name, email, avatar_url")
           .eq("id", user.id)
           .maybeSingle();
         if (profileError) {
           console.error("Supabase Çekme Hatası:", profileError);
         }
 
-        const profileFirstName =
-          profileRow && typeof profileRow === "object" && "first_name" in profileRow
-            ? (profileRow as { first_name?: unknown }).first_name
+        const profileEmail =
+          profileRow && typeof profileRow === "object" && "email" in profileRow
+            ? (profileRow as { email?: unknown }).email
             : null;
-        const profileLastName =
-          profileRow && typeof profileRow === "object" && "last_name" in profileRow
-            ? (profileRow as { last_name?: unknown }).last_name
-            : null;
+        const resolvedEmail =
+          typeof profileEmail === "string" ? profileEmail : authUser?.email ?? user.email ?? null;
+        setAccountEmail(resolvedEmail);
+        setFormEmail(resolvedEmail ?? "");
+
         const profileFullName =
-          (typeof profileFirstName === "string" ? profileFirstName : "")
-            .concat(typeof profileLastName === "string" && profileLastName ? ` ${profileLastName}` : "")
-            .trim() || null;
-
-        setFullName(metaFullName ?? "");
-
-        const resolvedName = metaFullName ?? profileFullName;
-        setAccountName(resolvedName);
+          profileRow && typeof profileRow === "object" && "full_name" in profileRow
+            ? (profileRow as { full_name?: unknown }).full_name
+            : null;
+        const meta = authUser?.user_metadata ?? {};
+        const metaFullNameRaw = (meta as { full_name?: unknown }).full_name;
+        const metaFullName = typeof metaFullNameRaw === "string" ? metaFullNameRaw : null;
+        const resolvedName = typeof profileFullName === "string" ? profileFullName : metaFullName;
+        setAccountName(resolvedName ?? resolvedEmail);
+        setFullName(resolvedName ?? "");
 
         const metaAvatar =
           typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
@@ -126,38 +123,17 @@ const Profile = () => {
     setSaving(true);
     try {
       const nextName = fullName.trim();
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          full_name: nextName,
-        },
-      });
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({ id: user.id, full_name: nextName }, { onConflict: "id" });
       if (error) {
         console.error("Supabase Güncelleme Hatası:", error);
         toast.error("Failed to update profile");
         return;
       }
-      if (nextName) {
-        const parts = nextName.split(/\s+/).filter(Boolean);
-        const firstName = parts[0] ?? null;
-        const lastName = parts.length > 1 ? parts.slice(1).join(" ") : null;
-        const { error: profileUpdateError } = await supabase
-          .from("profiles")
-          .update({ first_name: firstName, last_name: lastName })
-          .eq("id", user.id);
-        if (profileUpdateError) {
-          console.error("Supabase Güncelleme Hatası:", profileUpdateError);
-        }
-      }
 
-      const { data: refreshed, error: refreshError } = await supabase.auth.getUser();
-      if (refreshError) {
-        console.error("Supabase Çekme Hatası:", refreshError);
-      }
-      const refreshedNameRaw = refreshed.user?.user_metadata?.full_name;
-      const refreshedName = typeof refreshedNameRaw === "string" ? refreshedNameRaw : nextName || null;
-
-      setAccountName(refreshedName);
-      setFullName(refreshedName ?? "");
+      setAccountName(nextName || accountEmail);
+      setFullName(nextName);
       toast.success("Profile updated");
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
