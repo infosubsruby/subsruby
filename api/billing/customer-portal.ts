@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
-import { getCustomer, getSubscription, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
+import { getCustomer, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -97,7 +97,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     console.log("2. Supabase'den ID çekiliyor");
     const { data: subscriptionRow, error: subscriptionError } = await supabaseAdmin
       .from("user_subscriptions")
-      .select("subscription_id, lemon_squeezy_customer_id")
+      .select("customer_id")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -110,40 +110,17 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
-    const subscriptionIdRaw = subscriptionRow?.subscription_id;
-    const subscriptionId = typeof subscriptionIdRaw === "string" ? subscriptionIdRaw : null;
-    const customerIdRaw = subscriptionRow?.lemon_squeezy_customer_id;
-    const customerId = typeof customerIdRaw === "string" ? customerIdRaw : null;
+    const customerIdRaw = subscriptionRow?.customer_id;
+    const customerId =
+      typeof customerIdRaw === "string" || typeof customerIdRaw === "number" ? customerIdRaw : null;
 
-    if (!subscriptionId && !customerId) {
+    if (!customerId) {
       sendJson(res, 400, { error: "Müşteri ID'si bulunamadı. Aktif bir ödeme kaydınız yok." });
       return;
     }
 
     console.log("3. Lemon Squeezy'ye istek atılıyor");
-    if (subscriptionId) {
-      const { statusCode, error: lemonError, data } = await getSubscription(subscriptionId);
-      if (lemonError || !data) {
-        console.error("[customer-portal] lemon subscription error", {
-          requestId,
-          statusCode,
-          lemonError: safeStringifyError(lemonError),
-        });
-        sendJson(res, 500, { error: `Lemon Squeezy API error (HTTP ${statusCode ?? "unknown"})` });
-        return;
-      }
-
-      const portalUrl = pickCustomerPortalUrlFromLemonData(data);
-      if (!portalUrl) {
-        sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
-        return;
-      }
-
-      sendJson(res, 200, { url: portalUrl });
-      return;
-    }
-
-    const { statusCode, error: lemonError, data } = await getCustomer(customerId as string);
+    const { statusCode, error: lemonError, data } = await getCustomer(customerId);
     if (lemonError || !data) {
       console.error("[customer-portal] lemon customer error", {
         requestId,
