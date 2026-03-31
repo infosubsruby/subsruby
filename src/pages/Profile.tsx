@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, CreditCard, Loader2, Lock, LogOut, Trash2, User } from "lucide-react";
+import { AlertTriangle, Camera, CreditCard, Loader2, Lock, LogOut, Trash2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -26,12 +26,14 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, refreshProfile } = useAuth();
   const { t } = useLanguage();
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
   const [accountAvatarUrl, setAccountAvatarUrl] = useState<string | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [memberSince, setMemberSince] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [formEmail, setFormEmail] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -178,6 +180,65 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarPick = () => {
+    if (avatarUploading) return;
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (file: File | null) => {
+    if (!user?.id) return;
+    if (!file) return;
+
+    setAvatarUploading(true);
+    try {
+      const extFromName = file.name.includes(".") ? file.name.split(".").pop() : null;
+      const ext =
+        (typeof extFromName === "string" && extFromName ? extFromName.toLowerCase() : null) ??
+        (file.type.includes("/") ? file.type.split("/").pop() : "png");
+      const unique =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const filePath = `${user.id}/${unique}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { contentType: file.type, cacheControl: "3600", upsert: false });
+
+      if (uploadError) {
+        console.error("Supabase Upload Hatası:", uploadError);
+        toast.error("Fotoğraf yüklenemedi");
+        return;
+      }
+
+      const { data: publicData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = publicData?.publicUrl ?? null;
+      if (!publicUrl) {
+        toast.error("Fotoğraf linki alınamadı");
+        return;
+      }
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user.id);
+      if (profileError) {
+        console.error("Supabase Güncelleme Hatası:", profileError);
+        toast.error("Profil güncellenemedi");
+        return;
+      }
+
+      setAccountAvatarUrl(publicUrl);
+      await refreshProfile();
+      toast.success("Profil fotoğrafı güncellendi");
+    } catch (error) {
+      console.error("Supabase Upload Hatası:", error);
+      toast.error("Fotoğraf yüklenemedi");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const handleUpdatePassword = async () => {
     const email = formEmail || accountEmail || "";
     if (!email) {
@@ -308,19 +369,46 @@ const Profile = () => {
               <div className="glass-card rounded-xl p-6 space-y-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    {accountAvatarUrl ? (
-                      <img
-                        src={accountAvatarUrl}
-                        alt="Avatar"
-                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                    <div className="relative shrink-0">
+                      <input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          e.target.value = "";
+                          await handleAvatarChange(file);
+                        }}
                       />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                        <span className="text-sm font-medium">
-                          {(accountEmail?.[0] ?? "U").toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                      <button
+                        type="button"
+                        onClick={handleAvatarPick}
+                        className="group relative w-10 h-10 rounded-lg overflow-hidden"
+                        aria-label="Change avatar"
+                      >
+                        {accountAvatarUrl ? (
+                          <img
+                            src={accountAvatarUrl}
+                            alt="Avatar"
+                            className="w-10 h-10 object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                            <span className="text-sm font-medium">
+                              {(accountEmail?.[0] ?? "U").toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          {avatarUploading ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          ) : (
+                            <Camera className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                      </button>
+                    </div>
                     <div>
                       <Label className="text-base font-medium">Account Details</Label>
                       <p className="text-sm text-muted-foreground">{accountName ? accountName : "İsim belirtilmedi"}</p>
