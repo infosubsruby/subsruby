@@ -136,15 +136,24 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const plan = planRaw === "yearly" ? "yearly" : "monthly";
     const variantId = plan === "yearly" ? yearlyVariantId : monthlyVariantId;
 
-    const bodyUserId = typeof body.user_id === "string" ? body.user_id : null;
+    const bodyUserId =
+      typeof body.user_id === "string"
+        ? body.user_id
+        : typeof body.userId === "string"
+          ? body.userId
+          : null;
 
     const token = getBearerToken(req);
-    const supabaseUrl = process.env.SUPABASE_URL ?? "";
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? "";
+    const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+    const supabaseKey =
+      process.env.SUPABASE_ANON_KEY ??
+      process.env.VITE_SUPABASE_ANON_KEY ??
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      "";
 
     let userId: string | null = bodyUserId;
-    if (token && supabaseUrl && supabaseAnonKey) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    if (token && supabaseUrl && supabaseKey) {
+      const supabase = createClient(supabaseUrl, supabaseKey);
       const { data, error } = await supabase.auth.getUser(token);
       if (error || !data.user) {
         console.error("[create-checkout] unauthorized token", {

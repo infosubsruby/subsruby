@@ -142,6 +142,10 @@ const Settings = () => {
     if (isCheckoutLoading) return;
     setIsCheckoutLoading(true);
     try {
+      if (!user?.id) {
+        toast.error("Please sign in first.");
+        return;
+      }
       const { data: sessionData } = await supabase.auth.getSession();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (sessionData.session?.access_token) {
@@ -150,7 +154,7 @@ const Settings = () => {
       const response = await fetch("/api/create-checkout", {
         method: "POST",
         headers,
-        body: JSON.stringify({ plan: "monthly", redirect: false }),
+        body: JSON.stringify({ user_id: user.id, plan: "monthly", redirect: false }),
       });
       const data = (await response.json()) as { checkoutUrl?: unknown };
       const checkoutUrl = typeof data?.checkoutUrl === "string" ? data.checkoutUrl : null;
