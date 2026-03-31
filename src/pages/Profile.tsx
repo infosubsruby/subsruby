@@ -42,6 +42,8 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [currentPassword, setCurrentPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState<string>("");
+  const [passwordMismatch, setPasswordMismatch] = useState<string | null>(null);
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
@@ -329,6 +331,10 @@ const Profile = () => {
       toast.error("Please enter a new password");
       return;
     }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordMismatch("Şifreler eşleşmiyor");
+      return;
+    }
     setUpdatingPassword(true);
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -348,6 +354,8 @@ const Profile = () => {
       }
       setCurrentPassword("");
       setNewPassword("");
+      setConfirmNewPassword("");
+      setPasswordMismatch(null);
       toast.success("Password updated");
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
@@ -679,7 +687,12 @@ const Profile = () => {
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label>Current Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Current Password</Label>
+                      <a href="#" className="text-xs text-muted-foreground hover:text-foreground">
+                        Forgot password?
+                      </a>
+                    </div>
                     <Input
                       type="password"
                       value={currentPassword}
@@ -693,10 +706,27 @@ const Profile = () => {
                     <Input
                       type="password"
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setPasswordMismatch(null);
+                      }}
                       placeholder="********"
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Confirm New Password</Label>
+                    <Input
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => {
+                        setConfirmNewPassword(e.target.value);
+                        setPasswordMismatch(null);
+                      }}
+                      placeholder="********"
+                      className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
+                    />
+                    {passwordMismatch ? <p className="text-sm text-red-500">{passwordMismatch}</p> : null}
                   </div>
                   <div className="flex justify-end">
                     <Button
