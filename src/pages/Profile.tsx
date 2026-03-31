@@ -279,7 +279,13 @@ const Profile = () => {
     if (isPortalLoading) return;
     setIsPortalLoading(true);
     try {
-      const response = await fetch("/api/billing/customer-portal", { method: "POST" });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (sessionData.session?.access_token) {
+        headers.Authorization = `Bearer ${sessionData.session.access_token}`;
+      }
+
+      const response = await fetch("/api/billing/customer-portal", { method: "POST", headers });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
