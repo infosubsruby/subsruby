@@ -190,23 +190,15 @@ const Profile = () => {
 
     setAvatarUploading(true);
     try {
-      const extFromName = file.name.includes(".") ? file.name.split(".").pop() : null;
-      const ext =
-        (typeof extFromName === "string" && extFromName ? extFromName.toLowerCase() : null) ??
-        (file.type.includes("/") ? file.type.split("/").pop() : "png");
-      const unique =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      const filePath = `${user.id}/${unique}.${ext}`;
+      const filePath = `${user.id}/${Math.random()}-${file.name}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { contentType: file.type, cacheControl: "3600", upsert: false });
+        .upload(filePath, file);
 
       if (uploadError) {
-        console.error("Supabase Upload Hatası:", uploadError);
-        toast.error("Fotoğraf yüklenemedi");
+        console.error("Supabase Upload Hatası:", uploadError.message, uploadError);
+        toast.error(`Fotoğraf yüklenemedi: ${uploadError.message}`);
         return;
       }
 
@@ -231,8 +223,9 @@ const Profile = () => {
       await refreshProfile();
       toast.success("Profil fotoğrafı güncellendi");
     } catch (error) {
-      console.error("Supabase Upload Hatası:", error);
-      toast.error("Fotoğraf yüklenemedi");
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Supabase Upload Hatası:", message, error);
+      toast.error(`Fotoğraf yüklenemedi: ${message}`);
     } finally {
       setAvatarUploading(false);
     }
