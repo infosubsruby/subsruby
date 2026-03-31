@@ -31,6 +31,21 @@ function safeStringifyError(error: unknown) {
   return { message: typeof error === "string" ? error : "Unknown error", error };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function pickCustomerPortalUrl(payload: JsonRecord): string | null {
+  const data = payload.data;
+  if (!isRecord(data)) return null;
+  const attributes = data.attributes;
+  if (!isRecord(attributes)) return null;
+  const urls = attributes.urls;
+  if (!isRecord(urls)) return null;
+  const customerPortal = urls.customer_portal;
+  return typeof customerPortal === "string" ? customerPortal : null;
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const requestId = `portal_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {
@@ -55,20 +70,22 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? "";
     if (!supabaseUrl || !supabaseAnonKey) {
-      sendJson(res, 500, { message: "Supabase not configured", error: { requestId } });
-      return;
+      throw new Error("Supabase not configured");
     }
 
     const lemonApiKey = process.env.LEMON_SQUEEZY_API_KEY;
     if (!lemonApiKey) {
-      sendJson(res, 500, {
-        message: "Missing Lemon Squeezy API key",
-        error: { requestId, missing: "LEMON_SQUEEZY_API_KEY" },
-      });
-      return;
+      throw new Error("Missing LEMON_SQUEEZY_API_KEY");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authData.user) {
       console.error("[customer-portal] unauthorized", { requestId, authError: safeStringifyError(authError) });
@@ -77,47 +94,17 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const userId = authData.user.id;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-    if (!serviceRoleKey) {
-      sendJson(res, 500, { message: "Missing Supabase service role", error: { requestId } });
-      return;
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
-    const { data: subscriptionRow, error: subscriptionError } = await supabaseAdmin
-      .from("user_subscriptions")
-      .select("customer_portal_url")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (subscriptionError) {
-      console.error("[customer-portal] sub query failed", {
-        requestId,
-        subscriptionError: safeStringifyError(subscriptionError),
-      });
-    }
-
-    const portalUrlRaw =
-      subscriptionRow && typeof subscriptionRow === "object" && "customer_portal_url" in subscriptionRow
-        ? (subscriptionRow as { customer_portal_url?: unknown }).customer_portal_url
-        : null;
-    const portalUrl = typeof portalUrlRaw === "string" ? portalUrlRaw : null;
-    if (portalUrl) {
-      sendJson(res, 200, { url: portalUrl });
-      return;
-    }
-
-    const { data: profileRow, error: profileError } = await supabaseAdmin
+    const { data: profileRow, error: profileError } = await supabase
       .from("profiles")
       .select("lemon_squeezy_customer_id")
       .eq("id", userId)
       .maybeSingle();
 
     if (profileError) {
-      console.error("[customer-portal] profile query failed", { requestId, profileError: safeStringifyError(profileError) });
+      console.error("[customer-portal] profile query failed", {
+        requestId,
+        profileError: safeStringifyError(profileError),
+      });
     }
 
     const customerIdRaw =
@@ -127,20 +114,46 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const customerId = typeof customerIdRaw === "string" ? customerIdRaw : null;
 
     if (!customerId) {
-      sendJson(res, 400, { message: "Aktif bir aboneliğiniz bulunmuyor." });
+      sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
       return;
     }
 
-    // Normally you would call Lemon Squeezy API to create a portal session using lemonApiKey & customerId.
-    // For now, return a placeholder customer portal URL tied to customer id.
-    const url = `https://subsruby.lemonsqueezy.com/billing?customer_id=${encodeURIComponent(customerId)}`;
-    sendJson(res, 200, { url });
+    const lemonResponse = await fetch(`https://api.lemonsqueezy.com/v1/customers/${encodeURIComponent(customerId)}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        Authorization: `Bearer ${lemonApiKey}`,
+      },
+    });
+
+    const responseText = await lemonResponse.text();
+    let lemonPayload: JsonRecord = {};
+    try {
+      lemonPayload = responseText ? (JSON.parse(responseText) as JsonRecord) : {};
+    } catch {
+      lemonPayload = { raw: responseText };
+    }
+
+    if (!lemonResponse.ok) {
+      console.error("[customer-portal] lemon error", {
+        requestId,
+        status: lemonResponse.status,
+        lemonPayload,
+      });
+      throw new Error(`Lemon Squeezy API error (HTTP ${lemonResponse.status})`);
+    }
+
+    const portalUrl = pickCustomerPortalUrl(lemonPayload);
+    if (!portalUrl) {
+      sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
+      return;
+    }
+
+    sendJson(res, 200, { url: portalUrl });
   } catch (error) {
     console.error("[Billing API Error]:", error);
-    const message =
-      error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string"
-        ? (error as { message: string }).message
-        : "Bilinmeyen bir sunucu hatası oluştu";
+    const message = error instanceof Error ? error.message : "Bilinmeyen bir sunucu hatası oluştu";
     sendJson(res, 500, { error: message });
   }
 }
