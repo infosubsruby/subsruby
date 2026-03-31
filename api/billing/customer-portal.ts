@@ -1,8 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
-import { getCustomer, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
-
-type JsonRecord = Record<string, unknown>;
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -32,22 +29,6 @@ function safeStringifyError(error: unknown) {
   return { message: typeof error === "string" ? error : "Unknown error", error };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function pickCustomerPortalUrl(payload: unknown): string | null {
-  if (!isRecord(payload)) return null;
-  const dataLike = "data" in payload ? payload.data : payload;
-  if (!isRecord(dataLike)) return null;
-  const attributes = dataLike.attributes;
-  if (!isRecord(attributes)) return null;
-  const urls = attributes.urls;
-  if (!isRecord(urls)) return null;
-  const customerPortal = urls.customer_portal;
-  return typeof customerPortal === "string" ? customerPortal : null;
-}
-
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const requestId = `portal_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {
@@ -59,78 +40,55 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (req.method !== "POST" && req.method !== "GET") {
-      sendJson(res, 405, { message: "Method not allowed", error: { requestId } });
+      sendJson(res, 405, { error: "Method not allowed" });
       return;
     }
 
     const token = getBearerToken(req);
     if (!token) {
-      sendJson(res, 401, { message: "Unauthorized", error: { requestId } });
+      sendJson(res, 401, { error: "Unauthorized" });
       return;
     }
 
-    console.log("1. Auth kontrolü yapılıyor");
     const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "";
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("Supabase URL veya Key bulunamadı!");
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("[customer-portal] Supabase URL veya Key bulunamadı!", { requestId });
       sendJson(res, 500, { error: "Supabase not configured" });
       return;
     }
 
-    const lemonApiKey = process.env.LEMON_SQUEEZY_API_KEY;
-    if (!lemonApiKey) {
-      throw new Error("Missing LEMON_SQUEEZY_API_KEY");
-    }
-
-    lemonSqueezySetup({ apiKey: lemonApiKey });
-
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !authData.user) {
       console.error("[customer-portal] unauthorized", { requestId, authError: safeStringifyError(authError) });
-      sendJson(res, 401, { message: "Unauthorized", error: { requestId } });
+      sendJson(res, 401, { error: "Unauthorized" });
       return;
     }
 
     const userId = authData.user.id;
-    console.log("2. Supabase'den ID çekiliyor");
-    const { data: profileRow, error: profileError } = await supabase
-      .from("profiles")
-      .select("lemon_squeezy_customer_id")
-      .eq("id", userId)
+    const { data: subscriptionRow, error: subscriptionError } = await supabaseAdmin
+      .from("user_subscriptions")
+      .select("customer_portal_url")
+      .eq("user_id", userId)
       .maybeSingle();
 
-    if (profileError) {
-      console.error("[customer-portal] profile query failed", {
+    if (subscriptionError) {
+      console.error("[customer-portal] subscription query failed", {
         requestId,
-        profileError: safeStringifyError(profileError),
+        subscriptionError: safeStringifyError(subscriptionError),
       });
-    }
-
-    const customerIdRaw =
-      profileRow && typeof profileRow === "object" && "lemon_squeezy_customer_id" in profileRow
-        ? (profileRow as { lemon_squeezy_customer_id?: unknown }).lemon_squeezy_customer_id
-        : null;
-    const customerId = typeof customerIdRaw === "string" ? customerIdRaw : null;
-
-    if (!customerId) {
-      sendJson(res, 400, { error: "Müşteri ID'si bulunamadı. Aktif bir ödeme kaydınız yok." });
+      sendJson(res, 500, { error: "Bilinmeyen bir sunucu hatası oluştu" });
       return;
     }
 
-    console.log("3. Lemon Squeezy'ye istek atılıyor");
-    const { statusCode, error: lemonError, data } = await getCustomer(customerId);
-    if (lemonError || !data) {
-      console.error("[customer-portal] lemon error", { requestId, statusCode, lemonError: safeStringifyError(lemonError) });
-      throw new Error(`Lemon Squeezy API error (HTTP ${statusCode ?? "unknown"})`);
-    }
-
-    const portalUrl = pickCustomerPortalUrl(data);
+    const portalUrlRaw = subscriptionRow?.customer_portal_url;
+    const portalUrl = typeof portalUrlRaw === "string" ? portalUrlRaw : null;
     if (!portalUrl) {
-      sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
+      sendJson(res, 400, { error: "Aktif bir abonelik portalınız bulunamadı." });
       return;
     }
 
