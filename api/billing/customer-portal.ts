@@ -6,7 +6,7 @@ type JsonRecord = Record<string, unknown>;
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
 function sendJson(res: ServerResponse, status: number, payload: unknown) {
@@ -41,7 +41,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
-    if (req.method !== "POST") {
+    if (req.method !== "POST" && req.method !== "GET") {
       sendJson(res, 405, { message: "Method not allowed", error: { requestId } });
       return;
     }
@@ -127,4 +127,3 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     sendJson(res, 500, { message: "Internal Server Error", error: { requestId } });
   }
 }
-

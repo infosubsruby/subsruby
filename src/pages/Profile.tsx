@@ -285,7 +285,11 @@ const Profile = () => {
         headers.Authorization = `Bearer ${sessionData.session.access_token}`;
       }
 
-      const response = await fetch("/api/billing/customer-portal", { method: "POST", headers });
+      const response = await fetch("/api/billing/customer-portal", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({}),
+      });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
