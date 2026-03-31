@@ -6,7 +6,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -19,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, Camera, CreditCard, Download, Loader2, Lock, LogOut, Trash2, User } from "lucide-react";
+import { AlertTriangle, Camera, CreditCard, Loader2, Lock, LogOut, Trash2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -651,99 +650,16 @@ const Profile = () => {
                       <p className="mt-2 text-sm text-muted-foreground">Visa ending in 4242</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Update
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      void handleManageSubscription();
+                    }}
+                    disabled={isPortalLoading}
+                  >
+                    {isPortalLoading ? "Yönlendiriliyor..." : "Update"}
                   </Button>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-4">
-                <Label className="text-base font-medium">Billing History</Label>
-                <div className="overflow-hidden rounded-lg border border-border/40">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-muted-foreground">
-                        <th className="text-left font-medium px-4 py-3">Date</th>
-                        <th className="text-left font-medium px-4 py-3">Amount</th>
-                        <th className="text-left font-medium px-4 py-3">Status</th>
-                        <th className="text-right font-medium px-4 py-3">Invoice</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/40">
-                      <tr>
-                        <td className="px-4 py-3">Mar 15, 2026</td>
-                        <td className="px-4 py-3">$19.00</td>
-                        <td className="px-4 py-3">
-                          <Badge
-                            variant="secondary"
-                            className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
-                          >
-                            Paid
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <a
-                            href="#"
-                            className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toast.message("Download coming soon");
-                            }}
-                          >
-                            <Download className="w-4 h-4" />
-                            Download
-                          </a>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-3">Feb 15, 2026</td>
-                        <td className="px-4 py-3">$19.00</td>
-                        <td className="px-4 py-3">
-                          <Badge
-                            variant="secondary"
-                            className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
-                          >
-                            Paid
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <a
-                            href="#"
-                            className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toast.message("Download coming soon");
-                            }}
-                          >
-                            <Download className="w-4 h-4" />
-                            Download
-                          </a>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-3">Jan 15, 2026</td>
-                        <td className="px-4 py-3">$19.00</td>
-                        <td className="px-4 py-3">
-                          <Badge variant="secondary" className="bg-muted text-muted-foreground border border-border/40">
-                            Pending
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <a
-                            href="#"
-                            className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toast.message("Download coming soon");
-                            }}
-                          >
-                            <Download className="w-4 h-4" />
-                            Download
-                          </a>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </TabsContent>
