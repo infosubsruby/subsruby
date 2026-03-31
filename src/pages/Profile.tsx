@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -253,7 +254,18 @@ const Profile = () => {
                   <User className="w-8 h-8 text-primary" />
                   {t.nav.profile}
                 </h1>
-                <p className="text-muted-foreground mt-1">{t.nav.account}</p>
+                <Tabs defaultValue="account" className="mt-3">
+                  <TabsList className="bg-secondary">
+                    <TabsTrigger value="account">Account</TabsTrigger>
+                    <TabsTrigger
+                      value="billing"
+                      disabled
+                      className="text-muted-foreground data-[state=inactive]:text-muted-foreground"
+                    >
+                      Billing
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
               <Button variant="outline" className="gap-2" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4" />
@@ -293,22 +305,33 @@ const Profile = () => {
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input value={formEmail} readOnly disabled />
+                  <Input value={formEmail} readOnly disabled className="bg-muted text-muted-foreground" />
                 </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>First Name</Label>
-                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
+                  <Input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    className="focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Last Name</Label>
-                  <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+                  <Input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    className="focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                  />
                 </div>
               </div>
                 <div className="flex justify-end">
                   <Button
                     onClick={handleSave}
                     disabled={saving || accountLoading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   {saving ? "Kaydediliyor..." : "Save Changes"}
@@ -352,6 +375,7 @@ const Profile = () => {
                   <Button
                     onClick={handleUpdatePassword}
                     disabled={updatingPassword || accountLoading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {updatingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Update Password
