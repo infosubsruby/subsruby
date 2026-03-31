@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
+import { getCustomer, getSubscription, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,20 @@ function safeStringifyError(error: unknown) {
   return { message: typeof error === "string" ? error : "Unknown error", error };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function pickCustomerPortalUrlFromLemonData(data: unknown): string | null {
+  if (!isRecord(data)) return null;
+  const attributes = data.attributes;
+  if (!isRecord(attributes)) return null;
+  const urls = attributes.urls;
+  if (!isRecord(urls)) return null;
+  const portal = urls.customer_portal;
+  return typeof portal === "string" ? portal : null;
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const requestId = `portal_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {
@@ -50,6 +65,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
+    console.log("1. Auth kontrolü yapılıyor");
     const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "";
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
     if (!supabaseUrl || !serviceRoleKey) {
@@ -57,6 +73,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       sendJson(res, 500, { error: "Supabase not configured" });
       return;
     }
+
+    const lemonApiKey = process.env.LEMON_SQUEEZY_API_KEY ?? "";
+    if (!lemonApiKey) {
+      sendJson(res, 500, { error: "Missing LEMON_SQUEEZY_API_KEY" });
+      return;
+    }
+
+    lemonSqueezySetup({ apiKey: lemonApiKey });
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -70,9 +94,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const userId = authData.user.id;
+    console.log("2. Supabase'den ID çekiliyor");
     const { data: subscriptionRow, error: subscriptionError } = await supabaseAdmin
       .from("user_subscriptions")
-      .select("customer_portal_url")
+      .select("subscription_id, lemon_squeezy_customer_id")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -85,10 +110,53 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
-    const portalUrlRaw = subscriptionRow?.customer_portal_url;
-    const portalUrl = typeof portalUrlRaw === "string" ? portalUrlRaw : null;
+    const subscriptionIdRaw = subscriptionRow?.subscription_id;
+    const subscriptionId = typeof subscriptionIdRaw === "string" ? subscriptionIdRaw : null;
+    const customerIdRaw = subscriptionRow?.lemon_squeezy_customer_id;
+    const customerId = typeof customerIdRaw === "string" ? customerIdRaw : null;
+
+    if (!subscriptionId && !customerId) {
+      sendJson(res, 400, { error: "Müşteri ID'si bulunamadı. Aktif bir ödeme kaydınız yok." });
+      return;
+    }
+
+    console.log("3. Lemon Squeezy'ye istek atılıyor");
+    if (subscriptionId) {
+      const { statusCode, error: lemonError, data } = await getSubscription(subscriptionId);
+      if (lemonError || !data) {
+        console.error("[customer-portal] lemon subscription error", {
+          requestId,
+          statusCode,
+          lemonError: safeStringifyError(lemonError),
+        });
+        sendJson(res, 500, { error: `Lemon Squeezy API error (HTTP ${statusCode ?? "unknown"})` });
+        return;
+      }
+
+      const portalUrl = pickCustomerPortalUrlFromLemonData(data);
+      if (!portalUrl) {
+        sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
+        return;
+      }
+
+      sendJson(res, 200, { url: portalUrl });
+      return;
+    }
+
+    const { statusCode, error: lemonError, data } = await getCustomer(customerId as string);
+    if (lemonError || !data) {
+      console.error("[customer-portal] lemon customer error", {
+        requestId,
+        statusCode,
+        lemonError: safeStringifyError(lemonError),
+      });
+      sendJson(res, 500, { error: `Lemon Squeezy API error (HTTP ${statusCode ?? "unknown"})` });
+      return;
+    }
+
+    const portalUrl = pickCustomerPortalUrlFromLemonData(data);
     if (!portalUrl) {
-      sendJson(res, 400, { error: "Aktif bir abonelik portalınız bulunamadı." });
+      sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
       return;
     }
 
