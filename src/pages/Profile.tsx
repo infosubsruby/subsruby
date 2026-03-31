@@ -47,6 +47,7 @@ const Profile = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [customerPortalUrl, setCustomerPortalUrl] = useState<string | null>(null);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -271,6 +272,27 @@ const Profile = () => {
       toast.error("Hata oluştu");
     } finally {
       setAvatarDeleting(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (isPortalLoading) return;
+    setIsPortalLoading(true);
+    try {
+      const response = await fetch("/api/billing/customer-portal", { method: "POST" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = (await response.json()) as { url?: unknown };
+      const url = typeof data?.url === "string" ? data.url : null;
+      if (!url) {
+        throw new Error("Missing url");
+      }
+      window.location.href = url;
+    } catch (error) {
+      console.error("Customer portal error:", error);
+      toast.error("Müşteri portalı açılamadı. Lütfen daha sonra tekrar deneyin.");
+      setIsPortalLoading(false);
     }
   };
 
@@ -589,10 +611,11 @@ const Profile = () => {
                   <Button
                     className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     onClick={() => {
-                      toast.message("Manage Subscription coming soon");
+                      void handleManageSubscription();
                     }}
+                    disabled={isPortalLoading}
                   >
-                    Manage Subscription
+                    {isPortalLoading ? "Yönlendiriliyor..." : "Manage Subscription"}
                   </Button>
                 </div>
               </div>
