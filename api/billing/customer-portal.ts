@@ -70,10 +70,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     console.log("1. Auth kontrolü yapılıyor");
-    const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? "";
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error("Supabase not configured");
+    const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "";
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Supabase URL veya Key bulunamadı!");
+      sendJson(res, 500, { error: "Supabase not configured" });
+      return;
     }
 
     const lemonApiKey = process.env.LEMON_SQUEEZY_API_KEY;
@@ -83,12 +85,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     lemonSqueezySetup({ apiKey: lemonApiKey });
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+    const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
