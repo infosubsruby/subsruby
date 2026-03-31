@@ -187,12 +187,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     
     // Doğrudan payload üzerinden status çekimi
     const subscriptionStatus = attrs.status != null ? String(attrs.status) : null;
+    const subscriptionId = getNestedSubscriptionId(data, attrs);
+    const customerId = safeStringId(attrs.customer_id ?? (attrs as { customerId?: unknown }).customerId);
+    const variantId = safeStringId(attrs.variant_id ?? (attrs as { variantId?: unknown }).variantId);
     const urls = isRecord(attrs.urls) ? attrs.urls : null;
     const customerPortalUrlRaw = urls ? urls.customer_portal : null;
     const customerPortalUrl = typeof customerPortalUrlRaw === "string" ? customerPortalUrlRaw : null;
 
     console.log("2. İMZA DOĞRULANDI, Payload:", eventName);
     console.log("3. ALINAN USER ID:", userId, "| Gelen Custom Data:", customData, "| Status:", subscriptionStatus);
+    console.log("3b. Lemon IDs:", { subscriptionId, customerId, variantId, hasPortalUrl: !!customerPortalUrl });
 
     if (!eventName) {
       sendJson(res, 400, { error: "Missing event_name" });
@@ -238,13 +242,17 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       user_id: userId,
       status: subscriptionStatus,
     };
+    if (subscriptionId) upsertPayload.subscription_id = subscriptionId;
+    if (customerId) upsertPayload.customer_id = customerId;
+    if (variantId) upsertPayload.variant_id = variantId;
     if (customerPortalUrl) {
       upsertPayload.customer_portal_url = customerPortalUrl;
     }
-    const first = await supabaseAdmin.from("user_subscriptions").upsert(
-      upsertPayload,
-      { onConflict: "user_id" }
-    );
+    const first = await supabaseAdmin
+      .from("user_subscriptions")
+      .upsert(upsertPayload, { onConflict: "user_id" })
+      .select("user_id,status,subscription_id,variant_id,customer_id,customer_portal_url")
+      .maybeSingle();
 
     const error = first.error;
 
