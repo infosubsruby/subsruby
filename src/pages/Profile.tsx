@@ -47,8 +47,9 @@ const Profile = () => {
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
-  const [customerPortalUrl, setCustomerPortalUrl] = useState<string | null>(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -116,7 +117,7 @@ const Profile = () => {
 
         const { data: subRow, error: subError } = await supabase
           .from("user_subscriptions")
-          .select("status, customer_portal_url")
+          .select("status, current_period_end")
           .eq("user_id", user.id)
           .maybeSingle();
         if (subError) {
@@ -125,11 +126,11 @@ const Profile = () => {
         const statusRaw =
           subRow && typeof subRow === "object" && "status" in subRow ? (subRow as { status?: unknown }).status : null;
         setSubscriptionStatus(typeof statusRaw === "string" ? statusRaw : null);
-        const portalRaw =
-          subRow && typeof subRow === "object" && "customer_portal_url" in subRow
-            ? (subRow as { customer_portal_url?: unknown }).customer_portal_url
+        const endRaw =
+          subRow && typeof subRow === "object" && "current_period_end" in subRow
+            ? (subRow as { current_period_end?: unknown }).current_period_end
             : null;
-        setCustomerPortalUrl(typeof portalRaw === "string" ? portalRaw : null);
+        setCurrentPeriodEnd(typeof endRaw === "string" ? endRaw : null);
       } catch (error) {
         console.error("Supabase Çekme Hatası:", error);
         setAccountEmail(user?.email ?? null);
@@ -142,7 +143,7 @@ const Profile = () => {
         setAccountAvatarUrl(null);
         setDbAvatarUrl(null);
         setSubscriptionStatus(null);
-        setCustomerPortalUrl(null);
+        setCurrentPeriodEnd(null);
       } finally {
         setAccountLoading(false);
       }
@@ -316,6 +317,42 @@ const Profile = () => {
       setIsPortalLoading(false);
     }
   };
+
+  const handleStartCheckout = async () => {
+    if (isCheckoutLoading) return;
+    setIsCheckoutLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (sessionData.session?.access_token) {
+        headers.Authorization = `Bearer ${sessionData.session.access_token}`;
+      }
+      const response = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ plan: "monthly", redirect: false }),
+      });
+      const data = (await response.json()) as { checkoutUrl?: unknown };
+      const checkoutUrl = typeof data?.checkoutUrl === "string" ? data.checkoutUrl : null;
+      if (!checkoutUrl) {
+        throw new Error("Checkout URL not returned");
+      }
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to start checkout. Please try again.");
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
+
+  const isPro = subscriptionStatus === "active";
+  const formattedRenews =
+    currentPeriodEnd && !Number.isNaN(new Date(currentPeriodEnd).getTime())
+      ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(
+          new Date(currentPeriodEnd)
+        )
+      : null;
 
   const handleUpdatePassword = async () => {
     const email = formEmail || accountEmail || "";
@@ -623,53 +660,62 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="billing" className="space-y-6">
-              <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
-                <div className="flex items-start justify-between gap-6">
-                  <div className="min-w-0">
-                    <Label className="text-base font-medium">Current Plan</Label>
-                    <p className="mt-2 text-2xl font-semibold leading-none">
-                      {subscriptionStatus === "active" || subscriptionStatus === "trialing" ? "Pro Plan" : "Free Plan"}
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {subscriptionStatus === "active" || subscriptionStatus === "trialing" ? "$19/month" : "$0/month"}
-                    </p>
-                    <p className="mt-4 text-sm text-muted-foreground">Next payment: April 15, 2026</p>
+              {isPro ? (
+                <>
+                  <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="min-w-0">
+                        <Label className="text-base font-medium">Current Plan</Label>
+                        <p className="mt-2 text-2xl font-semibold leading-none">Pro Plan</p>
+                        {formattedRenews ? (
+                          <p className="mt-4 text-sm text-muted-foreground">Next payment: {formattedRenews}</p>
+                        ) : null}
+                      </div>
+                      <Button
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                        onClick={() => void handleManageSubscription()}
+                        disabled={isPortalLoading}
+                      >
+                        {isPortalLoading ? "Yönlendiriliyor..." : "Manage Subscription"}
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                    onClick={() => {
-                      void handleManageSubscription();
-                    }}
-                    disabled={isPortalLoading}
-                  >
-                    {isPortalLoading ? "Yönlendiriliyor..." : "Manage Subscription"}
-                  </Button>
-                </div>
-              </div>
 
-              <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
-                <div className="flex items-start justify-between gap-6">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-                      <CreditCard className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <Label className="text-base font-medium">Payment Method</Label>
-                      <p className="mt-2 text-sm text-muted-foreground">Visa ending in 4242</p>
+                  <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                          <CreditCard className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <Label className="text-base font-medium">Payment Method</Label>
+                          <p className="mt-2 text-sm text-muted-foreground">Visa ending in 4242</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => void handleManageSubscription()} disabled={isPortalLoading}>
+                        {isPortalLoading ? "Yönlendiriliyor..." : "Update"}
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      void handleManageSubscription();
-                    }}
-                    disabled={isPortalLoading}
-                  >
-                    {isPortalLoading ? "Yönlendiriliyor..." : "Update"}
-                  </Button>
+                </>
+              ) : (
+                <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="min-w-0">
+                      <Label className="text-base font-medium">Current Plan</Label>
+                      <p className="mt-2 text-2xl font-semibold leading-none">Free Plan</p>
+                      <p className="mt-2 text-sm text-muted-foreground">$0/month</p>
+                    </div>
+                    <Button
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                      onClick={() => void handleStartCheckout()}
+                      disabled={isCheckoutLoading}
+                    >
+                      {isCheckoutLoading ? "Yönlendiriliyor..." : "Upgrade to Pro"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </TabsContent>
 
             <TabsContent value="security" className="space-y-6">
