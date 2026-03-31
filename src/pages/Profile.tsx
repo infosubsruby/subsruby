@@ -30,10 +30,12 @@ const Profile = () => {
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
   const [accountAvatarUrl, setAccountAvatarUrl] = useState<string | null>(null);
+  const [dbAvatarUrl, setDbAvatarUrl] = useState<string | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [memberSince, setMemberSince] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarDeleting, setAvatarDeleting] = useState(false);
   const [formEmail, setFormEmail] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -101,18 +103,13 @@ const Profile = () => {
         const displayName = `${resolvedFirstName} ${resolvedLastName}`.trim();
         setAccountName(displayName || null);
 
-        const meta = authUser?.user_metadata ?? {};
-        const metaAvatar =
-          typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
-            ? String((meta as { avatar_url?: unknown }).avatar_url)
-            : null;
         const profileAvatarUrl =
           profileRow && typeof profileRow === "object" && "avatar_url" in profileRow
             ? (profileRow as { avatar_url?: unknown }).avatar_url
             : null;
-        setAccountAvatarUrl(
-          (typeof profileAvatarUrl === "string" ? profileAvatarUrl : null) ?? metaAvatar
-        );
+        const resolvedDbAvatarUrl = typeof profileAvatarUrl === "string" ? profileAvatarUrl : null;
+        setDbAvatarUrl(resolvedDbAvatarUrl);
+        setAccountAvatarUrl(resolvedDbAvatarUrl);
 
         const { data: subRow, error: subError } = await supabase
           .from("user_subscriptions")
@@ -140,6 +137,7 @@ const Profile = () => {
         setFirstName("");
         setLastName("");
         setAccountAvatarUrl(null);
+        setDbAvatarUrl(null);
         setSubscriptionStatus(null);
         setCustomerPortalUrl(null);
       } finally {
@@ -184,6 +182,14 @@ const Profile = () => {
     avatarInputRef.current?.click();
   };
 
+  const extractAvatarFilePath = (publicUrl: string) => {
+    const marker = "/storage/v1/object/public/avatars/";
+    const idx = publicUrl.indexOf(marker);
+    if (idx === -1) return null;
+    const remainder = publicUrl.slice(idx + marker.length);
+    return remainder.split("?")[0].split("#")[0] || null;
+  };
+
   const handleAvatarChange = async (file: File | null) => {
     if (!user?.id) return;
     if (!file) return;
@@ -219,6 +225,7 @@ const Profile = () => {
         return;
       }
 
+      setDbAvatarUrl(publicUrl);
       setAccountAvatarUrl(publicUrl);
       await refreshProfile();
       toast.success("Profil fotoğrafı güncellendi");
@@ -228,6 +235,41 @@ const Profile = () => {
       toast.error(`Fotoğraf yüklenemedi: ${message}`);
     } finally {
       setAvatarUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!user?.id) return;
+    if (!dbAvatarUrl) return;
+    if (avatarDeleting) return;
+
+    setAvatarDeleting(true);
+    const currentUrl = dbAvatarUrl;
+    try {
+      const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+      if (error) {
+        console.error("Supabase Güncelleme Hatası:", error);
+        toast.error("Hata oluştu");
+        return;
+      }
+
+      const filePath = extractAvatarFilePath(currentUrl);
+      if (filePath) {
+        const { error: removeError } = await supabase.storage.from("avatars").remove([filePath]);
+        if (removeError) {
+          console.error("Supabase Remove Hatası:", removeError);
+        }
+      }
+
+      setDbAvatarUrl(null);
+      setAccountAvatarUrl(null);
+      await refreshProfile();
+      toast.success("Fotoğraf başarıyla kaldırıldı");
+    } catch (err) {
+      console.error("Supabase Güncelleme Hatası:", err);
+      toast.error("Hata oluştu");
+    } finally {
+      setAvatarDeleting(false);
     }
   };
 
@@ -400,16 +442,30 @@ const Profile = () => {
                       </div>
                     </button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="px-0 text-muted-foreground hover:text-foreground"
-                    onClick={handleAvatarPick}
-                    disabled={avatarUploading}
-                  >
-                    Fotoğrafı Değiştir
-                  </Button>
+                  <div className="flex items-center gap-4">
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="px-0 text-muted-foreground hover:text-foreground"
+                      onClick={handleAvatarPick}
+                      disabled={avatarUploading || avatarDeleting}
+                    >
+                      Fotoğrafı Değiştir
+                    </Button>
+                    {dbAvatarUrl ? (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="px-0 text-red-500 hover:text-red-600"
+                        onClick={handleDeletePhoto}
+                        disabled={avatarUploading || avatarDeleting}
+                      >
+                        Fotoğrafı Sil
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="min-w-0">
