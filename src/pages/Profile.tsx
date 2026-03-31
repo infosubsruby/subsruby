@@ -32,7 +32,8 @@ const Profile = () => {
   const [memberSince, setMemberSince] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
   const [formEmail, setFormEmail] = useState<string>("");
-  const [fullName, setFullName] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [currentPassword, setCurrentPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
@@ -63,7 +64,7 @@ const Profile = () => {
 
         const { data: profileRow, error: profileError } = await supabase
           .from("profiles")
-          .select("full_name, email, avatar_url")
+          .select("first_name, last_name, email, avatar_url")
           .eq("id", user.id)
           .maybeSingle();
         if (profileError) {
@@ -79,17 +80,24 @@ const Profile = () => {
         setAccountEmail(resolvedEmail);
         setFormEmail(resolvedEmail ?? "");
 
-        const profileFullName =
-          profileRow && typeof profileRow === "object" && "full_name" in profileRow
-            ? (profileRow as { full_name?: unknown }).full_name
+        const profileFirstName =
+          profileRow && typeof profileRow === "object" && "first_name" in profileRow
+            ? (profileRow as { first_name?: unknown }).first_name
             : null;
-        const meta = authUser?.user_metadata ?? {};
-        const metaFullNameRaw = (meta as { full_name?: unknown }).full_name;
-        const metaFullName = typeof metaFullNameRaw === "string" ? metaFullNameRaw : null;
-        const resolvedName = typeof profileFullName === "string" ? profileFullName : metaFullName;
-        setAccountName(resolvedName ?? resolvedEmail);
-        setFullName(resolvedName ?? "");
+        const profileLastName =
+          profileRow && typeof profileRow === "object" && "last_name" in profileRow
+            ? (profileRow as { last_name?: unknown }).last_name
+            : null;
 
+        const resolvedFirstName = typeof profileFirstName === "string" ? profileFirstName : "";
+        const resolvedLastName = typeof profileLastName === "string" ? profileLastName : "";
+        setFirstName(resolvedFirstName);
+        setLastName(resolvedLastName);
+
+        const displayName = `${resolvedFirstName} ${resolvedLastName}`.trim();
+        setAccountName(displayName || null);
+
+        const meta = authUser?.user_metadata ?? {};
         const metaAvatar =
           typeof (meta as { avatar_url?: unknown }).avatar_url === "string"
             ? String((meta as { avatar_url?: unknown }).avatar_url)
@@ -108,7 +116,8 @@ const Profile = () => {
         setAccountId(user?.id ?? null);
         setMemberSince(null);
         setAccountName(null);
-        setFullName("");
+        setFirstName("");
+        setLastName("");
         setAccountAvatarUrl(null);
       } finally {
         setAccountLoading(false);
@@ -122,22 +131,25 @@ const Profile = () => {
     if (!user?.id) return;
     setSaving(true);
     try {
-      const nextName = fullName.trim();
+      const nextFirstName = firstName.trim();
+      const nextLastName = lastName.trim();
       const { error } = await supabase
         .from("profiles")
-        .upsert({ id: user.id, full_name: nextName }, { onConflict: "id" });
+        .upsert({ id: user.id, first_name: nextFirstName, last_name: nextLastName }, { onConflict: "id" });
       if (error) {
         console.error("Supabase Güncelleme Hatası:", error);
-        toast.error("Failed to update profile");
+        toast.error("Hata oluştu");
         return;
       }
 
-      setAccountName(nextName || accountEmail);
-      setFullName(nextName);
-      toast.success("Profile updated");
+      const displayName = `${nextFirstName} ${nextLastName}`.trim();
+      setAccountName(displayName || null);
+      setFirstName(nextFirstName);
+      setLastName(nextLastName);
+      toast.success("Profil güncellendi");
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
-      toast.error("Failed to update profile");
+      toast.error("Hata oluştu");
     } finally {
       setSaving(false);
     }
@@ -268,10 +280,8 @@ const Profile = () => {
                   )}
                   <div>
                     <Label className="text-base font-medium">Account Details</Label>
-                    <p className="text-sm text-muted-foreground">{accountName ?? accountEmail ?? ""}</p>
-                    {accountName && accountEmail ? (
-                      <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p>
-                    ) : null}
+                  <p className="text-sm text-muted-foreground">{accountName ? accountName : "İsim belirtilmedi"}</p>
+                  {accountEmail ? <p className="text-xs text-muted-foreground mt-1">{accountEmail}</p> : null}
                   {memberSince ? <p className="text-xs text-muted-foreground mt-1">{memberSince}</p> : null}
                   {accountId ? <p className="text-xs text-muted-foreground mt-1">Account ID: {accountId}</p> : null}
                   </div>
@@ -284,22 +294,23 @@ const Profile = () => {
                   <Label>Email</Label>
                   <Input value={formEmail} readOnly disabled />
                 </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Full Name</Label>
-                  <Input
-                  value={fullName || ""}
-                  onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your name"
-                  />
+                  <Label>First Name</Label>
+                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
                 </div>
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+                </div>
+              </div>
                 <div className="flex justify-end">
                   <Button
                     onClick={handleSave}
                     disabled={saving || accountLoading}
-                    className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Save Changes
+                  {saving ? "Kaydediliyor..." : "Save Changes"}
                   </Button>
                 </div>
               </div>
@@ -340,7 +351,6 @@ const Profile = () => {
                   <Button
                     onClick={handleUpdatePassword}
                     disabled={updatingPassword || accountLoading}
-                    className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
                   >
                     {updatingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Update Password

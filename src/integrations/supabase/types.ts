@@ -105,7 +105,6 @@ export type Database = {
           current_period_end: string | null
           email: string | null
           first_name: string | null
-          full_name: string | null
           id: string
           last_name: string | null
           lemon_squeezy_customer_id: string | null
@@ -120,7 +119,6 @@ export type Database = {
           current_period_end?: string | null
           email?: string | null
           first_name?: string | null
-          full_name?: string | null
           id: string
           last_name?: string | null
           lemon_squeezy_customer_id?: string | null
@@ -135,7 +133,6 @@ export type Database = {
           current_period_end?: string | null
           email?: string | null
           first_name?: string | null
-          full_name?: string | null
           id?: string
           last_name?: string | null
           lemon_squeezy_customer_id?: string | null
