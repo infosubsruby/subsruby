@@ -44,6 +44,18 @@ function pickCustomerPortalUrlFromLemonData(data: unknown): string | null {
   return typeof portal === "string" ? portal : null;
 }
 
+function pickCustomerPortalUrlFromJsonApiResponse(payload: unknown): string | null {
+  if (!isRecord(payload)) return null;
+  const data = payload.data;
+  if (!isRecord(data)) return null;
+  const attributes = data.attributes;
+  if (!isRecord(attributes)) return null;
+  const urls = attributes.urls;
+  if (!isRecord(urls)) return null;
+  const portal = urls.customer_portal;
+  return typeof portal === "string" ? portal : null;
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const requestId = `portal_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   try {
@@ -131,7 +143,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
-    const portalUrl = pickCustomerPortalUrlFromLemonData(data);
+    const portalUrl = pickCustomerPortalUrlFromJsonApiResponse(data) ?? pickCustomerPortalUrlFromLemonData(data);
+    console.log("Bulunan Portal URL:", portalUrl);
     if (!portalUrl) {
       sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
       return;
