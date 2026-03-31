@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
+import { getCustomer, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -35,10 +36,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function pickCustomerPortalUrl(payload: JsonRecord): string | null {
-  const data = payload.data;
-  if (!isRecord(data)) return null;
-  const attributes = data.attributes;
+function pickCustomerPortalUrl(payload: unknown): string | null {
+  if (!isRecord(payload)) return null;
+  const dataLike = "data" in payload ? payload.data : payload;
+  if (!isRecord(dataLike)) return null;
+  const attributes = dataLike.attributes;
   if (!isRecord(attributes)) return null;
   const urls = attributes.urls;
   if (!isRecord(urls)) return null;
@@ -67,6 +69,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
+    console.log("1. Auth kontrolü yapılıyor");
     const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? "";
     if (!supabaseUrl || !supabaseAnonKey) {
@@ -77,6 +80,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (!lemonApiKey) {
       throw new Error("Missing LEMON_SQUEEZY_API_KEY");
     }
+
+    lemonSqueezySetup({ apiKey: lemonApiKey });
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
@@ -94,6 +99,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const userId = authData.user.id;
+    console.log("2. Supabase'den ID çekiliyor");
     const { data: profileRow, error: profileError } = await supabase
       .from("profiles")
       .select("lemon_squeezy_customer_id")
@@ -114,37 +120,18 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const customerId = typeof customerIdRaw === "string" ? customerIdRaw : null;
 
     if (!customerId) {
-      sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
+      sendJson(res, 400, { error: "Müşteri ID'si bulunamadı. Aktif bir ödeme kaydınız yok." });
       return;
     }
 
-    const lemonResponse = await fetch(`https://api.lemonsqueezy.com/v1/customers/${encodeURIComponent(customerId)}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        "Content-Type": "application/vnd.api+json",
-        Authorization: `Bearer ${lemonApiKey}`,
-      },
-    });
-
-    const responseText = await lemonResponse.text();
-    let lemonPayload: JsonRecord = {};
-    try {
-      lemonPayload = responseText ? (JSON.parse(responseText) as JsonRecord) : {};
-    } catch {
-      lemonPayload = { raw: responseText };
+    console.log("3. Lemon Squeezy'ye istek atılıyor");
+    const { statusCode, error: lemonError, data } = await getCustomer(customerId);
+    if (lemonError || !data) {
+      console.error("[customer-portal] lemon error", { requestId, statusCode, lemonError: safeStringifyError(lemonError) });
+      throw new Error(`Lemon Squeezy API error (HTTP ${statusCode ?? "unknown"})`);
     }
 
-    if (!lemonResponse.ok) {
-      console.error("[customer-portal] lemon error", {
-        requestId,
-        status: lemonResponse.status,
-        lemonPayload,
-      });
-      throw new Error(`Lemon Squeezy API error (HTTP ${lemonResponse.status})`);
-    }
-
-    const portalUrl = pickCustomerPortalUrl(lemonPayload);
+    const portalUrl = pickCustomerPortalUrl(data);
     if (!portalUrl) {
       sendJson(res, 400, { error: "Henüz aktif bir aboneliğiniz veya fatura kaydınız bulunmuyor." });
       return;
@@ -154,6 +141,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   } catch (error) {
     console.error("[Billing API Error]:", error);
     const message = error instanceof Error ? error.message : "Bilinmeyen bir sunucu hatası oluştu";
-    sendJson(res, 500, { error: message });
+    const stack = error instanceof Error ? error.stack ?? null : null;
+    sendJson(res, 500, { error: message, stack });
   }
 }
