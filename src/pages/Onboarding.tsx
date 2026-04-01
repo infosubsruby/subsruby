@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useFinance } from "@/hooks/useFinance";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
+import { useAuth } from "@/hooks/useAuth";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { convertWithDynamicRates } from "@/lib/currency";
 import { calculatePotentialSavings } from "@/lib/subscriptionInsights";
@@ -15,6 +16,7 @@ type OnboardingStep = "welcome" | "income" | "subscription" | "wow";
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const { createTransaction } = useFinance();
   const { subscriptions } = useSubscriptions();
@@ -44,7 +46,9 @@ const Onboarding = () => {
   const handleCompleteStep1 = () => setStep("income");
 
   const finishOnboarding = () => {
-    localStorage.setItem("hasCompletedOnboarding", "true");
+    if (user?.id) {
+      localStorage.setItem(`hasCompletedOnboarding:${user.id}`, "true");
+    }
     navigate("/control");
   };
 

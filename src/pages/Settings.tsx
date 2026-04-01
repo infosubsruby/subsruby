@@ -48,11 +48,16 @@ const Settings = () => {
   } = useSettings();
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
-  const [subscriptionDebugRow, setSubscriptionDebugRow] = useState<unknown>(null);
-  const [subscriptionDebugError, setSubscriptionDebugError] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+
+  const pickRenewsAt = useCallback((row: unknown) => {
+    if (!row || typeof row !== "object") return null;
+    const r = row as Record<string, unknown>;
+    const candidate = r.current_period_end ?? r.renews_at ?? r.renew_at ?? r.renewsAt;
+    return typeof candidate === "string" ? candidate : null;
+  }, []);
 
   const refreshSubscription = useCallback(async () => {
     if (!user?.id) return;
@@ -60,13 +65,11 @@ const Settings = () => {
     try {
       const { data: subRow, error: subError } = await supabase
         .from("user_subscriptions")
-        .select("status, current_period_end")
+        .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setSubscriptionDebugRow(subRow);
-      setSubscriptionDebugError(typeof (subError as unknown as { message?: unknown })?.message === "string" ? String((subError as unknown as { message?: unknown }).message) : subError ? String(subError) : null);
 
       if (subError) {
         console.error("Supabase Çekme Hatası:", subError);
@@ -75,29 +78,19 @@ const Settings = () => {
         return;
       }
 
-      if (import.meta.env.DEV) {
-        console.log("Supabase Abonelik Verisi:", subRow, "Hata:", subError);
-      }
-
       const statusRaw =
         subRow && typeof subRow === "object" && "status" in subRow ? (subRow as { status?: unknown }).status : null;
       setSubscriptionStatus(statusRaw != null ? String(statusRaw) : null);
 
-      const endRaw =
-        subRow && typeof subRow === "object" && "current_period_end" in subRow
-          ? (subRow as { current_period_end?: unknown }).current_period_end
-          : null;
-      setCurrentPeriodEnd(typeof endRaw === "string" ? endRaw : null);
+      setCurrentPeriodEnd(pickRenewsAt(subRow));
     } catch (error) {
       console.error("Supabase Çekme Hatası:", error);
-      setSubscriptionDebugRow(null);
-      setSubscriptionDebugError(error instanceof Error ? error.message : String(error));
       setSubscriptionStatus(null);
       setCurrentPeriodEnd(null);
     } finally {
       setAccountLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, pickRenewsAt]);
 
   useEffect(() => {
     void refreshSubscription();
@@ -120,8 +113,7 @@ const Settings = () => {
           const row = (payload as unknown as { new?: Record<string, unknown> }).new ?? null;
           const status = row?.status != null ? String(row.status) : null;
           setSubscriptionStatus(status);
-          const end = row?.current_period_end;
-          setCurrentPeriodEnd(typeof end === "string" ? end : null);
+          setCurrentPeriodEnd(pickRenewsAt(row));
         }
       )
       .subscribe();
@@ -141,7 +133,7 @@ const Settings = () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       supabase.removeChannel(channel);
     };
-  }, [user?.id, refreshSubscription]);
+  }, [user?.id, refreshSubscription, pickRenewsAt]);
 
   const isActive = ["active", "trialing"].includes(subscriptionStatus ?? "");
 
@@ -370,11 +362,6 @@ const Settings = () => {
                 </div>
 
                 <div className="border-t border-border" />
-
-                <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-300 break-words">
-                  Debug -&gt; UserID: {user?.id} | Sub Verisi: {JSON.stringify(subscriptionDebugRow)} | Hata:{" "}
-                  {subscriptionDebugError}
-                </div>
 
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
