@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -26,13 +26,10 @@ import {
   FileText, 
   Clock,
   Loader2,
-  CreditCard,
   Sun,
   Moon,
   Monitor
 } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -46,175 +43,6 @@ const Settings = () => {
     notifications,
     setNotificationSetting 
   } = useSettings();
-  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
-  const [accountLoading, setAccountLoading] = useState(false);
-  const [isPortalLoading, setIsPortalLoading] = useState(false);
-  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-
-  const pickRenewsAt = useCallback((row: unknown) => {
-    if (!row || typeof row !== "object") return null;
-    const r = row as Record<string, unknown>;
-    const candidate = r.current_period_end ?? r.renews_at ?? r.renew_at ?? r.renewsAt;
-    return typeof candidate === "string" ? candidate : null;
-  }, []);
-
-  const refreshSubscription = useCallback(async () => {
-    if (!user?.id) return;
-    setAccountLoading(true);
-    try {
-      const { data: subRow, error: subError } = await supabase
-        .from("user_subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (subError) {
-        console.error("Supabase Çekme Hatası:", subError);
-        setSubscriptionStatus(null);
-        setCurrentPeriodEnd(null);
-        return;
-      }
-
-      const statusRaw =
-        subRow && typeof subRow === "object" && "status" in subRow ? (subRow as { status?: unknown }).status : null;
-      setSubscriptionStatus(statusRaw != null ? String(statusRaw) : null);
-
-      setCurrentPeriodEnd(pickRenewsAt(subRow));
-    } catch (error) {
-      console.error("Supabase Çekme Hatası:", error);
-      setSubscriptionStatus(null);
-      setCurrentPeriodEnd(null);
-    } finally {
-      setAccountLoading(false);
-    }
-  }, [user?.id, pickRenewsAt]);
-
-  useEffect(() => {
-    void refreshSubscription();
-  }, [refreshSubscription]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel("user-subscriptions-settings")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "user_subscriptions",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const row = (payload as unknown as { new?: Record<string, unknown> }).new ?? null;
-          const status = row?.status != null ? String(row.status) : null;
-          setSubscriptionStatus(status);
-          setCurrentPeriodEnd(pickRenewsAt(row));
-        }
-      )
-      .subscribe();
-
-    const onFocus = () => {
-      void refreshSubscription();
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") void refreshSubscription();
-    };
-
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, refreshSubscription, pickRenewsAt]);
-
-  const isActive = ["active", "trialing"].includes(subscriptionStatus ?? "");
-
-  const formatRenewsAt = (iso: string) => {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return null;
-    return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(d);
-  };
-
-  const handleManageSubscription = async () => {
-    if (isPortalLoading) return;
-    setIsPortalLoading(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (sessionData.session?.access_token) {
-        headers.Authorization = `Bearer ${sessionData.session.access_token}`;
-      }
-
-      const response = await fetch("/api/billing/customer-portal", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) {
-        let backendMessage: string | null = null;
-        try {
-          const errorData = (await response.json()) as { error?: unknown };
-          backendMessage = typeof errorData?.error === "string" ? errorData.error : null;
-        } catch {
-          backendMessage = null;
-        }
-        toast.error(backendMessage || "Bilinmeyen bir hata oluştu");
-        return;
-      }
-      const data = (await response.json()) as { url?: unknown };
-      const url = typeof data?.url === "string" ? data.url : null;
-      if (!url) {
-        toast.error("Bilinmeyen bir hata oluştu");
-        return;
-      }
-      window.location.href = url;
-    } catch (error) {
-      console.error("Customer portal error:", error);
-      toast.error("Bilinmeyen bir hata oluştu");
-    } finally {
-      setIsPortalLoading(false);
-    }
-  };
-
-  const handleStartCheckout = async () => {
-    if (isCheckoutLoading) return;
-    setIsCheckoutLoading(true);
-    try {
-      if (!user?.id) {
-        toast.error("Please sign in first.");
-        return;
-      }
-      const { data: sessionData } = await supabase.auth.getSession();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (sessionData.session?.access_token) {
-        headers.Authorization = `Bearer ${sessionData.session.access_token}`;
-      }
-      const response = await fetch("/api/create-checkout", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ user_id: user.id, plan: "monthly", redirect: false }),
-      });
-      const data = (await response.json()) as { checkoutUrl?: unknown };
-      const checkoutUrl = typeof data?.checkoutUrl === "string" ? data.checkoutUrl : null;
-      if (!checkoutUrl) {
-        throw new Error("Checkout URL not returned");
-      }
-      window.location.href = checkoutUrl;
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to start checkout. Please try again.");
-    } finally {
-      setIsCheckoutLoading(false);
-    }
-  };
 
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
@@ -362,76 +190,6 @@ const Settings = () => {
                 </div>
 
                 <div className="border-t border-border" />
-
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-                      <CreditCard className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <Label className="text-base font-medium">Subscription</Label>
-                      <p className="text-sm text-muted-foreground">Manage your Pro plan</p>
-                    </div>
-                  </div>
-                  {accountLoading ? (
-                    <Button disabled size="sm">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    </Button>
-                  ) : isActive ? (
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Current Plan: Pro</p>
-                        {currentPeriodEnd ? (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Renews: {formatRenewsAt(currentPeriodEnd) ?? "—"}
-                          </p>
-                        ) : null}
-                      </div>
-                      <Button
-                        size="sm"
-                        className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-                        onClick={() => void handleManageSubscription()}
-                        disabled={isPortalLoading}
-                      >
-                        {isPortalLoading ? "Yönlendiriliyor..." : "Manage Subscription"}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      size="sm"
-                      className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-                      onClick={() => void handleStartCheckout()}
-                      disabled={isCheckoutLoading}
-                    >
-                      {isCheckoutLoading ? "Yönlendiriliyor..." : "Upgrade to Pro"}
-                    </Button>
-                  )}
-                </div>
-
-                {isActive ? (
-                  <>
-                    <div className="border-t border-border" />
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-                          <CreditCard className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <Label className="text-base font-medium">Payment Method</Label>
-                          <p className="text-sm text-muted-foreground">Visa ending in 4242</p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => void handleManageSubscription()}
-                        disabled={isPortalLoading}
-                      >
-                        {isPortalLoading ? "Yönlendiriliyor..." : "Update"}
-                      </Button>
-                    </div>
-                  </>
-                ) : null}
               </div>
             </TabsContent>
 
