@@ -48,6 +48,8 @@ const Profile = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  const [subscriptionDebugRow, setSubscriptionDebugRow] = useState<unknown>(null);
+  const [subscriptionDebugError, setSubscriptionDebugError] = useState<string | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -61,6 +63,8 @@ const Profile = () => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+      setSubscriptionDebugRow(subRow);
+      setSubscriptionDebugError(typeof (subError as unknown as { message?: unknown })?.message === "string" ? String((subError as unknown as { message?: unknown }).message) : subError ? String(subError) : null);
       if (subError) {
         console.error("Supabase Çekme Hatası:", subError);
         setSubscriptionStatus(null);
@@ -80,6 +84,8 @@ const Profile = () => {
       setCurrentPeriodEnd(typeof endRaw === "string" ? endRaw : null);
     } catch (error) {
       console.error("Supabase Çekme Hatası:", error);
+      setSubscriptionDebugRow(null);
+      setSubscriptionDebugError(error instanceof Error ? error.message : String(error));
       setSubscriptionStatus(null);
       setCurrentPeriodEnd(null);
     }
@@ -723,6 +729,10 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="billing" className="space-y-6">
+              <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-300 break-words">
+                Debug -&gt; UserID: {user?.id} | Sub Verisi: {JSON.stringify(subscriptionDebugRow)} | Hata:{" "}
+                {subscriptionDebugError}
+              </div>
               {isPro ? (
                 <>
                   <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">

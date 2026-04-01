@@ -48,6 +48,8 @@ const Settings = () => {
   } = useSettings();
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  const [subscriptionDebugRow, setSubscriptionDebugRow] = useState<unknown>(null);
+  const [subscriptionDebugError, setSubscriptionDebugError] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -63,6 +65,8 @@ const Settings = () => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+      setSubscriptionDebugRow(subRow);
+      setSubscriptionDebugError(typeof (subError as unknown as { message?: unknown })?.message === "string" ? String((subError as unknown as { message?: unknown }).message) : subError ? String(subError) : null);
 
       if (subError) {
         console.error("Supabase Çekme Hatası:", subError);
@@ -86,6 +90,8 @@ const Settings = () => {
       setCurrentPeriodEnd(typeof endRaw === "string" ? endRaw : null);
     } catch (error) {
       console.error("Supabase Çekme Hatası:", error);
+      setSubscriptionDebugRow(null);
+      setSubscriptionDebugError(error instanceof Error ? error.message : String(error));
       setSubscriptionStatus(null);
       setCurrentPeriodEnd(null);
     } finally {
@@ -364,6 +370,11 @@ const Settings = () => {
                 </div>
 
                 <div className="border-t border-border" />
+
+                <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-300 break-words">
+                  Debug -&gt; UserID: {user?.id} | Sub Verisi: {JSON.stringify(subscriptionDebugRow)} | Hata:{" "}
+                  {subscriptionDebugError}
+                </div>
 
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
