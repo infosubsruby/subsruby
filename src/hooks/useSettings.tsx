@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { supabase } from "@/integrations/supabase/client";
 
 interface NotificationSettings {
+  [key: string]: boolean;
   emailAlerts: boolean;
   monthlyReport: boolean;
   billReminders: boolean;
@@ -10,8 +11,6 @@ interface NotificationSettings {
 interface SettingsContextType {
   defaultCurrency: string;
   setDefaultCurrency: (currency: string) => void;
-  theme: "light" | "dark" | "system";
-  setTheme: (theme: "light" | "dark" | "system") => void;
   notifications: NotificationSettings;
   setNotificationSetting: (key: keyof NotificationSettings, value: boolean) => void;
 }
@@ -22,13 +21,11 @@ const SETTINGS_STORAGE_KEY = "subsruby-settings";
 
 interface StoredSettings {
   defaultCurrency: string;
-  theme: "light" | "dark" | "system";
   notifications: NotificationSettings;
 }
 
 const defaultSettings: StoredSettings = {
   defaultCurrency: "USD",
-  theme: "dark",
   notifications: {
     emailAlerts: true,
     monthlyReport: false,
@@ -41,7 +38,27 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (stored) {
       try {
-        return { ...defaultSettings, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored) as Partial<StoredSettings> & Record<string, unknown>;
+        const nextDefaultCurrency =
+          typeof parsed.defaultCurrency === "string" ? parsed.defaultCurrency : defaultSettings.defaultCurrency;
+        const nextNotifications =
+          parsed.notifications && typeof parsed.notifications === "object"
+            ? {
+                emailAlerts:
+                  "emailAlerts" in parsed.notifications
+                    ? Boolean((parsed.notifications as Record<string, unknown>).emailAlerts)
+                    : defaultSettings.notifications.emailAlerts,
+                monthlyReport:
+                  "monthlyReport" in parsed.notifications
+                    ? Boolean((parsed.notifications as Record<string, unknown>).monthlyReport)
+                    : defaultSettings.notifications.monthlyReport,
+                billReminders:
+                  "billReminders" in parsed.notifications
+                    ? Boolean((parsed.notifications as Record<string, unknown>).billReminders)
+                    : defaultSettings.notifications.billReminders,
+              }
+            : defaultSettings.notifications;
+        return { defaultCurrency: nextDefaultCurrency, notifications: nextNotifications };
       } catch {
         return defaultSettings;
       }
@@ -56,17 +73,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   }, [settings]);
 
-  // Apply theme
   useEffect(() => {
     const root = document.documentElement;
-    
-    if (settings.theme === "system") {
-      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      root.classList.toggle("dark", isDark);
-    } else {
-      root.classList.toggle("dark", settings.theme === "dark");
-    }
-  }, [settings.theme]);
+    root.classList.add("dark");
+  }, []);
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
@@ -128,10 +138,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     void persistDefaultCurrency(currency);
   };
 
-  const setTheme = (theme: "light" | "dark" | "system") => {
-    setSettings(prev => ({ ...prev, theme }));
-  };
-
   const setNotificationSetting = (key: keyof NotificationSettings, value: boolean) => {
     setSettings(prev => ({
       ...prev,
@@ -144,8 +150,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       value={{
         defaultCurrency: settings.defaultCurrency,
         setDefaultCurrency,
-        theme: settings.theme,
-        setTheme,
         notifications: settings.notifications,
         setNotificationSetting,
       }}

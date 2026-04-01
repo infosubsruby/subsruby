@@ -15,19 +15,19 @@ const Success = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="text-center space-y-6 max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <div className="text-center space-y-6 max-w-md w-full bg-card p-8 rounded-2xl shadow-sm border border-border">
         <div className="flex justify-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-10 h-10 text-green-600" />
+          <div className="w-20 h-20 bg-success/20 rounded-full flex items-center justify-center">
+            <CheckCircle className="w-10 h-10 text-success" />
           </div>
         </div>
         
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold">
             Ödemeniz başarıyla alındı!
           </h1>
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Hesabınız oluşturuluyor, lütfen bekleyin...
           </p>
         </div>

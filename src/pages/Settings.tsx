@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings } from "@/hooks/useSettings";
 import { Navbar } from "@/components/layout/Navbar";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,15 +19,11 @@ import {
   Settings as SettingsIcon, 
   Globe, 
   Wallet, 
-  Palette, 
   Bell, 
   Mail, 
   FileText, 
   Clock,
   Loader2,
-  Sun,
-  Moon,
-  Monitor
 } from "lucide-react";
 
 const Settings = () => {
@@ -38,8 +33,6 @@ const Settings = () => {
   const { 
     defaultCurrency, 
     setDefaultCurrency, 
-    theme, 
-    setTheme,
     notifications,
     setNotificationSetting 
   } = useSettings();
@@ -143,50 +136,6 @@ const Settings = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="border-t border-border" />
-
-                {/* Theme */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center shrink-0">
-                      <Palette className="w-5 h-5 text-warning" />
-                    </div>
-                    <div>
-                      <Label className="text-base font-medium">{t.settings.theme}</Label>
-                      <p className="text-sm text-muted-foreground">{t.settings.themeDesc}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={theme === "light" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTheme("light")}
-                      className="gap-1"
-                    >
-                      <Sun className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t.settings.lightMode}</span>
-                    </Button>
-                    <Button
-                      variant={theme === "dark" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTheme("dark")}
-                      className="gap-1"
-                    >
-                      <Moon className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t.settings.darkMode}</span>
-                    </Button>
-                    <Button
-                      variant={theme === "system" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTheme("system")}
-                      className="gap-1"
-                    >
-                      <Monitor className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t.settings.systemMode}</span>
-                    </Button>
-                  </div>
                 </div>
 
                 <div className="border-t border-border" />

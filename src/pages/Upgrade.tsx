@@ -48,10 +48,10 @@ export default function Upgrade() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+      <div className="bg-card border border-border p-8 rounded-xl shadow-lg max-w-md w-full text-center">
         <h1 className="text-2xl font-bold mb-2">Upgrade to Pro</h1>
-        <p className="text-gray-500 mb-6">
+        <p className="text-muted-foreground mb-6">
           Unlock unlimited tracking, smart insights, and full financial control.
         </p>
 
@@ -59,10 +59,10 @@ export default function Upgrade() {
           <button
             type="button"
             onClick={() => setBillingCycle("monthly")}
-            className={`py-2 rounded-lg border text-sm font-medium transition ${
+            className={`py-2 rounded-lg border border-border text-sm font-medium transition ${
               billingCycle === "monthly"
-                ? "border-black bg-black text-white"
-                : "border-gray-200 bg-white text-gray-800 hover:bg-gray-50"
+                ? "bg-primary text-primary-foreground"
+                : "bg-background hover:bg-accent hover:text-accent-foreground"
             }`}
           >
             Monthly
@@ -70,10 +70,10 @@ export default function Upgrade() {
           <button
             type="button"
             onClick={() => setBillingCycle("yearly")}
-            className={`py-2 rounded-lg border text-sm font-medium transition ${
+            className={`py-2 rounded-lg border border-border text-sm font-medium transition ${
               billingCycle === "yearly"
-                ? "border-black bg-black text-white"
-                : "border-gray-200 bg-white text-gray-800 hover:bg-gray-50"
+                ? "bg-primary text-primary-foreground"
+                : "bg-background hover:bg-accent hover:text-accent-foreground"
             }`}
           >
             Yearly
@@ -83,7 +83,7 @@ export default function Upgrade() {
         <button
           onClick={handleCheckout}
           disabled={loading}
-          className="w-full bg-black text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition disabled:opacity-50"
+          className="w-full bg-primary text-primary-foreground py-3 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-50"
         >
           {loading ? <Loader2 className="animate-spin" /> : "Continue to Checkout"}
         </button>
