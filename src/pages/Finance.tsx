@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useFinance } from "@/hooks/useFinance";
+import { useSettings } from "@/hooks/useSettings";
 import { Navbar } from "@/components/layout/Navbar";
 import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
 import { AddBudgetModal } from "@/components/finance/AddBudgetModal";
@@ -32,6 +33,7 @@ import {
 const Finance = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
+  const { defaultCurrency } = useSettings();
   const {
     transactions,
     budgets,
@@ -70,7 +72,8 @@ const Finance = () => {
   }, [safeSubscriptions]);
 
   // Use user-selected currency or auto-detected
-  const activeCurrency = displayCurrency || autoDetectedCurrency;
+  const autoCurrency = defaultCurrency || autoDetectedCurrency;
+  const activeCurrency = displayCurrency || autoCurrency;
   const currencySymbol = getCurrencySymbol(activeCurrency);
 
   // Wrap all data calculations in a safe memo
@@ -293,7 +296,7 @@ const Finance = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
-                  <SelectItem value="auto">{t.dashboard.auto} ({autoDetectedCurrency})</SelectItem>
+                  <SelectItem value="auto">{t.dashboard.auto} ({autoCurrency})</SelectItem>
                   {currencies.map((c) => (
                     <SelectItem key={c.value} value={c.value}>
                       {c.label}

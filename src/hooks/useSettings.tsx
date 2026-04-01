@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NotificationSettings {
   emailAlerts: boolean;
@@ -47,6 +48,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
     return defaultSettings;
   });
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loadedProfileCurrencyFor, setLoadedProfileCurrencyFor] = useState<string | null>(null);
 
   // Persist settings to localStorage
   useEffect(() => {
@@ -65,8 +68,64 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [settings.theme]);
 
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user?.id ?? null);
+    });
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+      setLoadedProfileCurrencyFor(null);
+    });
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const nextUserId = userId;
+    if (!nextUserId) return;
+    if (loadedProfileCurrencyFor === nextUserId) return;
+
+    const loadProfileCurrency = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("default_currency")
+        .eq("id", nextUserId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Supabase Çekme Hatası:", error);
+        setLoadedProfileCurrencyFor(nextUserId);
+        return;
+      }
+
+      const valueRaw = data && typeof data === "object" ? (data as { default_currency?: unknown }).default_currency : null;
+      const value = typeof valueRaw === "string" ? valueRaw : null;
+      if (value) {
+        setSettings((prev) => ({ ...prev, defaultCurrency: value }));
+      }
+      setLoadedProfileCurrencyFor(nextUserId);
+    };
+
+    void loadProfileCurrency();
+  }, [userId, loadedProfileCurrencyFor]);
+
+  const persistDefaultCurrency = useCallback(
+    async (currency: string) => {
+      if (!userId) return;
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({ id: userId, default_currency: currency }, { onConflict: "id" });
+      if (error) {
+        console.error("Supabase Güncelleme Hatası:", error);
+      }
+    },
+    [userId]
+  );
+
   const setDefaultCurrency = (currency: string) => {
-    setSettings(prev => ({ ...prev, defaultCurrency: currency }));
+    setSettings((prev) => ({ ...prev, defaultCurrency: currency }));
+    void persistDefaultCurrency(currency);
   };
 
   const setTheme = (theme: "light" | "dark" | "system") => {

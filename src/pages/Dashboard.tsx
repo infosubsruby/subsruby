@@ -28,12 +28,14 @@ import {
 import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsModal";
 import { useFinance } from "@/hooks/useFinance";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/hooks/useSettings";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, isAdmin } = useAuth();
   const { isPro, status: proStatus, loading: subStatusLoading } = useSubscription();
   const { t } = useLanguage();
+  const { defaultCurrency } = useSettings();
   const { 
     subscriptions, 
     isLoading: subsLoading, 
@@ -60,7 +62,7 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSavingsModalOpen, setIsSavingsModalOpen] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<string | null>("TRY");
+  const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
 
   const FREE_PLAN_LIMIT = 3;
   const isFreeLimited = !isPro && !isAdmin;
@@ -102,7 +104,8 @@ const Dashboard = () => {
   }, [currencyCounts]);
 
   // Use user-selected currency or auto-detected
-  const activeCurrency = displayCurrency || autoDetectedCurrency;
+  const autoCurrency = defaultCurrency || autoDetectedCurrency;
+  const activeCurrency = displayCurrency || autoCurrency;
   const currencySymbol = getCurrencySymbol(activeCurrency);
 
   // Calculate total monthly cost with currency conversion
@@ -339,7 +342,7 @@ const Dashboard = () => {
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="auto">Auto ({autoDetectedCurrency})</SelectItem>
+                    <SelectItem value="auto">Auto ({autoCurrency})</SelectItem>
                     {currencies.map((currency) => (
                       <SelectItem key={currency.value} value={currency.value}>
                         {currency.value} ({currency.symbol})

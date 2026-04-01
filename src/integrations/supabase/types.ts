@@ -103,6 +103,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           current_period_end: string | null
+          default_currency: string | null
           email: string | null
           first_name: string | null
           id: string
@@ -117,6 +118,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           current_period_end?: string | null
+          default_currency?: string | null
           email?: string | null
           first_name?: string | null
           id: string
@@ -131,6 +133,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           current_period_end?: string | null
+          default_currency?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
