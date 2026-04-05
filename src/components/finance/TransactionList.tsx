@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { Trash2, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { Transaction } from "@/hooks/useFinance";
 import { Button } from "@/components/ui/button";
@@ -24,31 +23,33 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
 
+  const CATEGORY_KEY_MAP: Record<string, string> = {
+    Entertainment: "entertainment",
+    "Food & Dining": "food_dining",
+    Shopping: "shopping",
+    Transportation: "transportation",
+    Utilities: "utilities",
+    Health: "health",
+    Education: "education",
+    Travel: "travel",
+    Subscriptions: "subscriptions",
+    Other: "other",
+  };
+
   const getCategoryLabel = (cat: string) => {
-    switch (cat) {
-      case "Entertainment":
-        return tCategories("entertainment");
-      case "Food & Dining":
-        return tCategories("food_dining");
-      case "Shopping":
-        return tCategories("shopping");
-      case "Transportation":
-        return tCategories("transportation");
-      case "Utilities":
-        return tCategories("utilities");
-      case "Health":
-        return tCategories("health");
-      case "Education":
-        return tCategories("education");
-      case "Travel":
-        return tCategories("travel");
-      case "Subscriptions":
-        return tCategories("subscriptions");
-      case "Other":
-        return tCategories("other");
-      default:
-        return cat;
-    }
+    const key = CATEGORY_KEY_MAP[cat] ?? (cat in CATEGORY_KEY_MAP ? CATEGORY_KEY_MAP[cat] : null);
+    if (key) return tCategories(key);
+    if (cat === "food_dining") return tCategories("food_dining");
+    if (cat === "entertainment") return tCategories("entertainment");
+    if (cat === "shopping") return tCategories("shopping");
+    if (cat === "transportation") return tCategories("transportation");
+    if (cat === "utilities") return tCategories("utilities");
+    if (cat === "health") return tCategories("health");
+    if (cat === "education") return tCategories("education");
+    if (cat === "travel") return tCategories("travel");
+    if (cat === "subscriptions") return tCategories("subscriptions");
+    if (cat === "other") return tCategories("other");
+    return cat;
   };
 
   const handleDelete = async (id: string) => {
@@ -79,8 +80,19 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((transaction) => (
-            <TableRow key={transaction.id} className="hover:bg-secondary/30">
+          {transactions.map((transaction) => {
+            const rawDesc = (transaction.description ?? "").trim();
+            const categoryLabel = getCategoryLabel(transaction.category);
+            const isFallback = !rawDesc || rawDesc === transaction.category;
+            const isEnglishCategoryDesc = rawDesc in CATEGORY_KEY_MAP;
+            const displayDesc = isFallback
+              ? categoryLabel
+              : isEnglishCategoryDesc
+                ? getCategoryLabel(rawDesc)
+                : rawDesc;
+
+            return (
+              <TableRow key={transaction.id} className="hover:bg-secondary/30">
               <TableCell>
                 <div
                   className={cn(
@@ -98,11 +110,11 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                 </div>
               </TableCell>
               <TableCell className="font-medium">
-                {transaction.description || transaction.category}
+                {displayDesc}
               </TableCell>
               <TableCell>
                 <Badge variant="secondary" className="font-normal">
-                  {getCategoryLabel(transaction.category)}
+                  {categoryLabel}
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">
@@ -129,8 +141,9 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </TableCell>
-            </TableRow>
-          ))}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
