@@ -29,6 +29,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatDate } from "@/i18n/date";
+import { useSettings } from "@/hooks/useSettings";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -48,7 +49,9 @@ export const AddTransactionModal = ({
   const tModals = useTranslations("Modals");
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
+  const { defaultCurrency } = useSettings();
   const initialType = forcedType ?? "expense";
+  const currencyOptions = ["USD", "EUR", "TRY", "GBP", "MXN"];
   const initialFormData = useMemo<CreateTransactionData>(
     () => ({
       amount: 0,
@@ -61,6 +64,7 @@ export const AddTransactionModal = ({
   );
   const [formData, setFormData] = useState<CreateTransactionData>(initialFormData);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currency, setCurrency] = useState<string>(defaultCurrency || "USD");
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
@@ -93,7 +97,8 @@ export const AddTransactionModal = ({
     if (!open) return;
     setFormData(initialFormData);
     setSelectedDate(new Date());
-  }, [open, initialFormData]);
+    setCurrency(defaultCurrency || "USD");
+  }, [open, initialFormData, defaultCurrency]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +112,7 @@ export const AddTransactionModal = ({
     // Persist in background (optimistic updates + rollback handled in hook)
     void onCreateTransaction({
       ...formData,
+      currency,
       type: forcedType ?? formData.type,
       date: format(selectedDate, "yyyy-MM-dd"),
     });
@@ -153,25 +159,41 @@ export const AddTransactionModal = ({
             </div>
           )}
 
-          {/* Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">{tFinance("table_amount")}</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              value={formData.amount || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  amount: parseFloat(e.target.value) || 0,
-                }))
-              }
-              className="input-ruby"
-              required
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="amount">{tFinance("table_amount")}</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.amount || ""}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    amount: parseFloat(e.target.value) || 0,
+                  }))
+                }
+                className="input-ruby"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{tModals("currency")}</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="input-ruby">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {currencyOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Category */}

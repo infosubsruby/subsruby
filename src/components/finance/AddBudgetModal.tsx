@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CATEGORIES, CreateBudgetData } from "@/hooks/useFinance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "@/i18n/useTranslations";
+import { useSettings } from "@/hooks/useSettings";
 
 interface AddBudgetModalProps {
   open: boolean;
@@ -35,8 +36,16 @@ export const AddBudgetModal = ({
   const tModals = useTranslations("Modals");
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
+  const { defaultCurrency } = useSettings();
+  const currencyOptions = ["USD", "EUR", "TRY", "GBP", "MXN"];
   const [category, setCategory] = useState("");
   const [limitAmount, setLimitAmount] = useState(0);
+  const [currency, setCurrency] = useState<string>(defaultCurrency || "USD");
+
+  useEffect(() => {
+    if (!open) return;
+    setCurrency(defaultCurrency || "USD");
+  }, [open, defaultCurrency]);
 
   const availableCategories = CATEGORIES.filter(
     (cat) => !existingCategories.includes(cat)
@@ -76,10 +85,11 @@ export const AddBudgetModal = ({
     // Reset + close instantly for optimistic UX
     setCategory("");
     setLimitAmount(0);
+    setCurrency(defaultCurrency || "USD");
     onOpenChange(false);
 
     // Persist in background (optimistic updates + rollback handled in hook)
-    void onCreateBudget({ category, limit_amount: limitAmount });
+    void onCreateBudget({ category, limit_amount: limitAmount, currency });
   };
 
   return (
@@ -113,19 +123,36 @@ export const AddBudgetModal = ({
           </div>
 
           {/* Limit Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="limit">{tModals("monthly_limit")}</Label>
-            <Input
-              id="limit"
-              type="number"
-              step="1"
-              min="0"
-              placeholder="500"
-              value={limitAmount || ""}
-              onChange={(e) => setLimitAmount(parseFloat(e.target.value) || 0)}
-              className="input-ruby"
-              required
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="limit">{tModals("monthly_limit")}</Label>
+              <Input
+                id="limit"
+                type="number"
+                step="1"
+                min="0"
+                placeholder="500"
+                value={limitAmount || ""}
+                onChange={(e) => setLimitAmount(parseFloat(e.target.value) || 0)}
+                className="input-ruby"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{tModals("currency")}</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="input-ruby">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {currencyOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Submit Button */}

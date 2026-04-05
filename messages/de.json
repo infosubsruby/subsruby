@@ -157,6 +157,7 @@
     "transaction_desc": "Erfassen Sie neue Einnahmen oder Ausgaben, um Ihre Finanzen zu verfolgen.",
     "income": "Einkommen",
     "expense": "Ausgabe",
+    "currency": "Währung",
     "desc_optional": "Beschreibung (optional)",
     "add_note": "Notiz hinzufügen..."
   },

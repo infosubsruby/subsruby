@@ -4,6 +4,7 @@ import { useAuth } from "./useAuth";
 import { useSubscriptions, Subscription } from "./useSubscriptions";
 import { toast } from "sonner";
 import { formatMonthShortYear } from "@/i18n/date";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface Transaction {
   id: string;
@@ -12,6 +13,7 @@ export interface Transaction {
   type: "income" | "expense";
   category: string;
   description: string | null;
+  currency?: string | null;
   date: string;
   created_at: string;
 }
@@ -21,6 +23,7 @@ export interface Budget {
   user_id: string;
   category: string;
   limit_amount: number;
+  currency?: string | null;
   created_at: string;
 }
 
@@ -29,12 +32,14 @@ export interface CreateTransactionData {
   type: "income" | "expense";
   category: string;
   description?: string;
+  currency?: string;
   date: string;
 }
 
 export interface CreateBudgetData {
   category: string;
   limit_amount: number;
+  currency?: string;
 }
 
 export const CATEGORIES = [
@@ -253,17 +258,40 @@ export const useFinance = () => {
       type: data.type,
       category: data.category,
       description: data.description ?? null,
+      currency: data.currency ?? null,
       date: data.date,
       created_at: new Date().toISOString(),
     };
 
     setTransactions((prev) => [optimistic, ...prev]);
 
-    const { data: inserted, error } = await supabase
-      .from("transactions")
-      .insert([{ ...data, user_id: user.id }])
-      .select("*")
-      .maybeSingle();
+    type TransactionInsert = Database["public"]["Tables"]["transactions"]["Insert"];
+    const baseInsert: TransactionInsert = {
+      user_id: user.id,
+      amount: Number(data.amount),
+      type: data.type,
+      category: data.category,
+      description: data.description ?? null,
+      date: data.date,
+    };
+    const withCurrency = data.currency
+      ? ({ ...baseInsert, currency: data.currency } as unknown as TransactionInsert)
+      : baseInsert;
+
+    const firstAttempt = await supabase.from("transactions").insert([withCurrency]).select("*").maybeSingle();
+    let inserted = firstAttempt.data;
+    let error = firstAttempt.error;
+
+    if (error && data.currency) {
+      const msg = error.message.toLowerCase();
+      const isMissingCurrencyColumn =
+        msg.includes("currency") && (msg.includes("column") || msg.includes("schema cache") || msg.includes("could not find"));
+      if (isMissingCurrencyColumn) {
+        const retry = await supabase.from("transactions").insert([baseInsert]).select("*").maybeSingle();
+        inserted = retry.data;
+        error = retry.error;
+      }
+    }
 
     if (error || !inserted) {
       setTransactions((prev) => prev.filter((t) => t.id !== optimisticId));
@@ -312,16 +340,36 @@ export const useFinance = () => {
       user_id: user.id,
       category: data.category,
       limit_amount: Number(data.limit_amount),
+      currency: data.currency ?? null,
       created_at: new Date().toISOString(),
     };
 
     setBudgets((prev) => [optimistic, ...prev]);
 
-    const { data: inserted, error } = await supabase
-      .from("budgets")
-      .insert([{ ...data, user_id: user.id }])
-      .select("*")
-      .maybeSingle();
+    type BudgetInsert = Database["public"]["Tables"]["budgets"]["Insert"];
+    const baseInsert: BudgetInsert = {
+      user_id: user.id,
+      category: data.category,
+      limit_amount: Number(data.limit_amount),
+    };
+    const withCurrency = data.currency
+      ? ({ ...baseInsert, currency: data.currency } as unknown as BudgetInsert)
+      : baseInsert;
+
+    const firstAttempt = await supabase.from("budgets").insert([withCurrency]).select("*").maybeSingle();
+    let inserted = firstAttempt.data;
+    let error = firstAttempt.error;
+
+    if (error && data.currency) {
+      const msg = error.message.toLowerCase();
+      const isMissingCurrencyColumn =
+        msg.includes("currency") && (msg.includes("column") || msg.includes("schema cache") || msg.includes("could not find"));
+      if (isMissingCurrencyColumn) {
+        const retry = await supabase.from("budgets").insert([baseInsert]).select("*").maybeSingle();
+        inserted = retry.data;
+        error = retry.error;
+      }
+    }
 
     if (error) {
       setBudgets((prev) => prev.filter((b) => b.id !== optimisticId));

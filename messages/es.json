@@ -128,6 +128,7 @@
     "transaction_desc": "Registra un nuevo ingreso o gasto para seguir tus finanzas.",
     "income": "Ingreso",
     "expense": "Gasto",
+    "currency": "Moneda",
     "desc_optional": "Descripción (opcional)",
     "add_note": "Añadir una nota..."
   },

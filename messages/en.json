@@ -128,6 +128,7 @@
     "transaction_desc": "Record a new income or expense to track your finances.",
     "income": "Income",
     "expense": "Expense",
+    "currency": "Currency",
     "desc_optional": "Description (optional)",
     "add_note": "Add a note..."
   },

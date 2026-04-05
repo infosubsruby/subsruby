@@ -157,6 +157,7 @@
     "transaction_desc": "Enregistrez un nouveau revenu ou une dépense pour suivre vos finances.",
     "income": "Revenu",
     "expense": "Dépense",
+    "currency": "Devise",
     "desc_optional": "Description (facultatif)",
     "add_note": "Ajouter une note..."
   },
