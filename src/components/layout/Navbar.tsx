@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -18,7 +19,7 @@ import { User, LogOut, Settings, Shield, Wallet } from "lucide-react";
 export const Navbar = () => {
   const { user, profile, isAdmin: globalIsAdmin, signOut } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
-  const { t } = useLanguage();
+  const { t, language, setLanguage, languages } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -144,6 +145,18 @@ export const Navbar = () => {
             </>
           ) : (
             <>
+              <Select value={language} onValueChange={(v) => setLanguage(v as typeof language)}>
+                <SelectTrigger className="w-[140px] bg-background border-border h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {languages.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>
+                      {l.nativeName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Link to="/login">
                 <Button variant="ghost" size="sm">
                   {t.nav.signIn}

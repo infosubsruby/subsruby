@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Navbar } from "@/components/layout/Navbar";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "@/i18n/useTranslations";
 
 const Login = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const tAuth = useTranslations("Auth");
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,8 +53,8 @@ const Login = () => {
                 className="h-full w-auto max-h-8 sm:max-h-10 object-contain"
               />
             </div>
-            <h1 className="font-display text-2xl font-bold">Welcome back</h1>
-            <p className="text-muted-foreground mt-2">Sign in to your account</p>
+            <h1 className="font-display text-2xl font-bold">{tAuth("welcome_back")}</h1>
+            <p className="text-muted-foreground mt-2">{tAuth("sign_in_to_account")}</p>
           </div>
 
           {/* Form */}
@@ -61,7 +63,7 @@ const Login = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  Email
+                  {tAuth("email")}
                 </Label>
                 <Input
                   type="email"
@@ -76,7 +78,7 @@ const Login = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Lock className="w-4 h-4 text-muted-foreground" />
-                  Password
+                  {tAuth("password")}
                 </Label>
                 <Input
                   type="password"
@@ -93,7 +95,7 @@ const Login = () => {
                 className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {tAuth("sign_in_btn")}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </form>
@@ -101,9 +103,9 @@ const Login = () => {
 
           {/* Footer */}
           <p className="text-center mt-6 text-muted-foreground">
-            Don't have an account?{" "}
+            {tAuth("dont_have_account")}{" "}
             <Link to="/signup" className="text-primary hover:underline font-medium">
-              Sign up
+              {tAuth("sign_up")}
             </Link>
           </p>
         </div>

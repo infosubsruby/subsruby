@@ -11,6 +11,37 @@
   "dashboard": {
     "auto": "Auto"
   },
+  "Landing": {
+    "hero_title": "Übernehmen Sie die volle Kontrolle über Ihre Abonnements",
+    "hero_desc": "Verfolgen Sie alle Ihre Abonnements in einem schönen Dashboard. Verpassen Sie nie eine Zahlung, verwalten Sie Verlängerungen und kontrollieren Sie Ihre wiederkehrenden Ausgaben.",
+    "get_started": "Loslegen",
+    "sign_in": "Anmelden",
+    "free_plan_note": "Kostenloser Plan: bis zu 3 Abos • Auf Pro upgraden für unbegrenztes Tracking",
+    "features_title": "Alles, was Sie zur Verwaltung von Abonnements benötigen",
+    "features_subtitle": "Leistungsstarke Funktionen in einer schönen, intuitiven Benutzeroberfläche",
+    "ready_title": "Bereit, die Kontrolle zu übernehmen?",
+    "ready_desc": "Schließen Sie sich Tausenden von Benutzern an, die ihre Abonnementverwaltung mit SubsRuby vereinfacht haben.",
+    "get_started_free": "Kostenlos loslegen",
+    "mini_title": "Abonnements verfolgen. Mühelos Geld sparen.",
+    "mini_desc": "Verlieren Sie kein Geld mehr durch vergessene Verlängerungen. Richten wir Ihr persönliches Dashboard in 30 Sekunden ein."
+  },
+  "Auth": {
+    "create_account": "Erstellen Sie Ihr Konto",
+    "start_trial": "Mit 7-tägiger kostenloser Testversion starten",
+    "first_name": "Vorname",
+    "last_name": "Nachname",
+    "email": "E-Mail",
+    "phone_optional": "Telefon (Optional)",
+    "password": "Passwort",
+    "confirm_password": "Passwort bestätigen",
+    "create_btn": "Konto erstellen",
+    "already_account": "Haben Sie bereits ein Konto?",
+    "welcome_back": "Willkommen zurück",
+    "sign_in_to_account": "Melden Sie sich bei Ihrem Konto an",
+    "sign_in_btn": "Anmelden",
+    "dont_have_account": "Haben Sie kein Konto?",
+    "sign_up": "Registrieren"
+  },
   "Security": {
     "title": "Sicherheit",
     "description": "Aktualisieren Sie Ihr Passwort",

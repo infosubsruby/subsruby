@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Navbar } from "@/components/layout/Navbar";
 import { Mail, Lock, User, Phone, ArrowRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "@/i18n/useTranslations";
 
 const Signup = () => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
+  const tAuth = useTranslations("Auth");
   
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -86,10 +88,10 @@ const Signup = () => {
                 className="h-full w-auto max-h-8 sm:max-h-10 object-contain"
               />
             </div>
-            <h1 className="font-display text-2xl font-bold">Create your account</h1>
+            <h1 className="font-display text-2xl font-bold">{tAuth("create_account")}</h1>
             <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
-              Start with 7-day free trial
+              {tAuth("start_trial")}
             </p>
           </div>
 
@@ -101,7 +103,7 @@ const Signup = () => {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <User className="w-4 h-4 text-muted-foreground" />
-                    First Name *
+                    {tAuth("first_name")} *
                   </Label>
                   <Input
                     value={firstName}
@@ -112,7 +114,7 @@ const Signup = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Last Name *</Label>
+                  <Label>{tAuth("last_name")} *</Label>
                   <Input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -126,7 +128,7 @@ const Signup = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  Email *
+                  {tAuth("email")} *
                 </Label>
                 <Input
                   type="email"
@@ -141,7 +143,7 @@ const Signup = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
-                  Phone (Optional)
+                  {tAuth("phone_optional")}
                 </Label>
                 <Input
                   type="tel"
@@ -155,7 +157,7 @@ const Signup = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Lock className="w-4 h-4 text-muted-foreground" />
-                  Password *
+                  {tAuth("password")} *
                 </Label>
                 <Input
                   type="password"
@@ -170,7 +172,7 @@ const Signup = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Lock className="w-4 h-4 text-muted-foreground" />
-                  Confirm Password *
+                  {tAuth("confirm_password")} *
                 </Label>
                 <Input
                   type="password"
@@ -187,7 +189,7 @@ const Signup = () => {
                 className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
                 disabled={isLoading}
               >
-                {isLoading ? "Creating account..." : "Create Account"}
+                {tAuth("create_btn")}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </form>
@@ -195,9 +197,9 @@ const Signup = () => {
 
           {/* Footer */}
           <p className="text-center mt-6 text-muted-foreground">
-            Already have an account?{" "}
+            {tAuth("already_account")}{" "}
             <Link to="/login" className="text-primary hover:underline font-medium">
-              Sign in
+              {tAuth("sign_in_btn")}
             </Link>
           </p>
         </div>

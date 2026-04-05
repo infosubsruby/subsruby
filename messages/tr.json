@@ -11,6 +11,37 @@
   "dashboard": {
     "auto": "Otomatik"
   },
+  "Landing": {
+    "hero_title": "Aboneliklerinizin tam kontrolünü elinize alın",
+    "hero_desc": "Tüm aboneliklerinizi harika bir panelde takip edin. Hiçbir ödemeyi kaçırmayın, yenilemeleri yönetin ve düzenli giderlerinizi kontrol altına alın.",
+    "get_started": "Başla",
+    "sign_in": "Giriş Yap",
+    "free_plan_note": "Ücretsiz Plan: 3 aboneliğe kadar takip edin • Sınırsız takip için Pro'ya geçin",
+    "features_title": "Abonelikleri yönetmek için ihtiyacınız olan her şey",
+    "features_subtitle": "Güzel ve sezgisel bir arayüzde sunulan güçlü özellikler",
+    "ready_title": "Kontrolü ele almaya hazır mısınız?",
+    "ready_desc": "SubsRuby ile abonelik yönetimini basitleştiren binlerce kullanıcıya katılın.",
+    "get_started_free": "Ücretsiz Başla",
+    "mini_title": "Aboneliklerinizi takip edin. Zahmetsizce tasarruf edin.",
+    "mini_desc": "Unutulan yenilemeler yüzünden para kaybetmeyi bırakın. Kişisel panelinizi 30 saniyede kuralım."
+  },
+  "Auth": {
+    "create_account": "Hesabınızı oluşturun",
+    "start_trial": "7 günlük ücretsiz deneme ile başla",
+    "first_name": "İsim",
+    "last_name": "Soyisim",
+    "email": "E-posta",
+    "phone_optional": "Telefon (İsteğe bağlı)",
+    "password": "Şifre",
+    "confirm_password": "Şifreyi Onayla",
+    "create_btn": "Hesap Oluştur",
+    "already_account": "Zaten bir hesabınız var mı?",
+    "welcome_back": "Tekrar hoş geldiniz",
+    "sign_in_to_account": "Hesabınıza giriş yapın",
+    "sign_in_btn": "Giriş Yap",
+    "dont_have_account": "Hesabınız yok mu?",
+    "sign_up": "Kayıt ol"
+  },
   "Security": {
     "title": "Güvenlik",
     "description": "Şifrenizi güncelleyin",

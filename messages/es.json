@@ -11,6 +11,37 @@
   "dashboard": {
     "auto": "Auto"
   },
+  "Landing": {
+    "hero_title": "Toma el control total de tus suscripciones",
+    "hero_desc": "Rastrea todas tus suscripciones en un hermoso panel. Nunca te pierdas un pago, gestiona renovaciones y controla tus gastos recurrentes.",
+    "get_started": "Comenzar",
+    "sign_in": "Iniciar Sesión",
+    "free_plan_note": "Plan Gratuito: rastrea hasta 3 suscripciones • Actualiza a Pro para seguimiento ilimitado",
+    "features_title": "Todo lo que necesitas para gestionar suscripciones",
+    "features_subtitle": "Potentes funciones envueltas en una interfaz hermosa e intuitiva",
+    "ready_title": "¿Listo para tomar el control?",
+    "ready_desc": "Únete a miles de usuarios que han simplificado su gestión de suscripciones con SubsRuby.",
+    "get_started_free": "Comenzar Gratis",
+    "mini_title": "Rastrea tus suscripciones. Ahorra dinero sin esfuerzo.",
+    "mini_desc": "Deja de perder dinero en renovaciones olvidadas. Configuremos tu panel personal en 30 segundos."
+  },
+  "Auth": {
+    "create_account": "Crea tu cuenta",
+    "start_trial": "Comienza con una prueba gratuita de 7 días",
+    "first_name": "Nombre",
+    "last_name": "Apellido",
+    "email": "Correo Electrónico",
+    "phone_optional": "Teléfono (Opcional)",
+    "password": "Contraseña",
+    "confirm_password": "Confirmar Contraseña",
+    "create_btn": "Crear Cuenta",
+    "already_account": "¿Ya tienes una cuenta?",
+    "welcome_back": "Bienvenido de nuevo",
+    "sign_in_to_account": "Inicia sesión en tu cuenta",
+    "sign_in_btn": "Iniciar Sesión",
+    "dont_have_account": "¿No tienes una cuenta?",
+    "sign_up": "Regístrate"
+  },
   "Security": {
     "title": "Seguridad",
     "description": "Actualiza tu contraseña",

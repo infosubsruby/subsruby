@@ -11,6 +11,37 @@
   "dashboard": {
     "auto": "Auto"
   },
+  "Landing": {
+    "hero_title": "Prenez le contrôle total de vos abonnements",
+    "hero_desc": "Suivez tous vos abonnements dans un magnifique tableau de bord. Ne manquez jamais un paiement, gérez les renouvellements et prenez le contrôle de vos dépenses récurrentes.",
+    "get_started": "Commencer",
+    "sign_in": "Se connecter",
+    "free_plan_note": "Forfait gratuit : suivez jusqu'à 3 abonnements • Passez à Pro pour un suivi illimité",
+    "features_title": "Tout ce dont vous avez besoin pour gérer vos abonnements",
+    "features_subtitle": "Des fonctionnalités puissantes dans une interface belle et intuitive",
+    "ready_title": "Prêt à prendre le contrôle ?",
+    "ready_desc": "Rejoignez des milliers d'utilisateurs qui ont simplifié la gestion de leurs abonnements avec SubsRuby.",
+    "get_started_free": "Commencer gratuitement",
+    "mini_title": "Suivez vos abonnements. Économisez de l'argent sans effort.",
+    "mini_desc": "Arrêtez de perdre de l'argent sur les renouvellements oubliés. Configurons votre tableau de bord personnel en 30 secondes."
+  },
+  "Auth": {
+    "create_account": "Créez votre compte",
+    "start_trial": "Commencez avec un essai gratuit de 7 jours",
+    "first_name": "Prénom",
+    "last_name": "Nom de famille",
+    "email": "E-mail",
+    "phone_optional": "Téléphone (Facultatif)",
+    "password": "Mot de passe",
+    "confirm_password": "Confirmer le mot de passe",
+    "create_btn": "Créer un compte",
+    "already_account": "Vous avez déjà un compte ?",
+    "welcome_back": "Bon retour",
+    "sign_in_to_account": "Connectez-vous à votre compte",
+    "sign_in_btn": "Se connecter",
+    "dont_have_account": "Vous n'avez pas de compte ?",
+    "sign_up": "S'inscrire"
+  },
   "Security": {
     "title": "Sécurité",
     "description": "Mettez à jour votre mot de passe",

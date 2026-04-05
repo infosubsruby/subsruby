@@ -2,6 +2,7 @@ import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslations } from "@/i18n/useTranslations";
 import { 
   Diamond, 
   ArrowRight, 
@@ -17,6 +18,7 @@ import {
 
 const Index = () => {
   const { user, isLoading } = useAuth();
+  const tLanding = useTranslations("Landing");
 
   // Redirect authenticated users to dashboard
   if (isLoading) {
@@ -45,40 +47,40 @@ const Index = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/30 mb-8 animate-fade-in">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">Subscription Management Made Simple</span>
+            <span className="text-sm font-medium">{tLanding("mini_title")}</span>
           </div>
           
           {/* Main heading */}
           <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 leading-tight animate-fade-in">
-            Take full control of
-            <br />
-            <span className="ruby-text-gradient">your subscriptions</span>
+            {tLanding("hero_title")}
           </h1>
           
           {/* Subtitle */}
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in">
-            Track all your subscriptions in one beautiful dashboard. Never miss a payment, 
-            manage renewals, and take control of your recurring expenses.
+            {tLanding("hero_desc")}
           </p>
           
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in">
             <Link to="/signup">
               <Button size="lg" className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2 text-lg px-8 py-6">
-                Get Started
+                {tLanding("get_started")}
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
             <Link to="/login">
               <Button size="lg" variant="outline" className="gap-2 text-lg px-8 py-6 border-border hover:bg-secondary">
-                Sign In
+                {tLanding("sign_in")}
               </Button>
             </Link>
           </div>
 
           {/* Pricing hint */}
           <p className="mt-6 text-sm text-muted-foreground">
-            Free Plan: track up to <span className="text-primary font-semibold">3</span> subscriptions • Upgrade to Pro for unlimited tracking
+            {tLanding("free_plan_note")}
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {tLanding("mini_desc")}
           </p>
         </div>
       </section>
@@ -88,10 +90,10 @@ const Index = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              Everything you need to manage <span className="ruby-text-gradient">subscriptions</span>
+              <span className="ruby-text-gradient">{tLanding("features_title")}</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Powerful features wrapped in a beautiful, intuitive interface
+              {tLanding("features_subtitle")}
             </p>
           </div>
 
@@ -181,15 +183,15 @@ const Index = () => {
             </div>
             
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              Ready to take control?
+              {tLanding("ready_title")}
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto mb-8">
-              Join thousands of users who have simplified their subscription management with SubsRuby.
+              {tLanding("ready_desc")}
             </p>
             
             <Link to="/signup">
               <Button size="lg" className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2 text-lg px-10 py-6">
-                Get Started Free
+                {tLanding("get_started_free")}
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
