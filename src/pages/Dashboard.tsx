@@ -230,11 +230,13 @@ const Dashboard = () => {
     if (monthlyIncome === 0) {
       return {
         severity: "info",
-        icon: "🔵",
+        icon: <Info className="w-6 h-6 text-sky-300" />,
         title: tt("spending_moderate"),
         message: tt("spending_moderate_desc"),
-        color: "bg-blue-50 border-blue-200",
-        textColor: "text-blue-700",
+        containerClass: "bg-sky-500/10 border-sky-500/20",
+        titleClass: "text-sky-300",
+        messageClass: "text-zinc-400",
+        ctaClass: "bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border-sky-500/30",
         cta: tt("review_subs")
       };
     }
@@ -242,31 +244,36 @@ const Dashboard = () => {
     if (ratio > 0.5) {
       return {
         severity: "danger",
-        icon: "⚠",
+        icon: <AlertCircle className="w-6 h-6 text-red-300" />,
         title: tt("spending_moderate"),
         message: tt("spending_moderate_desc"),
-        color: "bg-red-50 border-red-200",
-        textColor: "text-red-700",
+        containerClass: "bg-red-500/10 border-red-500/20",
+        titleClass: "text-red-300",
+        messageClass: "text-zinc-400",
+        ctaClass: "bg-red-500/10 hover:bg-red-500/20 text-red-300 border-red-500/30",
         cta: tt("review_subs")
       };
     } else if (ratio >= 0.2) {
       return {
         severity: "warning",
-        icon: "🟡",
+        icon: <AlertTriangle className="w-6 h-6 text-amber-300" />,
         title: tt("spending_moderate"),
         message: tt("spending_moderate_desc"),
-        color: "bg-amber-50 border-amber-200",
-        textColor: "text-amber-700",
+        containerClass: "bg-amber-500/10 border-amber-500/20",
+        titleClass: "text-amber-300",
+        messageClass: "text-zinc-400",
+        ctaClass: "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30",
         cta: tt("review_subs")
       };
     } else {
       return {
         severity: "good",
-        icon: "✅",
+        icon: <CheckCircle2 className="w-6 h-6 text-emerald-300" />,
         title: tt("managing_well"),
         message: tt("find_hidden_savings"),
-        color: "bg-green-50 border-green-200",
-        textColor: "text-green-700"
+        containerClass: "bg-emerald-500/10 border-emerald-500/20",
+        titleClass: "text-emerald-300",
+        messageClass: "text-zinc-400"
       };
     }
   }, [subscriptions, transactions, tt]);
@@ -377,25 +384,33 @@ const Dashboard = () => {
           </div>
 
           {/* Smart Financial Insight Card */}
-          <div className={cn("mb-8 p-5 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm", financialInsight.color)}>
+          <div
+            className={cn(
+              "mb-8 p-4 rounded-2xl border backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4",
+              financialInsight.containerClass
+            )}
+          >
             <div className="flex items-center gap-4">
-              <div className="text-2xl shrink-0">
+              <div className="shrink-0">
                 {financialInsight.icon}
               </div>
               <div className="flex flex-col">
-                <h4 className={cn("text-base font-bold", financialInsight.textColor)}>
+                <h4 className={cn("text-base font-semibold", financialInsight.titleClass)}>
                   {financialInsight.title}
                 </h4>
-                <p className={cn("text-sm opacity-80", financialInsight.textColor)}>
+                <p className={cn("text-sm", financialInsight.messageClass)}>
                   {financialInsight.message}
                 </p>
               </div>
             </div>
             {financialInsight.cta && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
-                className={cn("whitespace-nowrap bg-background/50 hover:bg-background border-border/40 font-medium", financialInsight.textColor)}
+                className={cn(
+                  "whitespace-nowrap border transition-all px-4 py-2 rounded-lg font-medium",
+                  financialInsight.ctaClass
+                )}
                 onClick={() => {
                   window.scrollTo({ top: 600, behavior: "smooth" });
                 }}
