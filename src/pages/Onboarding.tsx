@@ -20,6 +20,7 @@ const Onboarding = () => {
   const { user } = useAuth();
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const tSetup = useTranslations("Setup");
+  const tLanding = useTranslations("Landing");
   const { createTransaction } = useFinance();
   const { subscriptions } = useSubscriptions();
   const { data: exchangeRatesList } = useExchangeRates();
@@ -95,19 +96,27 @@ const Onboarding = () => {
                 <Sparkles className="w-10 h-10 text-primary" />
               </div>
             </div>
+            {(() => {
+              const miniTitle = tLanding("mini_title");
+              const dotIndex = miniTitle.indexOf(".");
+              const firstLine = dotIndex >= 0 ? miniTitle.slice(0, dotIndex + 1) : miniTitle;
+              const secondLine = dotIndex >= 0 ? miniTitle.slice(dotIndex + 1).trim() : "";
+              return (
             <h1 className="text-4xl font-bold mb-4 tracking-tight">
-              Track your subscriptions. <br />
-              <span className="ruby-text-gradient text-5xl">Save money effortlessly.</span>
+              {firstLine} <br />
+              <span className="ruby-text-gradient text-5xl">{secondLine}</span>
             </h1>
+              );
+            })()}
             <p className="text-muted-foreground text-lg mb-10">
-              Stop losing money on forgotten renewals. Let's set up your personal dashboard in 30 seconds.
+              {tLanding("mini_desc")}
             </p>
             <Button 
               size="lg" 
               onClick={handleCompleteStep1}
               className="w-full ruby-gradient h-14 text-lg font-semibold rounded-2xl shadow-ruby hover:shadow-ruby-strong transition-all"
             >
-              Get Started
+              {tLanding("get_started")}
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </div>
