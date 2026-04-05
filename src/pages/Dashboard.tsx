@@ -493,38 +493,26 @@ const Dashboard = () => {
                         return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{tt("spending_change_desc")}</p>;
                       }
 
-                      const income = Number(convertedCurrentMonthlyIncome) || 0;
-                      const safeMonthlySpend = Number(monthlySpend) || 0;
+                      const totalIncome = Number(convertedCurrentMonthlyIncome) || 0;
+                      const totalSubs = Number(monthlySpend) || 0;
+                      const safeIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
+                      const safeSubs = Number.isFinite(totalSubs) ? totalSubs : 0;
 
-                      if (income <= 0) {
-                        return (
-                          <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                            {tt("spending_moderate_desc")}
-                          </p>
-                        );
-                      }
-
-                      if (income < 100) {
-                        return (
-                          <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                            {tt("spending_moderate_desc")}
-                          </p>
-                        );
-                      }
-                      
-                      const safePercentage = subscriptionPercentage;
-                      if (safePercentage === null) return null;
-
-                      const percentValue = safePercentage > 200 ? "200+" : String(safePercentage);
+                      const subsVsIncomePercent =
+                        safeIncome > 0 ? ((safeSubs / safeIncome) * 100).toFixed(1) : null;
 
                       return (
                         <>
                           <h3 className="text-xl font-bold mt-0.5 truncate">
-                            {formatCurrency(safeMonthlySpend, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
-                            {formatCurrency(income, activeCurrency, { maximumFractionDigits: 0 })}
+                            {formatCurrency(safeSubs, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
+                            {safeIncome > 0
+                              ? formatCurrency(safeIncome, activeCurrency, { maximumFractionDigits: 0 })
+                              : "N/A"}
                           </h3>
                           <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
-                            {tt("income_percent", { percent: percentValue })}
+                            {safeIncome > 0 && subsVsIncomePercent !== null
+                              ? tt("income_percent", { percent: subsVsIncomePercent })
+                              : "No income data"}
                           </p>
                         </>
                       );
@@ -540,40 +528,55 @@ const Dashboard = () => {
             <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                  {spendingChange?.percentageChange && spendingChange.percentageChange > 0 ? (
-                    <ArrowUp className="w-6 h-6 text-orange-500" />
-                  ) : (
-                    <ArrowDown className="w-6 h-6 text-green-500" />
-                  )}
+                  {(() => {
+                    const previousSpending = Number(spendingChange?.previousTotal) || 0;
+                    const currentSpending = Number(spendingChange?.currentTotal) || 0;
+                    if (previousSpending <= 0) {
+                      return <Info className="w-6 h-6 text-muted-foreground" />;
+                    }
+                    const rawChange = ((currentSpending - previousSpending) / previousSpending) * 100;
+                    const changeNumber = Number.isFinite(rawChange) ? rawChange : 0;
+                    return changeNumber > 0 ? (
+                      <ArrowUp className="w-6 h-6 text-orange-500" />
+                    ) : (
+                      <ArrowDown className="w-6 h-6 text-green-500" />
+                    );
+                  })()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">{tt("spending_change")}</p>
                   {(() => {
                     try {
-                      if (!spendingChange) return <p className="text-[10px] text-muted-foreground mt-1">{tt("spending_change_desc")}</p>;
-                      if (!spendingChange.hasPreviousData) {
-                        return (
-                          <div className="flex items-start gap-1.5 mt-1">
-                            <Info className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-                            <p className="text-[10px] text-muted-foreground leading-tight">
-                              {tt("spending_change_desc")}
-                            </p>
-                          </div>
-                        );
-                      }
-                      
-                      const change = spendingChange.percentageChange;
-                      const isIncrease = change > 0;
-                      const isDecrease = change < 0;
+                      const currentSpending = Number(spendingChange?.currentTotal) || 0;
+                      const previousSpending = Number(spendingChange?.previousTotal) || 0;
+                      const safeCurrent = Number.isFinite(currentSpending) ? currentSpending : 0;
+                      const safePrevious = Number.isFinite(previousSpending) ? previousSpending : 0;
+
+                      const spendingChangeValue =
+                        safePrevious > 0
+                          ? (((safeCurrent - safePrevious) / safePrevious) * 100).toFixed(1)
+                          : null;
+
+                      const changeNumber = spendingChangeValue !== null ? Number(spendingChangeValue) || 0 : 0;
+                      const isIncrease = changeNumber > 0;
                       
                       return (
                         <>
-                          <h3 className="text-2xl font-bold">
-                            {isIncrease ? "+" : ""}{change.toFixed(1)}%
-                          </h3>
-                          <p className={cn("text-[10px] font-medium mt-0.5", isIncrease ? "text-orange-500" : "text-green-500")}>
-                            {tt("spending_change_desc")}
-                          </p>
+                          {spendingChangeValue !== null ? (
+                            <>
+                              <h3 className="text-2xl font-bold">
+                                {isIncrease ? "+" : ""}{spendingChangeValue}%
+                              </h3>
+                              <p className={cn("text-[10px] font-medium mt-0.5", isIncrease ? "text-orange-500" : "text-green-500")}>
+                                {tt("spending_change_desc")}
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="text-base font-semibold mt-1 text-muted-foreground">No previous data</h3>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">{tt("spending_change_desc")}</p>
+                            </>
+                          )}
                         </>
                       );
                     } catch (e) {
