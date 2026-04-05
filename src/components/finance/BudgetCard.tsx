@@ -50,9 +50,7 @@ export const BudgetCard = ({ budget, spent, onDelete }: BudgetCardProps) => {
   };
 
   const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this budget?")) {
-      await onDelete(budget.id);
-    }
+    await onDelete(budget.id);
   };
 
   return (
