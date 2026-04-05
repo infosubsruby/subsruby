@@ -107,6 +107,7 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: string
+          language: string | null
           last_name: string | null
           lemon_squeezy_customer_id: string | null
           phone: string | null
@@ -122,6 +123,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id: string
+          language?: string | null
           last_name?: string | null
           lemon_squeezy_customer_id?: string | null
           phone?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          language?: string | null
           last_name?: string | null
           lemon_squeezy_customer_id?: string | null
           phone?: string | null

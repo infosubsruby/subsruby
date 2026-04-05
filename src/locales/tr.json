@@ -1,0 +1,27 @@
+{
+  "settings": {
+    "title": "Ayarlar",
+    "general": "Genel",
+    "notifications": "Bildirimler",
+    "language": "Dil",
+    "languageDesc": "Tercih ettiğiniz dili seçin",
+    "currency": "Varsayılan Para Birimi",
+    "currencyDesc": "Varsayılan görüntüleme para birimini ayarlayın"
+  },
+  "dashboard": {
+    "auto": "Otomatik"
+  },
+  "profile": {
+    "security": {
+      "title": "Güvenlik",
+      "subtitle": "Şifrenizi güncelleyin",
+      "currentPassword": "Mevcut Şifre",
+      "forgotPassword": "Şifremi unuttum?",
+      "newPassword": "Yeni Şifre",
+      "confirmNewPassword": "Yeni Şifreyi Onayla",
+      "updatePassword": "Şifreyi Güncelle",
+      "passwordMismatch": "Şifreler eşleşmiyor"
+    }
+  }
+}
+

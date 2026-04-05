@@ -1,0 +1,27 @@
+{
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "notifications": "Notifications",
+    "language": "Language",
+    "languageDesc": "Choose your preferred language",
+    "currency": "Default Currency",
+    "currencyDesc": "Set your default display currency"
+  },
+  "dashboard": {
+    "auto": "Auto"
+  },
+  "profile": {
+    "security": {
+      "title": "Security",
+      "subtitle": "Update your password",
+      "currentPassword": "Current Password",
+      "forgotPassword": "Forgot password?",
+      "newPassword": "New Password",
+      "confirmNewPassword": "Confirm New Password",
+      "updatePassword": "Update Password",
+      "passwordMismatch": "Passwords do not match"
+    }
+  }
+}
+

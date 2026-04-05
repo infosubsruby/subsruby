@@ -21,11 +21,13 @@ import {
 import { AlertTriangle, Camera, CreditCard, Loader2, Lock, LogOut, Trash2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslations } from "@/i18n/useTranslations";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, refreshProfile } = useAuth();
   const { t } = useLanguage();
+  const tt = useTranslations("profile.security");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
@@ -431,7 +433,7 @@ const Profile = () => {
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      setPasswordMismatch("Şifreler eşleşmiyor");
+      setPasswordMismatch(tt("passwordMismatch"));
       return;
     }
     setUpdatingPassword(true);
@@ -788,17 +790,17 @@ const Profile = () => {
                       <Lock className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <Label className="text-base font-medium">Security</Label>
-                      <p className="text-sm text-muted-foreground">Update your password</p>
+                      <Label className="text-base font-medium">{tt("title")}</Label>
+                      <p className="text-sm text-muted-foreground">{tt("subtitle")}</p>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label>Current Password</Label>
+                      <Label>{tt("currentPassword")}</Label>
                       <a href="#" className="text-xs text-muted-foreground hover:text-foreground">
-                        Forgot password?
+                        {tt("forgotPassword")}
                       </a>
                     </div>
                     <Input
@@ -810,7 +812,7 @@ const Profile = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>New Password</Label>
+                    <Label>{tt("newPassword")}</Label>
                     <Input
                       type="password"
                       value={newPassword}
@@ -823,7 +825,7 @@ const Profile = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Confirm New Password</Label>
+                    <Label>{tt("confirmNewPassword")}</Label>
                     <Input
                       type="password"
                       value={confirmNewPassword}
@@ -843,7 +845,7 @@ const Profile = () => {
                       className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     >
                       {updatingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      Update Password
+                      {tt("updatePassword")}
                     </Button>
                   </div>
                 </div>

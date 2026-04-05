@@ -1,0 +1,27 @@
+{
+  "settings": {
+    "title": "Einstellungen",
+    "general": "Allgemein",
+    "notifications": "Benachrichtigungen",
+    "language": "Sprache",
+    "languageDesc": "Wähle deine bevorzugte Sprache",
+    "currency": "Standardwährung",
+    "currencyDesc": "Lege deine Standardanzeigewährung fest"
+  },
+  "dashboard": {
+    "auto": "Auto"
+  },
+  "profile": {
+    "security": {
+      "title": "Sicherheit",
+      "subtitle": "Passwort aktualisieren",
+      "currentPassword": "Aktuelles Passwort",
+      "forgotPassword": "Passwort vergessen?",
+      "newPassword": "Neues Passwort",
+      "confirmNewPassword": "Neues Passwort bestätigen",
+      "updatePassword": "Passwort aktualisieren",
+      "passwordMismatch": "Passwörter stimmen nicht überein"
+    }
+  }
+}
+
