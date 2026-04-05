@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatDate } from "@/i18n/date";
+import { formatCurrency } from "@/i18n/currency";
+import { useSettings } from "@/hooks/useSettings";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -22,6 +24,7 @@ interface TransactionListProps {
 export const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
+  const { defaultCurrency } = useSettings();
 
   const CATEGORY_KEY_MAP: Record<string, string> = {
     Entertainment: "entertainment",
@@ -91,6 +94,13 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                 ? getCategoryLabel(rawDesc)
                 : rawDesc;
 
+            const absAmount = Math.abs(Number(transaction.amount) || 0);
+            const currency = transaction.currency || defaultCurrency || "USD";
+            const formattedAmount =
+              transaction.type === "income"
+                ? `+${formatCurrency(absAmount, currency)}`
+                : formatCurrency(-absAmount, currency);
+
             return (
               <TableRow key={transaction.id} className="hover:bg-secondary/30">
               <TableCell>
@@ -128,8 +138,7 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                     : "text-foreground"
                 )}
               >
-                {transaction.type === "income" ? "+" : "-"}$
-                {Number(transaction.amount).toFixed(2)}
+                {formattedAmount}
               </TableCell>
               <TableCell>
                 <Button

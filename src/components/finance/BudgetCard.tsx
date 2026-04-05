@@ -4,6 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
+import { formatCurrency } from "@/i18n/currency";
+import { useSettings } from "@/hooks/useSettings";
 
 interface BudgetCardProps {
   budget: Budget;
@@ -14,9 +16,11 @@ interface BudgetCardProps {
 export const BudgetCard = ({ budget, spent, onDelete }: BudgetCardProps) => {
   const tBudgets = useTranslations("Budgets");
   const tCategories = useTranslations("Categories");
+  const { defaultCurrency } = useSettings();
   const percentage = Math.min((spent / budget.limit_amount) * 100, 100);
   const isOverBudget = spent > budget.limit_amount;
   const remainingPercent = Math.max(0, ((budget.limit_amount - spent) / budget.limit_amount) * 100);
+  const currency = budget.currency || defaultCurrency || "USD";
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
@@ -74,7 +78,7 @@ export const BudgetCard = ({ budget, spent, onDelete }: BudgetCardProps) => {
               isOverBudget ? "text-destructive" : "text-foreground"
             )}
           >
-            ${spent.toFixed(2)} / ${budget.limit_amount.toFixed(2)}
+            {formatCurrency(spent, currency)} / {formatCurrency(budget.limit_amount, currency)}
           </span>
         </div>
 
@@ -88,7 +92,7 @@ export const BudgetCard = ({ budget, spent, onDelete }: BudgetCardProps) => {
 
         {isOverBudget && (
           <p className="text-xs text-destructive font-medium">
-            {tBudgets("over_budget", { amount: `$${(spent - budget.limit_amount).toFixed(2)}` })}
+            {tBudgets("over_budget", { amount: formatCurrency(spent - budget.limit_amount, currency) })}
           </p>
         )}
       </div>

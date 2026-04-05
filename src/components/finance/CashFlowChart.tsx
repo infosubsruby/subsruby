@@ -9,6 +9,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useTranslations } from "@/i18n/useTranslations";
+import { useSettings } from "@/hooks/useSettings";
+import { formatCurrency } from "@/i18n/currency";
 
 interface CashFlowChartProps {
   data: { month: string; income: number; expenses: number }[];
@@ -17,6 +19,8 @@ interface CashFlowChartProps {
 export const CashFlowChart = ({ data }: CashFlowChartProps) => {
   const tFinance = useTranslations("Finance");
   const tModals = useTranslations("Modals");
+  const { defaultCurrency } = useSettings();
+  const currency = defaultCurrency || "USD";
   return (
     <div className="glass-card rounded-xl p-5">
       <h3 className="font-display font-semibold text-lg mb-4">
@@ -36,7 +40,7 @@ export const CashFlowChart = ({ data }: CashFlowChartProps) => {
               stroke="hsl(220, 10%, 55%)"
               fontSize={12}
               tickLine={false}
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={(value) => formatCurrency(Number(value), currency)}
             />
             <Tooltip
               contentStyle={{
@@ -45,7 +49,7 @@ export const CashFlowChart = ({ data }: CashFlowChartProps) => {
                 borderRadius: "8px",
                 color: "hsl(0, 0%, 95%)",
               }}
-              formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+              formatter={(value: number) => [formatCurrency(value, currency), ""]}
             />
             <Legend />
             <Bar

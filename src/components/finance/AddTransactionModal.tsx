@@ -51,7 +51,7 @@ export const AddTransactionModal = ({
   const tCategories = useTranslations("Categories");
   const { defaultCurrency } = useSettings();
   const initialType = forcedType ?? "expense";
-  const currencyOptions = ["USD", "EUR", "TRY", "GBP", "MXN"];
+  const currencyOptions = ["USD", "EUR", "GBP", "TRY", "MXN", "CAD", "AUD", "JPY", "INR", "BRL"];
   const initialFormData = useMemo<CreateTransactionData>(
     () => ({
       amount: 0,

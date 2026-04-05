@@ -7,6 +7,8 @@ import {
   Legend,
 } from "recharts";
 import { useTranslations } from "@/i18n/useTranslations";
+import { useSettings } from "@/hooks/useSettings";
+import { formatCurrency } from "@/i18n/currency";
 
 interface SpendingPieChartProps {
   data: { name: string; value: number }[];
@@ -28,6 +30,8 @@ const COLORS = [
 export const SpendingPieChart = ({ data }: SpendingPieChartProps) => {
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
+  const { defaultCurrency } = useSettings();
+  const currency = defaultCurrency || "USD";
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   const getCategoryLabel = (name: string) => {
@@ -108,7 +112,7 @@ export const SpendingPieChart = ({ data }: SpendingPieChartProps) => {
                 color: "hsl(0, 0%, 95%)",
               }}
               formatter={(value: number) => [
-                `$${value.toFixed(2)} (${((value / total) * 100).toFixed(1)}%)`,
+                `${formatCurrency(value, currency)} (${((value / total) * 100).toFixed(1)}%)`,
                 "",
               ]}
             />
