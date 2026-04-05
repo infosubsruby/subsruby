@@ -24,7 +24,8 @@
     "ready_desc": "Únete a miles de usuarios que han simplificado su gestión del dinero con SubsRuby.",
     "get_started_free": "Comenzar Gratis",
     "mini_title": "Rastrea tu dinero. Haz crecer tu riqueza.",
-    "mini_desc": "Deja de preguntarte a dónde fue tu dinero. Configura tu panel financiero en 30 segundos."
+    "mini_desc": "Deja de preguntarte a dónde fue tu dinero. Configura tu panel financiero en 30 segundos.",
+    "supported_platforms": "Plataformas compatibles"
   },
   "Auth": {
     "create_account": "Crea tu cuenta",

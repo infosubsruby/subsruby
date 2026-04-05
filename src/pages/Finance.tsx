@@ -312,6 +312,49 @@ const Finance = () => {
     return result;
   }, [budgets, safeTransactions, activeCurrency, defaultCurrency, exchangeRates]);
 
+  const budgetConvertedFromMap = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const fallbackTxCurrency = defaultCurrency || "USD";
+    const parseLocalDate = (value: string) => new Date(`${value}T00:00:00`);
+
+    const result: Record<string, { amount: number; currency: string } | "multiple" | null> = {};
+
+    budgets.forEach((budget) => {
+      const budgetCurrency = budget.currency || activeCurrency || defaultCurrency || "USD";
+      const byCurrency: Record<string, number> = {};
+
+      safeTransactions
+        .filter((t) => {
+          if (!t?.date) return false;
+          const tDate = parseLocalDate(t.date);
+          return t.type === "expense" && t.category === budget.category && tDate >= startOfMonth;
+        })
+        .forEach((t) => {
+          const txCurrency = t.currency || fallbackTxCurrency;
+          if (txCurrency === budgetCurrency) return;
+          const raw = Number(t.amount || 0);
+          if (!Number.isFinite(raw)) return;
+          byCurrency[txCurrency] = (byCurrency[txCurrency] || 0) + raw;
+        });
+
+      const currencies = Object.keys(byCurrency);
+      if (currencies.length === 0) {
+        result[budget.id] = null;
+        return;
+      }
+      if (currencies.length > 1) {
+        result[budget.id] = "multiple";
+        return;
+      }
+
+      const onlyCurrency = currencies[0];
+      result[budget.id] = { currency: onlyCurrency, amount: byCurrency[onlyCurrency] ?? 0 };
+    });
+
+    return result;
+  }, [budgets, safeTransactions, activeCurrency, defaultCurrency]);
+
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
@@ -542,6 +585,7 @@ const Finance = () => {
                       budget={budget}
                       spent={budgetSpentMap[budget.id] ?? 0}
                       currency={budget.currency || activeCurrency || defaultCurrency || "USD"}
+                      convertedFrom={budgetConvertedFromMap[budget.id] ?? null}
                       onDelete={deleteBudget}
                     />
                   ))}

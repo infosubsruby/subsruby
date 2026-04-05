@@ -10,10 +10,11 @@ interface BudgetCardProps {
   budget: Budget;
   spent: number;
   currency: string;
+  convertedFrom?: { amount: number; currency: string } | "multiple";
   onDelete: (id: string) => Promise<{ success: boolean }>;
 }
 
-export const BudgetCard = ({ budget, spent, currency, onDelete }: BudgetCardProps) => {
+export const BudgetCard = ({ budget, spent, currency, convertedFrom, onDelete }: BudgetCardProps) => {
   const tBudgets = useTranslations("Budgets");
   const tCategories = useTranslations("Categories");
   const percentage = Math.min((spent / budget.limit_amount) * 100, 100);
@@ -77,6 +78,13 @@ export const BudgetCard = ({ budget, spent, currency, onDelete }: BudgetCardProp
             {formatCurrency(spent, currency)} / {formatCurrency(budget.limit_amount, currency)}
           </span>
         </div>
+        {convertedFrom ? (
+          <div className="text-[10px] text-muted-foreground">
+            {convertedFrom === "multiple"
+              ? "(Converted from multiple currencies)"
+              : `(Converted from ${formatCurrency(convertedFrom.amount, convertedFrom.currency)})`}
+          </div>
+        ) : null}
 
         <Progress
           value={percentage}

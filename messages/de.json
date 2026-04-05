@@ -24,7 +24,8 @@
     "ready_desc": "Schließen Sie sich Tausenden von Benutzern an, die ihr Geldmanagement vereinfacht haben.",
     "get_started_free": "Kostenlos loslegen",
     "mini_title": "Geld verfolgen. Vermögen aufbauen.",
-    "mini_desc": "Fragen Sie sich nicht länger, wo Ihr Geld geblieben ist. Richten Sie Ihr Finanz-Dashboard in 30 Sekunden ein."
+    "mini_desc": "Fragen Sie sich nicht länger, wo Ihr Geld geblieben ist. Richten Sie Ihr Finanz-Dashboard in 30 Sekunden ein.",
+    "supported_platforms": "Unterstützte Plattformen"
   },
   "Auth": {
     "create_account": "Erstellen Sie Ihr Konto",

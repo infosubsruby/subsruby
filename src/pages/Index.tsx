@@ -46,9 +46,9 @@ const Index = () => {
         
         <div className="container mx-auto max-w-5xl text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8 animate-fade-in">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-foreground/90">{tLanding("hero_badge")}</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 backdrop-blur-sm mb-8 animate-fade-in">
+            <Sparkles className="w-4 h-4 text-red-500" />
+            <span className="text-sm font-medium text-red-500">{tLanding("hero_badge")}</span>
           </div>
           
           {/* Main heading */}
@@ -164,6 +164,22 @@ const Index = () => {
                 {tFeatures("f6_desc")}
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-10 px-4 border-y border-border/50">
+        <div className="container mx-auto max-w-6xl">
+          <p className="text-xs tracking-wide uppercase text-muted-foreground text-center mb-4">
+            {tLanding("supported_platforms")}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-50 grayscale">
+            <span className="font-semibold">Netflix</span>
+            <span className="font-semibold">Spotify</span>
+            <span className="font-semibold">Apple Music</span>
+            <span className="font-semibold">Disney+</span>
+            <span className="font-semibold">YouTube Premium</span>
+            <span className="font-semibold">Adobe</span>
           </div>
         </div>
       </section>

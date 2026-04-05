@@ -24,7 +24,8 @@
     "ready_desc": "SubsRuby ile para yönetimini basitleştiren binlerce kullanıcıya katılın.",
     "get_started_free": "Ücretsiz Başla",
     "mini_title": "Paranızı takip edin. Servetinizi büyütün.",
-    "mini_desc": "Paranızın nereye gittiğini merak etmeyi bırakın. Kapsamlı finans panelinizi 30 saniyede kurun."
+    "mini_desc": "Paranızın nereye gittiğini merak etmeyi bırakın. Kapsamlı finans panelinizi 30 saniyede kurun.",
+    "supported_platforms": "Desteklenen Platformlar"
   },
   "Auth": {
     "create_account": "Hesabınızı oluşturun",

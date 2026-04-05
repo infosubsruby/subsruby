@@ -537,7 +537,7 @@ const Dashboard = () => {
                     const rawChange = ((currentSpending - previousSpending) / previousSpending) * 100;
                     const changeNumber = Number.isFinite(rawChange) ? rawChange : 0;
                     return changeNumber > 0 ? (
-                      <ArrowUp className="w-6 h-6 text-orange-500" />
+                      <ArrowUp className="w-6 h-6 text-destructive" />
                     ) : (
                       <ArrowDown className="w-6 h-6 text-green-500" />
                     );
@@ -559,21 +559,59 @@ const Dashboard = () => {
 
                       const changeNumber = spendingChangeValue !== null ? Number(spendingChangeValue) || 0 : 0;
                       const isIncrease = changeNumber > 0;
+                      const sparklineColor = isIncrease ? "hsl(358, 82%, 55%)" : "hsl(142, 70%, 45%)";
+                      const sparklinePoints =
+                        spendingChangeValue !== null
+                          ? (() => {
+                              const a = safePrevious;
+                              const b = safeCurrent;
+                              const min = Math.min(a, b);
+                              const max = Math.max(a, b);
+                              const span = max - min || 1;
+                              const x1 = 0;
+                              const x2 = 60;
+                              const y1 = 16 - ((a - min) / span) * 16;
+                              const y2 = 16 - ((b - min) / span) * 16;
+                              return `${x1},${y1} ${x2},${y2}`;
+                            })()
+                          : "0,12 60,12";
                       
                       return (
                         <>
                           {spendingChangeValue !== null ? (
                             <>
-                              <h3 className="text-2xl font-bold">
-                                {isIncrease ? "+" : ""}{spendingChangeValue}%
-                              </h3>
-                              <p className={cn("text-[10px] font-medium mt-0.5", isIncrease ? "text-orange-500" : "text-green-500")}>
+                              <div className="flex items-center justify-between gap-3">
+                                <h3 className="text-2xl font-bold">
+                                  {isIncrease ? "+" : ""}{spendingChangeValue}%
+                                </h3>
+                                <svg width="60" height="18" viewBox="0 0 60 18" className="shrink-0">
+                                  <polyline
+                                    fill="none"
+                                    stroke={sparklineColor}
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    points={sparklinePoints}
+                                  />
+                                </svg>
+                              </div>
+                              <p className={cn("text-[10px] font-medium mt-0.5", isIncrease ? "text-destructive" : "text-green-500")}>
                                 {tt("spending_change_desc")}
                               </p>
                             </>
                           ) : (
                             <>
                               <h3 className="text-base font-semibold mt-1 text-muted-foreground">{tt("no_previous_data")}</h3>
+                              <svg width="60" height="18" viewBox="0 0 60 18" className="mt-1">
+                                <polyline
+                                  fill="none"
+                                  stroke="hsl(220, 10%, 55%)"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  points="0,12 60,12"
+                                />
+                              </svg>
                               <p className="text-[10px] text-muted-foreground mt-0.5">{tt("spending_change_desc")}</p>
                             </>
                           )}

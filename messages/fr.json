@@ -24,7 +24,8 @@
     "ready_desc": "Rejoignez des milliers d'utilisateurs qui ont simplifié la gestion de leur argent.",
     "get_started_free": "Commencer gratuitement",
     "mini_title": "Suivez votre argent. Faites fructifier votre patrimoine.",
-    "mini_desc": "Arrêtez de vous demander où est passé votre argent. Configurez votre tableau de bord en 30 secondes."
+    "mini_desc": "Arrêtez de vous demander où est passé votre argent. Configurez votre tableau de bord en 30 secondes.",
+    "supported_platforms": "Plateformes prises en charge"
   },
   "Auth": {
     "create_account": "Créez votre compte",
