@@ -7,7 +7,7 @@ export const useTranslations = (namespace?: string) => {
     if (!options) return result;
     return Object.entries(options).reduce((acc, [k, v]) => {
       const value = String(v);
-      return acc.replaceAll(`{${k}}`, value).replaceAll(`%{${k}}`, value);
+      return acc.split(`{${k}}`).join(value).split(`%{${k}}`).join(value);
     }, String(result));
   };
 };
