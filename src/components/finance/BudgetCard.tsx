@@ -5,22 +5,20 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatCurrency } from "@/i18n/currency";
-import { useSettings } from "@/hooks/useSettings";
 
 interface BudgetCardProps {
   budget: Budget;
   spent: number;
+  currency: string;
   onDelete: (id: string) => Promise<{ success: boolean }>;
 }
 
-export const BudgetCard = ({ budget, spent, onDelete }: BudgetCardProps) => {
+export const BudgetCard = ({ budget, spent, currency, onDelete }: BudgetCardProps) => {
   const tBudgets = useTranslations("Budgets");
   const tCategories = useTranslations("Categories");
-  const { defaultCurrency } = useSettings();
   const percentage = Math.min((spent / budget.limit_amount) * 100, 100);
   const isOverBudget = spent > budget.limit_amount;
   const remainingPercent = Math.max(0, ((budget.limit_amount - spent) / budget.limit_amount) * 100);
-  const currency = budget.currency || defaultCurrency || "USD";
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {

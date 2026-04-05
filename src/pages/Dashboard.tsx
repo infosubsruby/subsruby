@@ -30,6 +30,7 @@ import { useFinance } from "@/hooks/useFinance";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/hooks/useSettings";
 import { useTranslations } from "@/i18n/useTranslations";
+import { formatCurrency } from "@/i18n/currency";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -158,11 +159,29 @@ const Dashboard = () => {
     };
   }, [subscriptions, activeCurrency, exchangeRates]);
 
+  const convertedCurrentMonthlyIncome = useMemo(() => {
+    const safeTransactions = Array.isArray(transactions) ? transactions : [];
+    const now = new Date();
+    const fallback = defaultCurrency || "USD";
+    return safeTransactions
+      .filter((t) => {
+        if (!t?.date) return false;
+        const d = new Date(t.date);
+        return t.type === "income" && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, t) => {
+        const raw = Number(t.amount || 0);
+        const from = t.currency || fallback;
+        const converted = convertWithDynamicRates(raw, from, activeCurrency, exchangeRates);
+        return sum + (isFinite(converted) ? converted : 0);
+      }, 0);
+  }, [transactions, activeCurrency, exchangeRates, defaultCurrency]);
+
   // Calculate subscription vs income percentage
   const subscriptionPercentage = useMemo(() => {
     try {
       // Strictly use current monthly income as requested
-      const income = Number(currentMonthlyIncome) || 0;
+      const income = Number(convertedCurrentMonthlyIncome) || 0;
       const safeMonthlySpend = Number(monthlySpend) || 0;
       
       // Sanity check: income too low
@@ -180,7 +199,7 @@ const Dashboard = () => {
       console.error("Error calculating subscription percentage:", error);
       return 0;
     }
-  }, [monthlySpend, currentMonthlyIncome]);
+  }, [monthlySpend, convertedCurrentMonthlyIncome]);
 
   const getStatusLabel = (percentage: number | null) => {
     if (percentage === null) return { label: "N/A", color: "text-muted-foreground" };
@@ -209,16 +228,15 @@ const Dashboard = () => {
           d.getFullYear() === now.getFullYear()
         );
       })
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      .reduce((sum, t) => {
+        const raw = Number(t.amount || 0);
+        const from = t.currency || (defaultCurrency || "USD");
+        const converted = convertWithDynamicRates(raw, from, activeCurrency, exchangeRates);
+        return sum + (isFinite(converted) ? converted : 0);
+      }, 0);
 
     // 2. Monthly Subscriptions
-    const monthlySubscriptions = safeSubscriptions.reduce((sum, sub) => {
-      const price = Number(sub?.price) || 0;
-      if (sub?.billing_cycle === "yearly") {
-        return sum + price / 12;
-      }
-      return sum + price;
-    }, 0);
+    const monthlySubscriptions = Number(monthlySpend) || 0;
 
     // 3. Ratio Calculation
     let ratio = 0;
@@ -276,7 +294,7 @@ const Dashboard = () => {
         messageClass: "text-zinc-400"
       };
     }
-  }, [subscriptions, transactions, tt]);
+  }, [subscriptions, transactions, tt, activeCurrency, exchangeRates, defaultCurrency, monthlySpend]);
 
   // Calculate month-over-month spending change
   const spendingChange = useMemo(() => {
@@ -430,7 +448,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
                   <h3 className="text-2xl font-bold">
-                    {currencySymbol}{monthlySpend.toFixed(2)}
+                    {formatCurrency(monthlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
@@ -444,7 +462,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
                   <h3 className="text-2xl font-bold">
-                    {currencySymbol}{yearlySpend.toFixed(2)}
+                    {formatCurrency(yearlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
@@ -475,7 +493,7 @@ const Dashboard = () => {
                         return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{tt("spending_change_desc")}</p>;
                       }
 
-                      const income = Number(currentMonthlyIncome) || 0;
+                      const income = Number(convertedCurrentMonthlyIncome) || 0;
                       const safeMonthlySpend = Number(monthlySpend) || 0;
 
                       if (income <= 0) {
@@ -502,7 +520,8 @@ const Dashboard = () => {
                       return (
                         <>
                           <h3 className="text-xl font-bold mt-0.5 truncate">
-                            {currencySymbol}{safeMonthlySpend.toFixed(0)} / {currencySymbol}{income.toFixed(0)}
+                            {formatCurrency(safeMonthlySpend, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
+                            {formatCurrency(income, activeCurrency, { maximumFractionDigits: 0 })}
                           </h3>
                           <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
                             {tt("income_percent", { percent: percentValue })}
@@ -588,7 +607,7 @@ const Dashboard = () => {
               {/* Middle row */}
               <div className="mb-2">
                 <h3 className="text-2xl font-bold">
-                  {currencySymbol}{potentialSavings.toFixed(2)}
+                  {formatCurrency(potentialSavings, activeCurrency)}
                   {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">{tt("per_month")}</span>}
                 </h3>
               </div>

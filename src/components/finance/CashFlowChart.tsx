@@ -9,18 +9,16 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useTranslations } from "@/i18n/useTranslations";
-import { useSettings } from "@/hooks/useSettings";
 import { formatCurrency } from "@/i18n/currency";
 
 interface CashFlowChartProps {
   data: { month: string; income: number; expenses: number }[];
+  currency: string;
 }
 
-export const CashFlowChart = ({ data }: CashFlowChartProps) => {
+export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
   const tFinance = useTranslations("Finance");
   const tModals = useTranslations("Modals");
-  const { defaultCurrency } = useSettings();
-  const currency = defaultCurrency || "USD";
   return (
     <div className="glass-card rounded-xl p-5">
       <h3 className="font-display font-semibold text-lg mb-4">

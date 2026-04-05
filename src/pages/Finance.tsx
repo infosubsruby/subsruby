@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useFinance } from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Navbar } from "@/components/layout/Navbar";
 import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
 import { AddBudgetModal } from "@/components/finance/AddBudgetModal";
@@ -16,10 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { currencies } from "@/data/subscriptionPresets";
-import { convertCurrency, getCurrencySymbol } from "@/lib/currency";
+import { convertWithDynamicRates } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatMonthShortYear } from "@/i18n/date";
+import { formatCurrency } from "@/i18n/currency";
 import {
   Plus,
   Wallet,
@@ -54,6 +56,15 @@ const Finance = () => {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
+  const { data: exchangeRatesList } = useExchangeRates();
+
+  const exchangeRates = useMemo(() => {
+    if (!exchangeRatesList) return {};
+    return exchangeRatesList.reduce((acc, curr) => {
+      acc[curr.currency_code] = Number(curr.rate);
+      return acc;
+    }, {} as Record<string, number>);
+  }, [exchangeRatesList]);
 
   // Defensive arrays
   const safeSubscriptions = useMemo(() => Array.isArray(subscriptions) ? subscriptions : [], [subscriptions]);
@@ -79,27 +90,43 @@ const Finance = () => {
   // Use user-selected currency or auto-detected
   const autoCurrency = defaultCurrency || autoDetectedCurrency;
   const activeCurrency = displayCurrency || autoCurrency;
-  const currencySymbol = getCurrencySymbol(activeCurrency);
+
+  const toActiveCurrency = useCallback(
+    (amount: number, fromCurrency: string) => {
+      return convertWithDynamicRates(amount, fromCurrency, activeCurrency, exchangeRates);
+    },
+    [activeCurrency, exchangeRates]
+  );
 
   // Wrap all data calculations in a safe memo
   const financialData = useMemo(() => {
     try {
-      // Calculate totals with currency conversion
+      const fallbackTxCurrency = defaultCurrency || "USD";
+
       const income = safeTransactions
         .filter((t) => t?.type === "income")
-        .reduce((total, t) => total + Number(t?.amount || 0), 0);
+        .reduce((total, t) => {
+          const raw = Number(t?.amount || 0);
+          const from = t?.currency || fallbackTxCurrency;
+          const converted = toActiveCurrency(raw, from);
+          return total + (isFinite(converted) ? converted : 0);
+        }, 0);
 
       const expenses = safeTransactions
         .filter((t) => t?.type === "expense")
-        .reduce((total, t) => total + Number(t?.amount || 0), 0);
+        .reduce((total, t) => {
+          const raw = Number(t?.amount || 0);
+          const from = t?.currency || fallbackTxCurrency;
+          const converted = toActiveCurrency(raw, from);
+          return total + (isFinite(converted) ? converted : 0);
+        }, 0);
 
-      // Calculate subscription cost with proper currency conversion
       const monthlySubCost = safeSubscriptions.reduce((total, sub) => {
         const rawPrice = Number(sub?.price ?? 0);
         const monthlyPrice = sub?.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
-        // Convert from subscription's currency to display currency
-        const convertedPrice = convertCurrency(monthlyPrice, sub?.currency || activeCurrency, activeCurrency);
-        return total + (isFinite(convertedPrice) ? convertedPrice : 0);
+        const from = sub?.currency || activeCurrency;
+        const converted = toActiveCurrency(monthlyPrice, from);
+        return total + (isFinite(converted) ? converted : 0);
       }, 0);
 
       const net = income - (expenses + monthlySubCost);
@@ -165,15 +192,15 @@ const Finance = () => {
         financialHealth: { score: null as number | null, label: "", emoji: "", color: "", description: tFinance("health_desc", { percent: 0 }) }
       };
     }
-  }, [safeSubscriptions, safeTransactions, activeCurrency, tFinance]);
+  }, [safeSubscriptions, safeTransactions, activeCurrency, defaultCurrency, tFinance, toActiveCurrency]);
 
   const { totalIncome, totalExpenses, totalMonthlyCost, netWorth, financialHealth } = financialData;
 
-  // Monthly cash flow data for charts
-  const getMonthlyCashFlow = () => {
+  const cashFlowData = useMemo(() => {
     try {
       const months: { month: string; income: number; expenses: number }[] = [];
       const now = new Date();
+      const fallbackTxCurrency = defaultCurrency || "USD";
 
       for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -185,62 +212,62 @@ const Finance = () => {
           .filter((t) => {
             if (!t?.date) return false;
             const tDate = new Date(t.date);
-            return (
-              t.type === "income" && tDate >= startOfMonth && tDate <= endOfMonth
-            );
+            return t.type === "income" && tDate >= startOfMonth && tDate <= endOfMonth;
           })
-          .reduce((sum, t) => sum + Number(t?.amount || 0), 0);
+          .reduce((sum, t) => {
+            const raw = Number(t?.amount || 0);
+            const from = t?.currency || fallbackTxCurrency;
+            const converted = toActiveCurrency(raw, from);
+            return sum + (isFinite(converted) ? converted : 0);
+          }, 0);
 
         const monthlyExpenses = safeTransactions
           .filter((t) => {
             if (!t?.date) return false;
             const tDate = new Date(t.date);
-            return (
-              t.type === "expense" && tDate >= startOfMonth && tDate <= endOfMonth
-            );
+            return t.type === "expense" && tDate >= startOfMonth && tDate <= endOfMonth;
           })
-          .reduce((sum, t) => sum + Number(t?.amount || 0), 0);
-
-        // Add subscription costs to expenses (converted)
-        const monthlySubCost = totalMonthlyCost;
+          .reduce((sum, t) => {
+            const raw = Number(t?.amount || 0);
+            const from = t?.currency || fallbackTxCurrency;
+            const converted = toActiveCurrency(raw, from);
+            return sum + (isFinite(converted) ? converted : 0);
+          }, 0);
 
         months.push({
           month: monthStr,
           income: isFinite(monthlyIncome) ? monthlyIncome : 0,
-          expenses: isFinite(monthlyExpenses + monthlySubCost) ? monthlyExpenses + monthlySubCost : 0,
+          expenses: isFinite(monthlyExpenses + totalMonthlyCost) ? monthlyExpenses + totalMonthlyCost : 0,
         });
       }
 
       return months;
-    } catch (e) {
+    } catch {
       return [];
     }
-  };
+  }, [safeTransactions, totalMonthlyCost, defaultCurrency, toActiveCurrency]);
 
-  // Spending distribution for pie chart
-  const getSpendingDistribution = () => {
+  const spendingData = useMemo(() => {
     try {
       const distribution: { name: string; value: number }[] = [];
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const fallbackTxCurrency = defaultCurrency || "USD";
 
-      // Group transactions by category
       const categoryTotals: Record<string, number> = {};
 
       safeTransactions
         .filter((t) => t?.type === "expense" && t?.date && new Date(t.date) >= startOfMonth)
         .forEach((t) => {
-          if (t?.category) {
-            categoryTotals[t.category] =
-              (categoryTotals[t.category] || 0) + Number(t?.amount || 0);
-          }
+          if (!t?.category) return;
+          const raw = Number(t?.amount || 0);
+          const from = t?.currency || fallbackTxCurrency;
+          const converted = toActiveCurrency(raw, from);
+          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + (isFinite(converted) ? converted : 0);
         });
 
-      // Add subscriptions as "Subscriptions" category (converted)
       if (totalMonthlyCost > 0) {
-        const subLabel = tCategories("subscriptions");
-        categoryTotals[subLabel] =
-          (categoryTotals[subLabel] || 0) + totalMonthlyCost;
+        categoryTotals["Subscriptions"] = (categoryTotals["Subscriptions"] || 0) + totalMonthlyCost;
       }
 
       Object.entries(categoryTotals).forEach(([name, value]) => {
@@ -250,10 +277,37 @@ const Finance = () => {
       });
 
       return distribution;
-    } catch (e) {
+    } catch {
       return [];
     }
-  };
+  }, [safeTransactions, totalMonthlyCost, defaultCurrency, toActiveCurrency]);
+
+  const budgetSpentMap = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const fallbackTxCurrency = defaultCurrency || "USD";
+    const result: Record<string, number> = {};
+
+    budgets.forEach((budget) => {
+      const budgetCurrency = budget.currency || activeCurrency || defaultCurrency || "USD";
+      const total = safeTransactions
+        .filter((t) => {
+          if (!t?.date) return false;
+          const tDate = new Date(t.date);
+          return t.type === "expense" && t.category === budget.category && tDate >= startOfMonth;
+        })
+        .reduce((sum, t) => {
+          const raw = Number(t?.amount || 0);
+          const from = t?.currency || fallbackTxCurrency;
+          const converted = convertWithDynamicRates(raw, from, budgetCurrency, exchangeRates);
+          return sum + (isFinite(converted) ? converted : 0);
+        }, 0);
+
+      result[budget.id] = isFinite(total) ? total : 0;
+    });
+
+    return result;
+  }, [budgets, safeTransactions, activeCurrency, defaultCurrency, exchangeRates]);
 
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
@@ -268,8 +322,6 @@ const Finance = () => {
     );
   }
 
-  const cashFlowData = getMonthlyCashFlow();
-  const spendingData = getSpendingDistribution();
   const displayedHealthLabel =
     financialHealth.label === "Risky"
       ? tFinance("risky")
@@ -342,7 +394,7 @@ const Finance = () => {
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">{t.finance.income}</p>
                   <p className="font-display text-3xl font-bold text-success mt-1">
-                    {currencySymbol}{totalIncome.toFixed(2)}
+                    {formatCurrency(totalIncome, activeCurrency)}
                   </p>
                 </div>
               </div>
@@ -356,7 +408,7 @@ const Finance = () => {
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">{t.finance.expenses}</p>
                   <p className="font-display text-3xl font-bold mt-1">
-                    {currencySymbol}{totalExpenses.toFixed(2)}
+                    {formatCurrency(totalExpenses, activeCurrency)}
                   </p>
                 </div>
               </div>
@@ -370,7 +422,7 @@ const Finance = () => {
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">{t.finance.subscriptions}</p>
                   <p className="font-display text-3xl font-bold mt-1">
-                    {currencySymbol}{totalMonthlyCost.toFixed(2)}
+                    {formatCurrency(totalMonthlyCost, activeCurrency)}
                     <span className="text-sm font-normal text-muted-foreground ml-1">
                       {tDashboard("per_month")}
                     </span>
@@ -391,7 +443,7 @@ const Finance = () => {
                       netWorth >= 0 ? "text-success" : "text-destructive"
                     }`}
                   >
-                    {currencySymbol}{netWorth.toFixed(2)}
+                    {formatCurrency(netWorth, activeCurrency)}
                   </p>
                 </div>
               </div>
@@ -441,8 +493,8 @@ const Finance = () => {
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <CashFlowChart data={cashFlowData} />
-            <SpendingPieChart data={spendingData} />
+            <CashFlowChart data={cashFlowData} currency={activeCurrency} />
+            <SpendingPieChart data={spendingData} currency={activeCurrency} />
           </div>
 
           {/* Tabs for Transactions and Budgets */}
@@ -485,7 +537,8 @@ const Finance = () => {
                     <BudgetCard
                       key={budget.id}
                       budget={budget}
-                      spent={getSpentByCategory(budget.category)}
+                      spent={budgetSpentMap[budget.id] ?? 0}
+                      currency={budget.currency || activeCurrency || defaultCurrency || "USD"}
                       onDelete={deleteBudget}
                     />
                   ))}
