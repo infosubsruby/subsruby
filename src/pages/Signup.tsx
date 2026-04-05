@@ -64,7 +64,7 @@ const Signup = () => {
       // Kısa bir gecikme ekleyerek kullanıcının toast mesajını görmesini sağlıyoruz
       setTimeout(() => {
         setIsLoading(false);
-        navigate("/control");
+        navigate("/onboarding");
       }, 1500);
 
     } catch (err) {

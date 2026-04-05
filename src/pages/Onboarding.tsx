@@ -12,6 +12,7 @@ import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
 import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
 import { toast } from "sonner";
 import { useTranslations } from "@/i18n/useTranslations";
+import { supabase } from "@/integrations/supabase/client";
 
 type OnboardingStep = "welcome" | "income" | "subscription" | "wow";
 
@@ -51,6 +52,7 @@ const Onboarding = () => {
   const finishOnboarding = () => {
     if (user?.id) {
       localStorage.setItem(`hasCompletedOnboarding:${user.id}`, "true");
+      void supabase.from("profiles").update({ has_completed_onboarding: true }).eq("id", user.id);
     }
     navigate("/control");
   };

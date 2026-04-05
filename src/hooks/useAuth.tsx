@@ -15,6 +15,9 @@ interface Profile {
   variant_id: string | null;
   status: string | null;
   current_period_end: string | null;
+  has_completed_onboarding: boolean | null;
+  language?: string | null;
+  default_currency?: string | null;
 }
 
 interface AuthContextType {

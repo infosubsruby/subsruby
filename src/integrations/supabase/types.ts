@@ -106,6 +106,7 @@ export type Database = {
           default_currency: string | null
           email: string | null
           first_name: string | null
+          has_completed_onboarding: boolean
           id: string
           language: string | null
           last_name: string | null
@@ -122,6 +123,7 @@ export type Database = {
           default_currency?: string | null
           email?: string | null
           first_name?: string | null
+          has_completed_onboarding?: boolean
           id: string
           language?: string | null
           last_name?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           default_currency?: string | null
           email?: string | null
           first_name?: string | null
+          has_completed_onboarding?: boolean
           id?: string
           language?: string | null
           last_name?: string | null
