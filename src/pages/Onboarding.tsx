@@ -18,7 +18,7 @@ type OnboardingStep = "welcome" | "income" | "subscription" | "wow";
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const tSetup = useTranslations("Setup");
   const tLanding = useTranslations("Landing");
@@ -37,6 +37,12 @@ const Onboarding = () => {
       return acc;
     }, {} as Record<string, number>);
   }, [exchangeRatesList]);
+
+  useEffect(() => {
+    if (profile?.has_completed_onboarding === true) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate, profile?.has_completed_onboarding]);
 
   useEffect(() => {
     if (step === "income") {

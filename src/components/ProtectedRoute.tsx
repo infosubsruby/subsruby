@@ -26,17 +26,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Check for onboarding completion
-  const onboardingKey = `hasCompletedOnboarding:${session.user.id}`;
-  const localCompleted = localStorage.getItem(onboardingKey) === "true";
-  const hasCompletedOnboarding =
-    typeof profile.has_completed_onboarding === "boolean" ? profile.has_completed_onboarding : localCompleted;
-
-  localStorage.setItem(onboardingKey, hasCompletedOnboarding ? "true" : "false");
-  
-  if (!hasCompletedOnboarding && location.pathname !== "/onboarding") {
-    return <Navigate to="/onboarding" replace />;
-  }
+  const hasCompletedOnboarding = profile.has_completed_onboarding === true;
 
   if (hasCompletedOnboarding && location.pathname === "/onboarding") {
     return <Navigate to="/dashboard" replace />;
