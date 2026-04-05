@@ -6,6 +6,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface SpendingPieChartProps {
   data: { name: string; value: number }[];
@@ -25,16 +26,45 @@ const COLORS = [
 ];
 
 export const SpendingPieChart = ({ data }: SpendingPieChartProps) => {
+  const tFinance = useTranslations("Finance");
+  const tCategories = useTranslations("Categories");
   const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  const getCategoryLabel = (name: string) => {
+    switch (name) {
+      case "Entertainment":
+        return tCategories("entertainment");
+      case "Food & Dining":
+        return tCategories("food_dining");
+      case "Shopping":
+        return tCategories("shopping");
+      case "Transportation":
+        return tCategories("transportation");
+      case "Utilities":
+        return tCategories("utilities");
+      case "Health":
+        return tCategories("health");
+      case "Education":
+        return tCategories("education");
+      case "Travel":
+        return tCategories("travel");
+      case "Subscriptions":
+        return tCategories("subscriptions");
+      case "Other":
+        return tCategories("other");
+      default:
+        return name;
+    }
+  };
 
   if (data.length === 0) {
     return (
       <div className="glass-card rounded-xl p-5">
         <h3 className="font-display font-semibold text-lg mb-4">
-          Spending Distribution
+          {tFinance("spending_dist")}
         </h3>
         <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-          No spending data this month
+          —
         </div>
       </div>
     );
@@ -43,7 +73,7 @@ export const SpendingPieChart = ({ data }: SpendingPieChartProps) => {
   return (
     <div className="glass-card rounded-xl p-5">
       <h3 className="font-display font-semibold text-lg mb-4">
-        Spending Distribution
+        {tFinance("spending_dist")}
       </h3>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -57,7 +87,7 @@ export const SpendingPieChart = ({ data }: SpendingPieChartProps) => {
               paddingAngle={2}
               dataKey="value"
               label={({ name, percent }) =>
-                `${name} ${(percent * 100).toFixed(0)}%`
+                `${getCategoryLabel(String(name))} ${(percent * 100).toFixed(0)}%`
               }
               labelLine={false}
             >
@@ -94,7 +124,7 @@ export const SpendingPieChart = ({ data }: SpendingPieChartProps) => {
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
-            <span className="text-muted-foreground truncate">{item.name}</span>
+            <span className="text-muted-foreground truncate">{getCategoryLabel(item.name)}</span>
           </div>
         ))}
       </div>

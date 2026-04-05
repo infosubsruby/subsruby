@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertCurrency, getCurrencySymbol } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "@/i18n/useTranslations";
 import {
   Plus,
   Wallet,
@@ -33,6 +34,9 @@ import {
 const Finance = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
+  const tFinance = useTranslations("Finance");
+  const tDashboard = useTranslations("Dashboard");
+  const tCategories = useTranslations("Categories");
   const { defaultCurrency } = useSettings();
   const {
     transactions,
@@ -100,7 +104,7 @@ const Finance = () => {
       const net = income - (expenses + monthlySubCost);
 
       // Health Score Calculation
-      let health = { score: null as number | null, label: "", emoji: "", color: "", description: "Add income to calculate financial health" };
+      let health = { score: null as number | null, label: "", emoji: "", color: "", description: tFinance("health_desc", { percent: 0 }) };
       
       if (income > 0) {
         const ratio = monthlySubCost / income;
@@ -139,7 +143,7 @@ const Finance = () => {
           label,
           emoji,
           color,
-          description: `Your subscriptions use ${isFinite(percentage) ? percentage : 0}% of your income.`,
+          description: tFinance("health_desc", { percent: isFinite(percentage) ? percentage : 0 }),
         };
       }
 
@@ -157,10 +161,10 @@ const Finance = () => {
         totalExpenses: 0,
         totalMonthlyCost: 0,
         netWorth: 0,
-        financialHealth: { score: null as number | null, label: "", emoji: "", color: "", description: "Data unavailable" }
+        financialHealth: { score: null as number | null, label: "", emoji: "", color: "", description: tFinance("health_desc", { percent: 0 }) }
       };
     }
-  }, [safeSubscriptions, safeTransactions, activeCurrency]);
+  }, [safeSubscriptions, safeTransactions, activeCurrency, tFinance]);
 
   const { totalIncome, totalExpenses, totalMonthlyCost, netWorth, financialHealth } = financialData;
 
@@ -172,7 +176,7 @@ const Finance = () => {
 
       for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStr = date.toLocaleDateString("en-US", {
+        const monthStr = date.toLocaleDateString(undefined, {
           month: "short",
           year: "2-digit",
         });
@@ -236,7 +240,7 @@ const Finance = () => {
 
       // Add subscriptions as "Subscriptions" category (converted)
       if (totalMonthlyCost > 0) {
-        const subLabel = t?.finance?.subscriptions || "Subscriptions";
+        const subLabel = tCategories("subscriptions");
         categoryTotals[subLabel] =
           (categoryTotals[subLabel] || 0) + totalMonthlyCost;
       }
@@ -268,6 +272,7 @@ const Finance = () => {
 
   const cashFlowData = getMonthlyCashFlow();
   const spendingData = getSpendingDistribution();
+  const displayedHealthLabel = financialHealth.label === "Risky" ? tFinance("risky") : financialHealth.label;
 
   return (
     <div className="min-h-screen pb-20">
@@ -362,7 +367,7 @@ const Finance = () => {
                   <p className="font-display text-3xl font-bold mt-1">
                     {currencySymbol}{totalMonthlyCost.toFixed(2)}
                     <span className="text-sm font-normal text-muted-foreground ml-1">
-                      /mo
+                      {tDashboard("per_month")}
                     </span>
                   </p>
                 </div>
@@ -388,7 +393,7 @@ const Finance = () => {
             </div>
 
             <div className="glass-card rounded-2xl p-6 flex flex-col items-center text-center justify-center h-full min-h-[180px] shadow-sm">
-              <p className="text-sm text-muted-foreground font-medium mb-2">Financial Health Score</p>
+              <p className="text-sm text-muted-foreground font-medium mb-2">{tFinance("health_score")}</p>
               
               {financialHealth.score !== null ? (
                 <div className="flex flex-col items-center gap-3 w-full">
@@ -399,7 +404,7 @@ const Finance = () => {
 
                   <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
                     <span>{financialHealth.emoji}</span>
-                    <span>{financialHealth.label}</span>
+                    <span>{displayedHealthLabel}</span>
                   </div>
 
                   <div className="w-full max-w-[140px] bg-secondary rounded-full h-2 mt-1 overflow-hidden">

@@ -27,7 +27,9 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, refreshProfile } = useAuth();
   const { t: tLegacy } = useLanguage();
-  const t = useTranslations("Security");
+  const tSecurity = useTranslations("Security");
+  const tProfile = useTranslations("Profile");
+  const tDashboard = useTranslations("Dashboard");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
@@ -103,8 +105,8 @@ const Profile = () => {
         const createdAt = authUser?.created_at ?? null;
         if (createdAt) {
           const d = new Date(createdAt);
-          const monthYear = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(d);
-          setMemberSince(`Member since ${monthYear}`);
+          const monthYear = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(d);
+          setMemberSince(tProfile("member_since", { date: monthYear }));
         } else {
           setMemberSince(null);
         }
@@ -421,19 +423,19 @@ const Profile = () => {
   const handleUpdatePassword = async () => {
     const email = formEmail || accountEmail || "";
     if (!email) {
-      toast.error(t("error_mismatch"));
+      toast.error(tSecurity("error_mismatch"));
       return;
     }
     if (!currentPassword) {
-      toast.error(t("error_mismatch"));
+      toast.error(tSecurity("error_mismatch"));
       return;
     }
     if (!newPassword) {
-      toast.error(t("error_mismatch"));
+      toast.error(tSecurity("error_mismatch"));
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      setPasswordMismatch(t("error_mismatch"));
+      setPasswordMismatch(tSecurity("error_mismatch"));
       return;
     }
     setUpdatingPassword(true);
@@ -443,24 +445,24 @@ const Profile = () => {
         password: currentPassword,
       });
       if (signInError) {
-        toast.error(t("error_mismatch"));
+        toast.error(tSecurity("error_mismatch"));
         return;
       }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
         console.error("Supabase Güncelleme Hatası:", error);
-        toast.error(t("error_mismatch"));
+        toast.error(tSecurity("error_mismatch"));
         return;
       }
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
       setPasswordMismatch(null);
-      toast.success(t("success_update"));
+      toast.success(tSecurity("success_update"));
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
-      toast.error(t("error_mismatch"));
+      toast.error(tSecurity("error_mismatch"));
     } finally {
       setUpdatingPassword(false);
     }
@@ -527,25 +529,25 @@ const Profile = () => {
                       value="account"
                       className="rounded-none px-0 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
                     >
-                      Account
+                      {tProfile("tab_account")}
                     </TabsTrigger>
                     <TabsTrigger
                       value="billing"
                       className="rounded-none px-0 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
                     >
-                      Billing
+                      {tProfile("tab_billing")}
                     </TabsTrigger>
                     <TabsTrigger
                       value="security"
                       className="rounded-none px-0 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
                     >
-                      {t("title")}
+                      {tProfile("tab_security")}
                     </TabsTrigger>
                   </TabsList>
                 </div>
                 <Button variant="outline" className="gap-2" onClick={handleSignOut}>
                   <LogOut className="w-4 h-4" />
-                  Sign Out
+                  {tLegacy.nav.signOut}
                 </Button>
               </div>
             </div>
@@ -628,36 +630,36 @@ const Profile = () => {
                   </p>
                   {accountEmail ? <p className="text-sm text-muted-foreground mt-1">{accountEmail}</p> : null}
                   {memberSince ? <p className="text-xs text-muted-foreground mt-3">{memberSince}</p> : null}
-                  {accountId ? <p className="text-xs text-muted-foreground mt-1">Account ID: {accountId}</p> : null}
+                  {accountId ? <p className="text-xs text-muted-foreground mt-1">{tProfile("account_id")} {accountId}</p> : null}
                 </div>
               </div>
 
               <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-medium">Account Details</Label>
+                  <Label className="text-base font-medium">{tProfile("account_details")}</Label>
                   {accountLoading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : null}
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label>Email</Label>
+                    <Label>{tProfile("email")}</Label>
                     <Input value={formEmail} readOnly disabled className="bg-muted text-muted-foreground h-9" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>First Name</Label>
+                      <Label>{tProfile("first_name")}</Label>
                       <Input
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="First name"
+                        placeholder={tProfile("first_name")}
                         className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Last Name</Label>
+                      <Label>{tProfile("last_name")}</Label>
                       <Input
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Last name"
+                        placeholder={tProfile("last_name")}
                         className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                       />
                     </div>
@@ -669,7 +671,7 @@ const Profile = () => {
                       className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     >
                       {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      {saving ? "Kaydediliyor..." : "Save Changes"}
+                      {tProfile("save_changes")}
                     </Button>
                   </div>
                 </div>
@@ -729,7 +731,7 @@ const Profile = () => {
                   <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
                     <div className="flex items-start justify-between gap-6">
                       <div className="min-w-0">
-                        <Label className="text-base font-medium">Current Plan</Label>
+                        <Label className="text-base font-medium">{tProfile("current_plan")}</Label>
                         <p className="mt-2 text-2xl font-semibold leading-none">Pro Plan</p>
                         {formattedRenews ? (
                           <p className="mt-4 text-sm text-muted-foreground">Next payment: {formattedRenews}</p>
@@ -766,16 +768,16 @@ const Profile = () => {
                 <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
                   <div className="flex items-start justify-between gap-6">
                     <div className="min-w-0">
-                      <Label className="text-base font-medium">Current Plan</Label>
-                      <p className="mt-2 text-2xl font-semibold leading-none">Free Plan</p>
-                      <p className="mt-2 text-sm text-muted-foreground">$0/month</p>
+                      <Label className="text-base font-medium">{tProfile("current_plan")}</Label>
+                      <p className="mt-2 text-2xl font-semibold leading-none">{tProfile("free_plan")}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">{tProfile("per_month", { price: "$0" })}</p>
                     </div>
                     <Button
                       className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                       onClick={() => void handleStartCheckout()}
                       disabled={isCheckoutLoading}
                     >
-                      {isCheckoutLoading ? "Yönlendiriliyor..." : "Upgrade to Pro"}
+                      {isCheckoutLoading ? "Yönlendiriliyor..." : tDashboard("upgrade_btn")}
                     </Button>
                   </div>
                 </div>
@@ -790,29 +792,29 @@ const Profile = () => {
                       <Lock className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <Label className="text-base font-medium">{t("title")}</Label>
-                      <p className="text-sm text-muted-foreground">{t("description")}</p>
+                      <Label className="text-base font-medium">{tSecurity("title")}</Label>
+                      <p className="text-sm text-muted-foreground">{tSecurity("description")}</p>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label>{t("current_password")}</Label>
+                      <Label>{tSecurity("current_password")}</Label>
                       <a href="#" className="text-xs text-muted-foreground hover:text-foreground">
-                        {t("forgot_password")}
+                        {tSecurity("forgot_password")}
                       </a>
                     </div>
                     <Input
                       type="password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder={t("current_password")}
+                      placeholder={tSecurity("current_password")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t("new_password")}</Label>
+                    <Label>{tSecurity("new_password")}</Label>
                     <Input
                       type="password"
                       value={newPassword}
@@ -820,12 +822,12 @@ const Profile = () => {
                         setNewPassword(e.target.value);
                         setPasswordMismatch(null);
                       }}
-                      placeholder={t("new_password")}
+                      placeholder={tSecurity("new_password")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t("confirm_password")}</Label>
+                    <Label>{tSecurity("confirm_password")}</Label>
                     <Input
                       type="password"
                       value={confirmNewPassword}
@@ -833,7 +835,7 @@ const Profile = () => {
                         setConfirmNewPassword(e.target.value);
                         setPasswordMismatch(null);
                       }}
-                      placeholder={t("confirm_password")}
+                      placeholder={tSecurity("confirm_password")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                     {passwordMismatch ? <p className="text-sm text-red-500">{passwordMismatch}</p> : null}
@@ -845,7 +847,7 @@ const Profile = () => {
                       className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     >
                       {updatingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      {t("update_button")}
+                      {tSecurity("update_button")}
                     </Button>
                   </div>
                 </div>

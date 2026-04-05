@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Subscription } from "@/hooks/subscriptions/types";
 import { AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface SavingsDetailsModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
   yearlySavings,
   currencySymbol,
 }) => {
+  const t = useTranslations("Modals");
   const hasUnused = unusedSubscriptions.length > 0;
   const isMultipleUnused = unusedSubscriptions.length > 2;
 
@@ -35,9 +37,9 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-xl font-display font-bold">Potential Savings Details</DialogTitle>
+          <DialogTitle className="text-xl font-display font-bold">{t("savings_title")}</DialogTitle>
           <DialogDescription>
-            Detailed breakdown of your potential monthly and yearly savings.
+            {t("savings_desc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -45,7 +47,7 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
           {/* Section 1: Unused Subscriptions */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Unused Subscriptions
+              {t("unused_subs")}
             </h4>
             {!hasUnused ? (
               <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
@@ -53,10 +55,10 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
                   <CheckCircle2 className="w-6 h-6 text-green-500" />
                 </div>
                 <p className="text-sm text-foreground font-medium">
-                  No unused subscriptions detected.
+                  {t("no_unused")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Great job managing your subscriptions.
+                  {t("great_job")}
                 </p>
               </div>
             ) : (
@@ -78,13 +80,13 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
           {/* Section 2: Savings Summary */}
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-              <p className="text-xs text-muted-foreground mb-1">Monthly Savings</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("monthly_savings")}</p>
               <p className="text-xl font-display font-bold text-primary">
                 {currencySymbol}{monthlySavings.toFixed(2)}
               </p>
             </div>
             <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
-              <p className="text-xs text-muted-foreground mb-1">Yearly Savings</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("yearly_savings")}</p>
               <p className="text-xl font-display font-bold text-green-500">
                 {currencySymbol}{yearlySavings.toFixed(2)}
               </p>

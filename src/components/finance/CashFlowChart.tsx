@@ -8,16 +8,19 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface CashFlowChartProps {
   data: { month: string; income: number; expenses: number }[];
 }
 
 export const CashFlowChart = ({ data }: CashFlowChartProps) => {
+  const tFinance = useTranslations("Finance");
+  const tModals = useTranslations("Modals");
   return (
     <div className="glass-card rounded-xl p-5">
       <h3 className="font-display font-semibold text-lg mb-4">
-        Monthly Cash Flow
+        {tFinance("monthly_cash_flow")}
       </h3>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -47,13 +50,13 @@ export const CashFlowChart = ({ data }: CashFlowChartProps) => {
             <Legend />
             <Bar
               dataKey="income"
-              name="Income"
+              name={tModals("income")}
               fill="hsl(142, 70%, 45%)"
               radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey="expenses"
-              name="Expenses + Subs"
+              name={tFinance("expenses_subs")}
               fill="hsl(358, 82%, 55%)"
               radius={[4, 4, 0, 0]}
             />

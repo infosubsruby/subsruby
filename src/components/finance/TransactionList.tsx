@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -19,6 +20,36 @@ interface TransactionListProps {
 }
 
 export const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
+  const tFinance = useTranslations("Finance");
+  const tCategories = useTranslations("Categories");
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case "Entertainment":
+        return tCategories("entertainment");
+      case "Food & Dining":
+        return tCategories("food_dining");
+      case "Shopping":
+        return tCategories("shopping");
+      case "Transportation":
+        return tCategories("transportation");
+      case "Utilities":
+        return tCategories("utilities");
+      case "Health":
+        return tCategories("health");
+      case "Education":
+        return tCategories("education");
+      case "Travel":
+        return tCategories("travel");
+      case "Subscriptions":
+        return tCategories("subscriptions");
+      case "Other":
+        return tCategories("other");
+      default:
+        return cat;
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this transaction?")) {
       await onDelete(id);
@@ -39,10 +70,10 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
         <TableHeader>
           <TableRow className="bg-secondary/50 hover:bg-secondary/50">
             <TableHead className="w-12"></TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>{tFinance("table_desc")}</TableHead>
+            <TableHead>{tFinance("table_category")}</TableHead>
+            <TableHead>{tFinance("table_date")}</TableHead>
+            <TableHead className="text-right">{tFinance("table_amount")}</TableHead>
             <TableHead className="w-12"></TableHead>
           </TableRow>
         </TableHeader>
@@ -70,11 +101,11 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
               </TableCell>
               <TableCell>
                 <Badge variant="secondary" className="font-normal">
-                  {transaction.category}
+                  {getCategoryLabel(transaction.category)}
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {format(new Date(transaction.date), "MMM d, yyyy")}
+                {format(new Date(transaction.date), "yyyy-MM-dd")}
               </TableCell>
               <TableCell
                 className={cn(

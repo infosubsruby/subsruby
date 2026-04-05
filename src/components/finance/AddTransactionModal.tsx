@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -43,6 +44,9 @@ export const AddTransactionModal = ({
   onCreateTransaction,
   forcedType,
 }: AddTransactionModalProps) => {
+  const tModals = useTranslations("Modals");
+  const tFinance = useTranslations("Finance");
+  const tCategories = useTranslations("Categories");
   const initialType = forcedType ?? "expense";
   const initialFormData = useMemo<CreateTransactionData>(
     () => ({
@@ -56,6 +60,33 @@ export const AddTransactionModal = ({
   );
   const [formData, setFormData] = useState<CreateTransactionData>(initialFormData);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case "Entertainment":
+        return tCategories("entertainment");
+      case "Food & Dining":
+        return tCategories("food_dining");
+      case "Shopping":
+        return tCategories("shopping");
+      case "Transportation":
+        return tCategories("transportation");
+      case "Utilities":
+        return tCategories("utilities");
+      case "Health":
+        return tCategories("health");
+      case "Education":
+        return tCategories("education");
+      case "Travel":
+        return tCategories("travel");
+      case "Subscriptions":
+        return tCategories("subscriptions");
+      case "Other":
+        return tCategories("other");
+      default:
+        return cat;
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -85,10 +116,10 @@ export const AddTransactionModal = ({
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
-            Add Transaction
+            {tModals("add_transaction")}
           </DialogTitle>
           <DialogDescription>
-            Record a new income or expense to track your finances.
+            {tModals("transaction_desc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -105,7 +136,7 @@ export const AddTransactionModal = ({
                 )}
                 onClick={() => setFormData((prev) => ({ ...prev, type: "income" }))}
               >
-                Income
+                {tModals("income")}
               </Button>
               <Button
                 type="button"
@@ -116,14 +147,14 @@ export const AddTransactionModal = ({
                 )}
                 onClick={() => setFormData((prev) => ({ ...prev, type: "expense" }))}
               >
-                Expense
+                {tModals("expense")}
               </Button>
             </div>
           )}
 
           {/* Amount */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="amount">{tFinance("table_amount")}</Label>
             <Input
               id="amount"
               type="number"
@@ -144,7 +175,7 @@ export const AddTransactionModal = ({
 
           {/* Category */}
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>{tFinance("table_category")}</Label>
             <Select
               value={formData.category}
               onValueChange={(value) =>
@@ -152,12 +183,12 @@ export const AddTransactionModal = ({
               }
             >
               <SelectTrigger className="input-ruby">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={tModals("select_category")} />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
                 {CATEGORIES.map((cat) => (
                   <SelectItem key={cat} value={cat}>
-                    {cat}
+                    {getCategoryLabel(cat)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -166,7 +197,7 @@ export const AddTransactionModal = ({
 
           {/* Date */}
           <div className="space-y-2">
-            <Label>Date</Label>
+            <Label>{tFinance("table_date")}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -177,7 +208,7 @@ export const AddTransactionModal = ({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                  {selectedDate ? format(selectedDate, "PPP") : tFinance("table_date")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -194,10 +225,10 @@ export const AddTransactionModal = ({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description (optional)</Label>
+            <Label htmlFor="description">{tModals("desc_optional")}</Label>
             <Textarea
               id="description"
-              placeholder="Add a note..."
+              placeholder={tModals("add_note")}
               value={formData.description || ""}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, description: e.target.value }))
@@ -213,7 +244,7 @@ export const AddTransactionModal = ({
             className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
             disabled={formData.amount <= 0}
           >
-            Add Transaction
+            {tModals("add_transaction")}
           </Button>
         </form>
       </DialogContent>

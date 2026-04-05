@@ -31,6 +31,7 @@ interface FlipCardProps {
 
 export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) => {
   const t = useTranslations("Dashboard");
+  const tProfile = useTranslations("Profile");
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -277,10 +278,10 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                     className="w-full mt-3"
                     style={{ backgroundColor: subscription.card_color }}
                   >
-                    {isSaving ? "Saving..." : (
+                    {isSaving ? tProfile("save_changes") : (
                       <>
                         <Check className="w-4 h-4 mr-2" />
-                        Save Changes
+                        {tProfile("save_changes")}
                       </>
                     )}
                   </Button>
