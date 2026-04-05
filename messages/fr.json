@@ -12,18 +12,19 @@
     "auto": "Auto"
   },
   "Landing": {
-    "hero_title": "Prenez le contrôle total de vos abonnements",
-    "hero_desc": "Suivez tous vos abonnements dans un magnifique tableau de bord. Ne manquez jamais un paiement, gérez les renouvellements et prenez le contrôle de vos dépenses récurrentes.",
+    "hero_badge": "Gérez vos finances. Suivez vos abonnements. Économisez.",
+    "hero_title": "Maîtrisez vos finances et abonnements au même endroit",
+    "hero_desc": "Suivez vos revenus, dépenses, budgets et abonnements dans un magnifique tableau de bord. Prenez le contrôle de votre santé financière.",
     "get_started": "Commencer",
     "sign_in": "Se connecter",
-    "free_plan_note": "Forfait gratuit : suivez jusqu'à 3 abonnements • Passez à Pro pour un suivi illimité",
-    "features_title": "Tout ce dont vous avez besoin pour gérer vos abonnements",
-    "features_subtitle": "Des fonctionnalités puissantes dans une interface belle et intuitive",
-    "ready_title": "Prêt à prendre le contrôle ?",
-    "ready_desc": "Rejoignez des milliers d'utilisateurs qui ont simplifié la gestion de leurs abonnements avec SubsRuby.",
+    "free_plan_note": "Forfait gratuit : jusqu'à 3 abonnements • Passez à Pro pour un suivi illimité",
+    "features_title": "Tout ce dont vous avez besoin pour la liberté financière",
+    "features_subtitle": "Des outils puissants pour suivre chaque centime dans une belle interface",
+    "ready_title": "Prêt à transformer vos finances ?",
+    "ready_desc": "Rejoignez des milliers d'utilisateurs qui ont simplifié la gestion de leur argent.",
     "get_started_free": "Commencer gratuitement",
-    "mini_title": "Suivez vos abonnements. Économisez de l'argent sans effort.",
-    "mini_desc": "Arrêtez de perdre de l'argent sur les renouvellements oubliés. Configurons votre tableau de bord personnel en 30 secondes."
+    "mini_title": "Suivez votre argent. Faites fructifier votre patrimoine.",
+    "mini_desc": "Arrêtez de vous demander où est passé votre argent. Configurez votre tableau de bord en 30 secondes."
   },
   "Auth": {
     "create_account": "Créez votre compte",
@@ -43,18 +44,18 @@
     "sign_up": "S'inscrire"
   },
   "Features": {
-    "f1_title": "Rappels Intelligents",
-    "f1_desc": "Soyez notifié avant les renouvellements. Les comptes à rebours en direct montrent exactement quand les paiements sont dus.",
-    "f2_title": "Suivre les Dépenses",
-    "f2_desc": "Voyez vos coûts mensuels totaux en un coup d'œil. Suivez facilement plusieurs devises.",
-    "f3_title": "Remplissage Auto Intelligent",
-    "f3_desc": "Tapez 'Netflix' et regardez les prix, les liens et les couleurs se remplir automatiquement.",
-    "f4_title": "Compte à Rebours en Direct",
-    "f4_desc": "Comptes à rebours en temps réel sur chaque carte d'abonnement affichant les jours, heures, minutes, secondes.",
-    "f5_title": "Actions Rapides",
-    "f5_desc": "Accès en un clic aux pages de gestion des abonnements. Annulez ou modifiez directement.",
-    "f6_title": "Sécurisé & Privé",
-    "f6_desc": "Vos données sont cryptées et protégées. Vous seul pouvez accéder à vos abonnements."
+    "f1_title": "Suivi des revenus et dépenses",
+    "f1_desc": "Enregistrez facilement vos transactions quotidiennes et voyez où va votre argent.",
+    "f2_title": "Budgétisation intelligente",
+    "f2_desc": "Fixez des limites mensuelles pour l'alimentation ou le shopping et ne dépensez plus trop.",
+    "f3_title": "Gestion des abonnements",
+    "f3_desc": "Recevez des notifications avant les renouvellements avec des comptes à rebours en direct.",
+    "f4_title": "Support multi-devises",
+    "f4_desc": "Suivez les budgets et les transactions en USD, EUR, TRY et plus encore.",
+    "f5_title": "Analyses avancées",
+    "f5_desc": "Visualisez votre flux de trésorerie avec des graphiques beaux et faciles à lire.",
+    "f6_title": "Sécurité de niveau bancaire",
+    "f6_desc": "Vos données financières sont cryptées. Vous seul avez accès à votre tableau de bord."
   },
   "Setup": {
     "title": "Configuration Terminée ! 🎉",

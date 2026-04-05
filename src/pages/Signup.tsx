@@ -89,10 +89,6 @@ const Signup = () => {
               />
             </div>
             <h1 className="font-display text-2xl font-bold">{tAuth("create_account")}</h1>
-            <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              {tAuth("start_trial")}
-            </p>
           </div>
 
           {/* Form */}

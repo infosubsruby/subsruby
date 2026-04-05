@@ -12,18 +12,19 @@
     "auto": "Auto"
   },
   "Landing": {
-    "hero_title": "Übernehmen Sie die volle Kontrolle über Ihre Abonnements",
-    "hero_desc": "Verfolgen Sie alle Ihre Abonnements in einem schönen Dashboard. Verpassen Sie nie eine Zahlung, verwalten Sie Verlängerungen und kontrollieren Sie Ihre wiederkehrenden Ausgaben.",
+    "hero_badge": "Finanzen verwalten. Abos verfolgen. Geld sparen.",
+    "hero_title": "Meistern Sie Ihre Finanzen & Abos an einem Ort",
+    "hero_desc": "Verfolgen Sie Ihre Einnahmen, Ausgaben, Budgets und Abonnements in einem schönen Dashboard. Übernehmen Sie die Kontrolle über Ihre finanzielle Gesundheit.",
     "get_started": "Loslegen",
     "sign_in": "Anmelden",
     "free_plan_note": "Kostenloser Plan: bis zu 3 Abos • Auf Pro upgraden für unbegrenztes Tracking",
-    "features_title": "Alles, was Sie zur Verwaltung von Abonnements benötigen",
-    "features_subtitle": "Leistungsstarke Funktionen in einer schönen, intuitiven Benutzeroberfläche",
-    "ready_title": "Bereit, die Kontrolle zu übernehmen?",
-    "ready_desc": "Schließen Sie sich Tausenden von Benutzern an, die ihre Abonnementverwaltung mit SubsRuby vereinfacht haben.",
+    "features_title": "Alles, was Sie für finanzielle Freiheit brauchen",
+    "features_subtitle": "Leistungsstarke Tools, um jeden Cent zu verfolgen, in einer schönen Benutzeroberfläche",
+    "ready_title": "Bereit, Ihre Finanzen zu transformieren?",
+    "ready_desc": "Schließen Sie sich Tausenden von Benutzern an, die ihr Geldmanagement vereinfacht haben.",
     "get_started_free": "Kostenlos loslegen",
-    "mini_title": "Abonnements verfolgen. Mühelos Geld sparen.",
-    "mini_desc": "Verlieren Sie kein Geld mehr durch vergessene Verlängerungen. Richten wir Ihr persönliches Dashboard in 30 Sekunden ein."
+    "mini_title": "Geld verfolgen. Vermögen aufbauen.",
+    "mini_desc": "Fragen Sie sich nicht länger, wo Ihr Geld geblieben ist. Richten Sie Ihr Finanz-Dashboard in 30 Sekunden ein."
   },
   "Auth": {
     "create_account": "Erstellen Sie Ihr Konto",
@@ -43,18 +44,18 @@
     "sign_up": "Registrieren"
   },
   "Features": {
-    "f1_title": "Intelligente Erinnerungen",
-    "f1_desc": "Lassen Sie sich vor Verlängerungen benachrichtigen. Live-Countdown-Timer zeigen genau, wann Zahlungen fällig sind.",
-    "f2_title": "Ausgaben Verfolgen",
-    "f2_desc": "Sehen Sie Ihre gesamten monatlichen Kosten auf einen Blick. Verfolgen Sie problemlos mehrere Währungen.",
-    "f3_title": "Intelligentes Auto-Fill",
-    "f3_desc": "Tippen Sie 'Netflix' und sehen Sie zu, wie Preise, Links und Farben automatisch ausgefüllt werden.",
-    "f4_title": "Live-Countdown",
-    "f4_desc": "Echtzeit-Countdown-Timer auf jeder Abo-Karte mit Tagen, Stunden, Minuten und Sekunden.",
-    "f5_title": "Schnelle Aktionen",
-    "f5_desc": "Ein-Klick-Zugang zu den Abo-Verwaltungsseiten. Direkt kündigen oder ändern.",
-    "f6_title": "Sicher & Privat",
-    "f6_desc": "Ihre Daten sind verschlüsselt und geschützt. Nur Sie haben Zugriff auf Ihre Abonnements."
+    "f1_title": "Einnahmen- & Ausgabenverfolgung",
+    "f1_desc": "Protokollieren Sie tägliche Transaktionen. Sehen Sie genau, wohin Ihr Geld fließt.",
+    "f2_title": "Intelligente Budgets",
+    "f2_desc": "Legen Sie monatliche Limits für Kategorien wie Essen oder Einkaufen fest.",
+    "f3_title": "Abonnement-Verwaltung",
+    "f3_desc": "Live-Countdown-Timer zeigen genau, wann Zahlungen fällig sind.",
+    "f4_title": "Mehrere Währungen",
+    "f4_desc": "Verfolgen Sie Budgets und Transaktionen in USD, EUR, TRY und mehr.",
+    "f5_title": "Erweiterte Analysen",
+    "f5_desc": "Visualisieren Sie Ihren Cashflow mit schönen, leicht lesbaren Diagrammen.",
+    "f6_title": "Sicherheit auf Bankniveau",
+    "f6_desc": "Ihre Finanzdaten sind verschlüsselt. Nur Sie haben Zugriff auf Ihr Dashboard."
   },
   "Setup": {
     "title": "Einrichtung Abgeschlossen! 🎉",

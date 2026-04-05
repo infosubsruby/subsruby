@@ -12,18 +12,19 @@
     "auto": "Auto"
   },
   "Landing": {
-    "hero_title": "Toma el control total de tus suscripciones",
-    "hero_desc": "Rastrea todas tus suscripciones en un hermoso panel. Nunca te pierdas un pago, gestiona renovaciones y controla tus gastos recurrentes.",
+    "hero_badge": "Gestiona finanzas. Rastrea suscripciones. Ahorra.",
+    "hero_title": "Domina tus Finanzas y Suscripciones en un Solo Lugar",
+    "hero_desc": "Rastrea tus ingresos, gastos, presupuestos y suscripciones en un hermoso panel. Toma el control absoluto de tu salud financiera.",
     "get_started": "Comenzar",
     "sign_in": "Iniciar Sesión",
-    "free_plan_note": "Plan Gratuito: rastrea hasta 3 suscripciones • Actualiza a Pro para seguimiento ilimitado",
-    "features_title": "Todo lo que necesitas para gestionar suscripciones",
-    "features_subtitle": "Potentes funciones envueltas en una interfaz hermosa e intuitiva",
-    "ready_title": "¿Listo para tomar el control?",
-    "ready_desc": "Únete a miles de usuarios que han simplificado su gestión de suscripciones con SubsRuby.",
+    "free_plan_note": "Plan Gratuito: hasta 3 suscripciones • Actualiza a Pro para análisis ilimitados",
+    "features_title": "Todo lo que necesitas para la libertad financiera",
+    "features_subtitle": "Potentes herramientas para rastrear cada centavo en una interfaz hermosa",
+    "ready_title": "¿Listo para transformar tus finanzas?",
+    "ready_desc": "Únete a miles de usuarios que han simplificado su gestión del dinero con SubsRuby.",
     "get_started_free": "Comenzar Gratis",
-    "mini_title": "Rastrea tus suscripciones. Ahorra dinero sin esfuerzo.",
-    "mini_desc": "Deja de perder dinero en renovaciones olvidadas. Configuremos tu panel personal en 30 segundos."
+    "mini_title": "Rastrea tu dinero. Haz crecer tu riqueza.",
+    "mini_desc": "Deja de preguntarte a dónde fue tu dinero. Configura tu panel financiero en 30 segundos."
   },
   "Auth": {
     "create_account": "Crea tu cuenta",
@@ -43,18 +44,18 @@
     "sign_up": "Regístrate"
   },
   "Features": {
-    "f1_title": "Recordatorios Inteligentes",
-    "f1_desc": "Recibe notificaciones antes de las renovaciones. Los temporizadores en vivo muestran exactamente cuándo vencen los pagos.",
-    "f2_title": "Rastrea Gastos",
-    "f2_desc": "Mira tus costos mensuales totales de un vistazo. Rastrea múltiples monedas con facilidad.",
-    "f3_title": "Autocompletado Inteligente",
-    "f3_desc": "Escribe 'Netflix' y observa cómo los precios, enlaces y colores se completan automáticamente.",
-    "f4_title": "Cuenta Regresiva en Vivo",
-    "f4_desc": "Temporizadores en vivo en cada tarjeta de suscripción mostrando días, horas, minutos y segundos.",
-    "f5_title": "Acciones Rápidas",
-    "f5_desc": "Acceso con un clic a las páginas de gestión de suscripciones. Cancela o modifica directamente.",
-    "f6_title": "Seguro y Privado",
-    "f6_desc": "Tus datos están encriptados y protegidos. Solo tú puedes acceder a tus suscripciones."
+    "f1_title": "Seguimiento de Ingresos y Gastos",
+    "f1_desc": "Registra tus transacciones diarias. Mira exactamente a dónde va tu dinero con categorías inteligentes.",
+    "f2_title": "Presupuestos Inteligentes",
+    "f2_desc": "Establece límites mensuales para categorías como Comida o Compras y nunca gastes de más.",
+    "f3_title": "Gestión de Suscripciones",
+    "f3_desc": "Recibe notificaciones antes de renovar. Los temporizadores muestran cuándo vencen los pagos.",
+    "f4_title": "Soporte Multidivisa",
+    "f4_desc": "¿Gastas a nivel global? Rastrea presupuestos y transacciones en USD, EUR, TRY y más.",
+    "f5_title": "Análisis Avanzado",
+    "f5_desc": "Visualiza tu flujo de caja y distribución de gastos con gráficos hermosos y fáciles de leer.",
+    "f6_title": "Seguridad Nivel Bancario",
+    "f6_desc": "Tus datos financieros están encriptados. Solo tú puedes acceder a tu panel personal."
   },
   "Setup": {
     "title": "¡Configuración Completa! 🎉",

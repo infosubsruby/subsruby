@@ -12,18 +12,19 @@
     "auto": "Otomatik"
   },
   "Landing": {
-    "hero_title": "Aboneliklerinizin tam kontrolünü elinize alın",
-    "hero_desc": "Tüm aboneliklerinizi harika bir panelde takip edin. Hiçbir ödemeyi kaçırmayın, yenilemeleri yönetin ve düzenli giderlerinizi kontrol altına alın.",
+    "hero_badge": "Finansınızı yönetin. Abonelikleri takip edin. Tasarruf edin.",
+    "hero_title": "Paranızın ve Aboneliklerinizin Tam Kontrolünü Elinize Alın",
+    "hero_desc": "Gelirinizi, giderlerinizi, bütçelerinizi ve aboneliklerinizi harika bir panelde takip edin. Finansal sağlığınızın kontrolünü elinize alın.",
     "get_started": "Başla",
     "sign_in": "Giriş Yap",
-    "free_plan_note": "Ücretsiz Plan: 3 aboneliğe kadar takip edin • Sınırsız takip için Pro'ya geçin",
-    "features_title": "Abonelikleri yönetmek için ihtiyacınız olan her şey",
-    "features_subtitle": "Güzel ve sezgisel bir arayüzde sunulan güçlü özellikler",
-    "ready_title": "Kontrolü ele almaya hazır mısınız?",
-    "ready_desc": "SubsRuby ile abonelik yönetimini basitleştiren binlerce kullanıcıya katılın.",
+    "free_plan_note": "Ücretsiz Plan: 3 aboneliğe kadar takip • Sınırsız takip ve analiz için Pro'ya geçin",
+    "features_title": "Tam finansal özgürlük için ihtiyacınız olan her şey",
+    "features_subtitle": "Her kuruşu takip etmek için güçlü araçlar, güzel bir arayüzde sunuluyor",
+    "ready_title": "Finansınızı dönüştürmeye hazır mısınız?",
+    "ready_desc": "SubsRuby ile para yönetimini basitleştiren binlerce kullanıcıya katılın.",
     "get_started_free": "Ücretsiz Başla",
-    "mini_title": "Aboneliklerinizi takip edin. Zahmetsizce tasarruf edin.",
-    "mini_desc": "Unutulan yenilemeler yüzünden para kaybetmeyi bırakın. Kişisel panelinizi 30 saniyede kuralım."
+    "mini_title": "Paranızı takip edin. Servetinizi büyütün.",
+    "mini_desc": "Paranızın nereye gittiğini merak etmeyi bırakın. Kapsamlı finans panelinizi 30 saniyede kurun."
   },
   "Auth": {
     "create_account": "Hesabınızı oluşturun",
@@ -43,18 +44,18 @@
     "sign_up": "Kayıt ol"
   },
   "Features": {
-    "f1_title": "Akıllı Hatırlatıcılar",
-    "f1_desc": "Yenilemelerden önce bildirim alın. Canlı geri sayım sayaçları ödemelerin tam olarak ne zaman yapılacağını gösterir.",
-    "f2_title": "Harcamaları Takip Edin",
-    "f2_desc": "Toplam aylık maliyetlerinizi bir bakışta görün. Farklı para birimlerini kolayca takip edin.",
-    "f3_title": "Akıllı Otomatik Doldurma",
-    "f3_desc": "'Netflix' yazın ve fiyatların, bağlantıların ve renklerin otomatik olarak dolmasını izleyin.",
-    "f4_title": "Canlı Geri Sayım",
-    "f4_desc": "Her abonelik kartında gün, saat, dakika, saniye gösteren gerçek zamanlı geri sayım sayaçları.",
-    "f5_title": "Hızlı İşlemler",
-    "f5_desc": "Abonelik yönetim sayfalarına tek tıkla erişim. Doğrudan iptal edin veya değiştirin.",
-    "f6_title": "Güvenli ve Gizli",
-    "f6_desc": "Verileriniz şifrelenir ve korunur. Aboneliklerinize yalnızca siz erişebilirsiniz."
+    "f1_title": "Gelir ve Gider Takibi",
+    "f1_desc": "Günlük işlemlerinizi kolayca kaydedin. Akıllı kategorilerle paranızın tam olarak nereye gittiğini görün.",
+    "f2_title": "Akıllı Bütçeleme",
+    "f2_desc": "Yemek veya Alışveriş gibi kategoriler için aylık limitler belirleyin ve bütçenizi asla aşmayın.",
+    "f3_title": "Abonelik Yönetimi",
+    "f3_desc": "Yenilemelerden önce bildirim alın. Canlı geri sayım sayaçları ödemelerin ne zaman yapılacağını gösterir.",
+    "f4_title": "Çoklu Para Birimi",
+    "f4_desc": "Küresel mi harcıyorsunuz? Bütçeleri ve işlemleri USD, EUR, TRY ve daha fazlası ile takip edin.",
+    "f5_title": "Gelişmiş Analitikler",
+    "f5_desc": "Nakit akışınızı ve harcama dağılımınızı güzel, okunması kolay grafiklerle görselleştirin.",
+    "f6_title": "Banka Düzeyinde Güvenlik",
+    "f6_desc": "Finansal verileriniz şifrelenir ve korunur. Kişisel panelinize yalnızca siz erişebilirsiniz."
   },
   "Setup": {
     "title": "Kurulum Tamamlandı! 🎉",

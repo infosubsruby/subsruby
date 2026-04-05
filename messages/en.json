@@ -12,18 +12,19 @@
     "auto": "Auto"
   },
   "Landing": {
-    "hero_title": "Take full control of your subscriptions",
-    "hero_desc": "Track all your subscriptions in one beautiful dashboard. Never miss a payment, manage renewals, and take control of your recurring expenses.",
+    "hero_badge": "Manage finances. Track subscriptions. Save money.",
+    "hero_title": "Master Your Finances & Subscriptions in One Place",
+    "hero_desc": "Track your income, expenses, budgets, and subscriptions in one beautiful dashboard. Take ultimate control of your financial health.",
     "get_started": "Get Started",
     "sign_in": "Sign In",
-    "free_plan_note": "Free Plan: track up to 3 subscriptions • Upgrade to Pro for unlimited tracking",
-    "features_title": "Everything you need to manage subscriptions",
-    "features_subtitle": "Powerful features wrapped in a beautiful, intuitive interface",
-    "ready_title": "Ready to take control?",
-    "ready_desc": "Join thousands of users who have simplified their subscription management with SubsRuby.",
+    "free_plan_note": "Free Plan: track up to 3 subscriptions • Upgrade to Pro for unlimited tracking & insights",
+    "features_title": "Everything you need for total financial freedom",
+    "features_subtitle": "Powerful tools to track every penny, wrapped in a beautiful interface",
+    "ready_title": "Ready to transform your finances?",
+    "ready_desc": "Join thousands of users who have simplified their money management with SubsRuby.",
     "get_started_free": "Get Started Free",
-    "mini_title": "Track your subscriptions. Save money effortlessly.",
-    "mini_desc": "Stop losing money on forgotten renewals. Let's set up your personal dashboard in 30 seconds."
+    "mini_title": "Track your money. Grow your wealth.",
+    "mini_desc": "Stop wondering where your money went. Set up your complete financial dashboard in 30 seconds."
   },
   "Auth": {
     "create_account": "Create your account",
@@ -43,18 +44,18 @@
     "sign_up": "Sign up"
   },
   "Features": {
-    "f1_title": "Smart Reminders",
-    "f1_desc": "Get notified before renewals. Live countdown timers show exactly when payments are due.",
-    "f2_title": "Track Spending",
-    "f2_desc": "See your total monthly costs at a glance. Track multiple currencies with ease.",
-    "f3_title": "Smart Auto-Fill",
-    "f3_desc": "Type 'Netflix' and watch prices, links, and colors fill in automatically.",
-    "f4_title": "Live Countdown",
-    "f4_desc": "Real-time countdown timers on each subscription card showing days, hours, minutes, seconds.",
-    "f5_title": "Quick Actions",
-    "f5_desc": "One-click access to subscription management pages. Cancel or modify directly.",
-    "f6_title": "Secure & Private",
-    "f6_desc": "Your data is encrypted and protected. Only you can access your subscriptions."
+    "f1_title": "Income & Expense Tracking",
+    "f1_desc": "Easily log your daily transactions. See exactly where your money goes with smart categorizations.",
+    "f2_title": "Smart Budgeting",
+    "f2_desc": "Set monthly limits for categories like Food, Shopping, or Travel and never overspend again.",
+    "f3_title": "Subscription Management",
+    "f3_desc": "Get notified before renewals. Live countdown timers show exactly when payments are due.",
+    "f4_title": "Multi-Currency Support",
+    "f4_desc": "Travel or subscribe globally? Track budgets and transactions in USD, EUR, TRY, and more.",
+    "f5_title": "Advanced Analytics",
+    "f5_desc": "Visualize your cash flow and spending distribution with beautiful, easy-to-read charts.",
+    "f6_title": "Bank-Level Security",
+    "f6_desc": "Your financial data is encrypted and protected. Only you can access your personal dashboard."
   },
   "Setup": {
     "title": "Setup Complete! 🎉",
