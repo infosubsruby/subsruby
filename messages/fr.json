@@ -11,6 +11,17 @@
   "dashboard": {
     "auto": "Auto"
   },
+  "Security": {
+    "title": "Sécurité",
+    "description": "Mettez à jour votre mot de passe",
+    "current_password": "Mot de passe actuel",
+    "new_password": "Nouveau mot de passe",
+    "confirm_password": "Confirmer le nouveau mot de passe",
+    "forgot_password": "Mot de passe oublié ?",
+    "update_button": "Mettre à jour le mot de passe",
+    "error_mismatch": "Les mots de passe ne correspondent pas.",
+    "success_update": "Mot de passe mis à jour avec succès."
+  },
   "Dashboard": {
     "free_plan": "Forfait Gratuit",
     "subs_used": "{used} / {limit} abonnements utilisés",
@@ -71,6 +82,69 @@
     "spent": "Dépensé",
     "remaining": "{percent}% restant",
     "over_budget": "Dépassement de {amount}"
+  },
+  "Modals": {
+    "savings_title": "Détails des économies potentielles",
+    "savings_desc": "Détail de vos économies potentielles mensuelles et annuelles.",
+    "unused_subs": "ABONNEMENTS NON UTILISÉS",
+    "no_unused": "Aucun abonnement non utilisé détecté.",
+    "great_job": "Bravo pour la gestion de vos abonnements.",
+    "monthly_savings": "Économies mensuelles",
+    "yearly_savings": "Économies annuelles",
+    "upgrade_title": "Passer à Pro",
+    "upgrade_desc": "Débloquez un suivi illimité, des analyses intelligentes et un contrôle financier complet.",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "continue_checkout": "Continuer vers le paiement",
+    "create_budget": "Créer un budget",
+    "budget_desc": "Définissez une limite de dépenses mensuelle pour une catégorie spécifique.",
+    "select_category": "Sélectionner une catégorie",
+    "monthly_limit": "Limite mensuelle",
+    "add_transaction": "Ajouter une transaction",
+    "transaction_desc": "Enregistrez un nouveau revenu ou une dépense pour suivre vos finances.",
+    "income": "Revenu",
+    "expense": "Dépense",
+    "desc_optional": "Description (facultatif)",
+    "add_note": "Ajouter une note..."
+  },
+  "Finance": {
+    "health_score": "Score de santé financière",
+    "risky": "Risque",
+    "health_desc": "Vos abonnements utilisent {percent}% de vos revenus.",
+    "monthly_cash_flow": "Flux de trésorerie mensuel",
+    "expenses_subs": "Dépenses + Abonn.",
+    "spending_dist": "Répartition des dépenses",
+    "table_desc": "Description",
+    "table_category": "Catégorie",
+    "table_date": "Date",
+    "table_amount": "Montant"
+  },
+  "Categories": {
+    "entertainment": "Divertissement",
+    "food_dining": "Restauration",
+    "shopping": "Shopping",
+    "transportation": "Transport",
+    "utilities": "Services",
+    "health": "Santé",
+    "education": "Éducation",
+    "travel": "Voyage",
+    "subscriptions": "Abonnements",
+    "other": "Autre"
+  },
+  "Profile": {
+    "tab_account": "Compte",
+    "tab_billing": "Facturation",
+    "tab_security": "Sécurité",
+    "member_since": "Membre depuis {date}",
+    "account_id": "ID du compte :",
+    "account_details": "Détails du compte",
+    "email": "E-mail",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "save_changes": "Enregistrer les modifications",
+    "current_plan": "Forfait actuel",
+    "free_plan": "Forfait gratuit",
+    "per_month": "{price}/mois"
   },
   "profile": {
     "security": {
