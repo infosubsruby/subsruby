@@ -11,6 +11,7 @@ import { Sparkles, Wallet, CreditCard, ArrowRight, CheckCircle2, PiggyBank, Tren
 import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
 import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
 import { toast } from "sonner";
+import { useTranslations } from "@/i18n/useTranslations";
 
 type OnboardingStep = "welcome" | "income" | "subscription" | "wow";
 
@@ -18,6 +19,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState<OnboardingStep>("welcome");
+  const tSetup = useTranslations("Setup");
   const { createTransaction } = useFinance();
   const { subscriptions } = useSubscriptions();
   const { data: exchangeRatesList } = useExchangeRates();
@@ -161,17 +163,17 @@ const Onboarding = () => {
               </div>
             </div>
             
-            <h2 className="text-3xl font-bold mb-8">Setup Complete! 🎉</h2>
+            <h2 className="text-3xl font-bold mb-8">{tSetup("title")}</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
               <div className="p-6 bg-card border rounded-2xl shadow-sm">
                 <TrendingUp className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Monthly Spending</p>
+                <p className="text-sm text-muted-foreground">{tSetup("monthly_spending")}</p>
                 <p className="text-3xl font-bold">${wowData.monthlyTotal}</p>
               </div>
               <div className="p-6 bg-card border rounded-2xl shadow-sm">
                 <PiggyBank className="w-6 h-6 text-green-500 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Yearly Projection</p>
+                <p className="text-sm text-muted-foreground">{tSetup("yearly_projection")}</p>
                 <p className="text-3xl font-bold">${wowData.yearlyTotal}</p>
               </div>
             </div>
@@ -189,10 +191,10 @@ const Onboarding = () => {
               ) : (
                 <>
                   <p className="text-lg font-medium text-green-600 mb-1">
-                    Excellent Management! 🏆
+                    {tSetup("excellent_management")}
                   </p>
                   <p className="text-muted-foreground text-sm px-4">
-                    You're managing your subscriptions well. We'll alert you if any costs increase.
+                    {tSetup("management_desc")}
                   </p>
                 </>
               )}
@@ -203,7 +205,7 @@ const Onboarding = () => {
               onClick={finishOnboarding}
               className="w-full ruby-gradient h-14 text-lg font-semibold rounded-2xl shadow-ruby hover:shadow-ruby-strong transition-all"
             >
-              Go to Dashboard
+              {tSetup("go_dashboard")}
             </Button>
           </div>
         )}

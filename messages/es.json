@@ -42,6 +42,28 @@
     "dont_have_account": "¿No tienes una cuenta?",
     "sign_up": "Regístrate"
   },
+  "Features": {
+    "f1_title": "Recordatorios Inteligentes",
+    "f1_desc": "Recibe notificaciones antes de las renovaciones. Los temporizadores en vivo muestran exactamente cuándo vencen los pagos.",
+    "f2_title": "Rastrea Gastos",
+    "f2_desc": "Mira tus costos mensuales totales de un vistazo. Rastrea múltiples monedas con facilidad.",
+    "f3_title": "Autocompletado Inteligente",
+    "f3_desc": "Escribe 'Netflix' y observa cómo los precios, enlaces y colores se completan automáticamente.",
+    "f4_title": "Cuenta Regresiva en Vivo",
+    "f4_desc": "Temporizadores en vivo en cada tarjeta de suscripción mostrando días, horas, minutos y segundos.",
+    "f5_title": "Acciones Rápidas",
+    "f5_desc": "Acceso con un clic a las páginas de gestión de suscripciones. Cancela o modifica directamente.",
+    "f6_title": "Seguro y Privado",
+    "f6_desc": "Tus datos están encriptados y protegidos. Solo tú puedes acceder a tus suscripciones."
+  },
+  "Setup": {
+    "title": "¡Configuración Completa! 🎉",
+    "monthly_spending": "Gasto Mensual",
+    "yearly_projection": "Proyección Anual",
+    "excellent_management": "¡Excelente Gestión! 🏆",
+    "management_desc": "Estás gestionando bien tus suscripciones. Te avisaremos si algún costo aumenta.",
+    "go_dashboard": "Ir al Panel"
+  },
   "Security": {
     "title": "Seguridad",
     "description": "Actualiza tu contraseña",

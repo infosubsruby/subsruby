@@ -19,6 +19,7 @@ import {
 const Index = () => {
   const { user, isLoading } = useAuth();
   const tLanding = useTranslations("Landing");
+  const tFeatures = useTranslations("Features");
 
   // Redirect authenticated users to dashboard
   if (isLoading) {
@@ -103,9 +104,9 @@ const Index = () => {
               <div className="w-12 h-12 rounded-lg ruby-gradient flex items-center justify-center mb-4 shadow-ruby">
                 <Bell className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-display text-xl font-semibold mb-2">Smart Reminders</h3>
+              <h3 className="font-display text-xl font-semibold mb-2">{tFeatures("f1_title")}</h3>
               <p className="text-muted-foreground">
-                Get notified before renewals. Live countdown timers show exactly when payments are due.
+                {tFeatures("f1_desc")}
               </p>
             </div>
 
@@ -114,9 +115,9 @@ const Index = () => {
               <div className="w-12 h-12 rounded-lg ruby-gradient flex items-center justify-center mb-4 shadow-ruby">
                 <Wallet className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-display text-xl font-semibold mb-2">Track Spending</h3>
+              <h3 className="font-display text-xl font-semibold mb-2">{tFeatures("f2_title")}</h3>
               <p className="text-muted-foreground">
-                See your total monthly costs at a glance. Track multiple currencies with ease.
+                {tFeatures("f2_desc")}
               </p>
             </div>
 
@@ -125,9 +126,9 @@ const Index = () => {
               <div className="w-12 h-12 rounded-lg ruby-gradient flex items-center justify-center mb-4 shadow-ruby">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-display text-xl font-semibold mb-2">Smart Auto-Fill</h3>
+              <h3 className="font-display text-xl font-semibold mb-2">{tFeatures("f3_title")}</h3>
               <p className="text-muted-foreground">
-                Type "Netflix" and watch prices, links, and colors fill in automatically.
+                {tFeatures("f3_desc")}
               </p>
             </div>
 
@@ -136,9 +137,9 @@ const Index = () => {
               <div className="w-12 h-12 rounded-lg ruby-gradient flex items-center justify-center mb-4 shadow-ruby">
                 <Clock className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-display text-xl font-semibold mb-2">Live Countdown</h3>
+              <h3 className="font-display text-xl font-semibold mb-2">{tFeatures("f4_title")}</h3>
               <p className="text-muted-foreground">
-                Real-time countdown timers on each subscription card showing days, hours, minutes, seconds.
+                {tFeatures("f4_desc")}
               </p>
             </div>
 
@@ -147,9 +148,9 @@ const Index = () => {
               <div className="w-12 h-12 rounded-lg ruby-gradient flex items-center justify-center mb-4 shadow-ruby">
                 <CreditCard className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-display text-xl font-semibold mb-2">Quick Actions</h3>
+              <h3 className="font-display text-xl font-semibold mb-2">{tFeatures("f5_title")}</h3>
               <p className="text-muted-foreground">
-                One-click access to subscription management pages. Cancel or modify directly.
+                {tFeatures("f5_desc")}
               </p>
             </div>
 
@@ -158,9 +159,9 @@ const Index = () => {
               <div className="w-12 h-12 rounded-lg ruby-gradient flex items-center justify-center mb-4 shadow-ruby">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-display text-xl font-semibold mb-2">Secure & Private</h3>
+              <h3 className="font-display text-xl font-semibold mb-2">{tFeatures("f6_title")}</h3>
               <p className="text-muted-foreground">
-                Your data is encrypted and protected. Only you can access your subscriptions.
+                {tFeatures("f6_desc")}
               </p>
             </div>
           </div>

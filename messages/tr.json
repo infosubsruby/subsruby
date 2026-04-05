@@ -42,6 +42,28 @@
     "dont_have_account": "Hesabınız yok mu?",
     "sign_up": "Kayıt ol"
   },
+  "Features": {
+    "f1_title": "Akıllı Hatırlatıcılar",
+    "f1_desc": "Yenilemelerden önce bildirim alın. Canlı geri sayım sayaçları ödemelerin tam olarak ne zaman yapılacağını gösterir.",
+    "f2_title": "Harcamaları Takip Edin",
+    "f2_desc": "Toplam aylık maliyetlerinizi bir bakışta görün. Farklı para birimlerini kolayca takip edin.",
+    "f3_title": "Akıllı Otomatik Doldurma",
+    "f3_desc": "'Netflix' yazın ve fiyatların, bağlantıların ve renklerin otomatik olarak dolmasını izleyin.",
+    "f4_title": "Canlı Geri Sayım",
+    "f4_desc": "Her abonelik kartında gün, saat, dakika, saniye gösteren gerçek zamanlı geri sayım sayaçları.",
+    "f5_title": "Hızlı İşlemler",
+    "f5_desc": "Abonelik yönetim sayfalarına tek tıkla erişim. Doğrudan iptal edin veya değiştirin.",
+    "f6_title": "Güvenli ve Gizli",
+    "f6_desc": "Verileriniz şifrelenir ve korunur. Aboneliklerinize yalnızca siz erişebilirsiniz."
+  },
+  "Setup": {
+    "title": "Kurulum Tamamlandı! 🎉",
+    "monthly_spending": "Aylık Harcama",
+    "yearly_projection": "Yıllık Tahmin",
+    "excellent_management": "Mükemmel Yönetim! 🏆",
+    "management_desc": "Aboneliklerinizi iyi yönetiyorsunuz. Herhangi bir maliyet artışında sizi uyaracağız.",
+    "go_dashboard": "Panele Git"
+  },
   "Security": {
     "title": "Güvenlik",
     "description": "Şifrenizi güncelleyin",

@@ -42,6 +42,28 @@
     "dont_have_account": "Vous n'avez pas de compte ?",
     "sign_up": "S'inscrire"
   },
+  "Features": {
+    "f1_title": "Rappels Intelligents",
+    "f1_desc": "Soyez notifié avant les renouvellements. Les comptes à rebours en direct montrent exactement quand les paiements sont dus.",
+    "f2_title": "Suivre les Dépenses",
+    "f2_desc": "Voyez vos coûts mensuels totaux en un coup d'œil. Suivez facilement plusieurs devises.",
+    "f3_title": "Remplissage Auto Intelligent",
+    "f3_desc": "Tapez 'Netflix' et regardez les prix, les liens et les couleurs se remplir automatiquement.",
+    "f4_title": "Compte à Rebours en Direct",
+    "f4_desc": "Comptes à rebours en temps réel sur chaque carte d'abonnement affichant les jours, heures, minutes, secondes.",
+    "f5_title": "Actions Rapides",
+    "f5_desc": "Accès en un clic aux pages de gestion des abonnements. Annulez ou modifiez directement.",
+    "f6_title": "Sécurisé & Privé",
+    "f6_desc": "Vos données sont cryptées et protégées. Vous seul pouvez accéder à vos abonnements."
+  },
+  "Setup": {
+    "title": "Configuration Terminée ! 🎉",
+    "monthly_spending": "Dépenses Mensuelles",
+    "yearly_projection": "Projection Annuelle",
+    "excellent_management": "Excellente Gestion ! 🏆",
+    "management_desc": "Vous gérez bien vos abonnements. Nous vous alerterons si des coûts augmentent.",
+    "go_dashboard": "Aller au Tableau de bord"
+  },
   "Security": {
     "title": "Sécurité",
     "description": "Mettez à jour votre mot de passe",

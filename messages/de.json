@@ -42,6 +42,28 @@
     "dont_have_account": "Haben Sie kein Konto?",
     "sign_up": "Registrieren"
   },
+  "Features": {
+    "f1_title": "Intelligente Erinnerungen",
+    "f1_desc": "Lassen Sie sich vor Verlängerungen benachrichtigen. Live-Countdown-Timer zeigen genau, wann Zahlungen fällig sind.",
+    "f2_title": "Ausgaben Verfolgen",
+    "f2_desc": "Sehen Sie Ihre gesamten monatlichen Kosten auf einen Blick. Verfolgen Sie problemlos mehrere Währungen.",
+    "f3_title": "Intelligentes Auto-Fill",
+    "f3_desc": "Tippen Sie 'Netflix' und sehen Sie zu, wie Preise, Links und Farben automatisch ausgefüllt werden.",
+    "f4_title": "Live-Countdown",
+    "f4_desc": "Echtzeit-Countdown-Timer auf jeder Abo-Karte mit Tagen, Stunden, Minuten und Sekunden.",
+    "f5_title": "Schnelle Aktionen",
+    "f5_desc": "Ein-Klick-Zugang zu den Abo-Verwaltungsseiten. Direkt kündigen oder ändern.",
+    "f6_title": "Sicher & Privat",
+    "f6_desc": "Ihre Daten sind verschlüsselt und geschützt. Nur Sie haben Zugriff auf Ihre Abonnements."
+  },
+  "Setup": {
+    "title": "Einrichtung Abgeschlossen! 🎉",
+    "monthly_spending": "Monatliche Ausgaben",
+    "yearly_projection": "Jährliche Prognose",
+    "excellent_management": "Ausgezeichnetes Management! 🏆",
+    "management_desc": "Sie verwalten Ihre Abonnements gut. Wir benachrichtigen Sie, falls die Kosten steigen.",
+    "go_dashboard": "Zum Dashboard"
+  },
   "Security": {
     "title": "Sicherheit",
     "description": "Aktualisieren Sie Ihr Passwort",

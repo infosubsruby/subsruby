@@ -42,6 +42,28 @@
     "dont_have_account": "Don't have an account?",
     "sign_up": "Sign up"
   },
+  "Features": {
+    "f1_title": "Smart Reminders",
+    "f1_desc": "Get notified before renewals. Live countdown timers show exactly when payments are due.",
+    "f2_title": "Track Spending",
+    "f2_desc": "See your total monthly costs at a glance. Track multiple currencies with ease.",
+    "f3_title": "Smart Auto-Fill",
+    "f3_desc": "Type 'Netflix' and watch prices, links, and colors fill in automatically.",
+    "f4_title": "Live Countdown",
+    "f4_desc": "Real-time countdown timers on each subscription card showing days, hours, minutes, seconds.",
+    "f5_title": "Quick Actions",
+    "f5_desc": "One-click access to subscription management pages. Cancel or modify directly.",
+    "f6_title": "Secure & Private",
+    "f6_desc": "Your data is encrypted and protected. Only you can access your subscriptions."
+  },
+  "Setup": {
+    "title": "Setup Complete! 🎉",
+    "monthly_spending": "Monthly Spending",
+    "yearly_projection": "Yearly Projection",
+    "excellent_management": "Excellent Management! 🏆",
+    "management_desc": "You're managing your subscriptions well. We'll alert you if any costs increase.",
+    "go_dashboard": "Go to Dashboard"
+  },
   "Security": {
     "title": "Security",
     "description": "Update your password",
