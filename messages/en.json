@@ -11,6 +11,17 @@
   "dashboard": {
     "auto": "Auto"
   },
+  "Security": {
+    "title": "Security",
+    "description": "Update your password",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm New Password",
+    "forgot_password": "Forgot password?",
+    "update_button": "Update Password",
+    "error_mismatch": "Passwords do not match.",
+    "success_update": "Password updated successfully."
+  },
   "profile": {
     "security": {
       "title": "Security",

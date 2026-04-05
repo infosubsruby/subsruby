@@ -11,6 +11,17 @@
   "dashboard": {
     "auto": "Otomatik"
   },
+  "Security": {
+    "title": "Güvenlik",
+    "description": "Şifrenizi güncelleyin",
+    "current_password": "Mevcut Şifre",
+    "new_password": "Yeni Şifre",
+    "confirm_password": "Yeni Şifreyi Onayla",
+    "forgot_password": "Şifremi unuttum?",
+    "update_button": "Şifreyi Güncelle",
+    "error_mismatch": "Şifreler eşleşmiyor.",
+    "success_update": "Şifre başarıyla güncellendi."
+  },
   "profile": {
     "security": {
       "title": "Güvenlik",

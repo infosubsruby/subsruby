@@ -26,8 +26,8 @@ import { useTranslations } from "@/i18n/useTranslations";
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, refreshProfile } = useAuth();
-  const { t } = useLanguage();
-  const tt = useTranslations("profile.security");
+  const { t: tLegacy } = useLanguage();
+  const t = useTranslations("Security");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
@@ -421,19 +421,19 @@ const Profile = () => {
   const handleUpdatePassword = async () => {
     const email = formEmail || accountEmail || "";
     if (!email) {
-      toast.error(tt("emailNotFound"));
+      toast.error(t("error_mismatch"));
       return;
     }
     if (!currentPassword) {
-      toast.error(tt("currentPasswordRequired"));
+      toast.error(t("error_mismatch"));
       return;
     }
     if (!newPassword) {
-      toast.error(tt("newPasswordRequired"));
+      toast.error(t("error_mismatch"));
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      setPasswordMismatch(tt("passwordMismatch"));
+      setPasswordMismatch(t("error_mismatch"));
       return;
     }
     setUpdatingPassword(true);
@@ -443,24 +443,24 @@ const Profile = () => {
         password: currentPassword,
       });
       if (signInError) {
-        toast.error(tt("currentPasswordIncorrect"));
+        toast.error(t("error_mismatch"));
         return;
       }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
         console.error("Supabase Güncelleme Hatası:", error);
-        toast.error(tt("updateFailed"));
+        toast.error(t("error_mismatch"));
         return;
       }
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
       setPasswordMismatch(null);
-      toast.success(tt("updateSuccess"));
+      toast.success(t("success_update"));
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
-      toast.error(tt("updateFailed"));
+      toast.error(t("error_mismatch"));
     } finally {
       setUpdatingPassword(false);
     }
@@ -520,7 +520,7 @@ const Profile = () => {
                 <div className="min-w-0">
                   <h1 className="font-display text-3xl font-bold flex items-center gap-3">
                     <User className="w-8 h-8 text-primary" />
-                    {t.nav.profile}
+                    {tLegacy.nav.profile}
                   </h1>
                   <TabsList className="mt-3 bg-transparent p-0 gap-4">
                     <TabsTrigger
@@ -539,7 +539,7 @@ const Profile = () => {
                       value="security"
                       className="rounded-none px-0 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
                     >
-                      {tt("title")}
+                      {t("title")}
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -682,26 +682,26 @@ const Profile = () => {
                       <Trash2 className="w-5 h-5 text-destructive" />
                     </div>
                     <div>
-                      <Label className="text-base font-medium text-destructive">{t.settings.deleteAccount}</Label>
-                      <p className="text-sm text-muted-foreground">{t.settings.deleteAccountDesc}</p>
+                      <Label className="text-base font-medium text-destructive">{tLegacy.settings.deleteAccount}</Label>
+                      <p className="text-sm text-muted-foreground">{tLegacy.settings.deleteAccountDesc}</p>
                     </div>
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm" className="bg-destructive/80 hover:bg-destructive">
-                        {t.settings.delete}
+                        {tLegacy.settings.delete}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="bg-card border-border">
                       <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
                           <AlertTriangle className="w-5 h-5 text-destructive" />
-                          {t.settings.deleteAccount}
+                          {tLegacy.settings.deleteAccount}
                         </AlertDialogTitle>
-                        <AlertDialogDescription>{t.settings.deleteConfirm}</AlertDialogDescription>
+                        <AlertDialogDescription>{tLegacy.settings.deleteConfirm}</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>{t.settings.cancel}</AlertDialogCancel>
+                        <AlertDialogCancel>{tLegacy.settings.cancel}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDeleteAccount}
                           disabled={isDeleting}
@@ -710,10 +710,10 @@ const Profile = () => {
                           {isDeleting ? (
                             <>
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              {t.common.loading}
+                              {tLegacy.common.loading}
                             </>
                           ) : (
-                            t.settings.delete
+                            tLegacy.settings.delete
                           )}
                         </AlertDialogAction>
                       </AlertDialogFooter>
@@ -790,29 +790,29 @@ const Profile = () => {
                       <Lock className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <Label className="text-base font-medium">{tt("title")}</Label>
-                      <p className="text-sm text-muted-foreground">{tt("subtitle")}</p>
+                      <Label className="text-base font-medium">{t("title")}</Label>
+                      <p className="text-sm text-muted-foreground">{t("description")}</p>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label>{tt("currentPassword")}</Label>
+                      <Label>{t("current_password")}</Label>
                       <a href="#" className="text-xs text-muted-foreground hover:text-foreground">
-                        {tt("forgotPassword")}
+                        {t("forgot_password")}
                       </a>
                     </div>
                     <Input
                       type="password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder={tt("currentPasswordPlaceholder")}
+                      placeholder={t("current_password")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{tt("newPassword")}</Label>
+                    <Label>{t("new_password")}</Label>
                     <Input
                       type="password"
                       value={newPassword}
@@ -820,12 +820,12 @@ const Profile = () => {
                         setNewPassword(e.target.value);
                         setPasswordMismatch(null);
                       }}
-                      placeholder={tt("newPasswordPlaceholder")}
+                      placeholder={t("new_password")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{tt("confirmNewPassword")}</Label>
+                    <Label>{t("confirm_password")}</Label>
                     <Input
                       type="password"
                       value={confirmNewPassword}
@@ -833,7 +833,7 @@ const Profile = () => {
                         setConfirmNewPassword(e.target.value);
                         setPasswordMismatch(null);
                       }}
-                      placeholder={tt("confirmNewPasswordPlaceholder")}
+                      placeholder={t("confirm_password")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                     {passwordMismatch ? <p className="text-sm text-red-500">{passwordMismatch}</p> : null}
@@ -845,7 +845,7 @@ const Profile = () => {
                       className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                     >
                       {updatingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      {tt("updatePassword")}
+                      {t("update_button")}
                     </Button>
                   </div>
                 </div>
