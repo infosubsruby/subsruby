@@ -114,7 +114,10 @@ const Signup = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{tAuth("last_name")} *</Label>
+                  <Label className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-muted-foreground" />
+                    {tAuth("last_name")} *
+                  </Label>
                   <Input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
