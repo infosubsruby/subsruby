@@ -16,15 +16,15 @@ interface SpendingPieChartProps {
 
 const COLORS = [
   "hsl(358, 82%, 55%)",
-  "hsl(142, 70%, 45%)",
+  "hsl(24, 95%, 53%)",
   "hsl(38, 92%, 50%)",
   "hsl(220, 70%, 55%)",
-  "hsl(280, 70%, 55%)",
-  "hsl(180, 70%, 45%)",
-  "hsl(320, 70%, 55%)",
-  "hsl(60, 70%, 45%)",
-  "hsl(200, 70%, 55%)",
-  "hsl(100, 70%, 45%)",
+  "hsl(240, 70%, 60%)",
+  "hsl(270, 70%, 60%)",
+  "hsl(290, 70%, 60%)",
+  "hsl(320, 70%, 60%)",
+  "hsl(200, 90%, 55%)",
+  "hsl(45, 95%, 55%)",
 ];
 
 export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {

@@ -201,6 +201,7 @@ const Finance = () => {
       const months: { month: string; income: number; expenses: number }[] = [];
       const now = new Date();
       const fallbackTxCurrency = defaultCurrency || "USD";
+      const parseLocalDate = (value: string) => new Date(`${value}T00:00:00`);
 
       for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -211,7 +212,7 @@ const Finance = () => {
         const monthlyIncome = safeTransactions
           .filter((t) => {
             if (!t?.date) return false;
-            const tDate = new Date(t.date);
+            const tDate = parseLocalDate(t.date);
             return t.type === "income" && tDate >= startOfMonth && tDate <= endOfMonth;
           })
           .reduce((sum, t) => {
@@ -224,7 +225,7 @@ const Finance = () => {
         const monthlyExpenses = safeTransactions
           .filter((t) => {
             if (!t?.date) return false;
-            const tDate = new Date(t.date);
+            const tDate = parseLocalDate(t.date);
             return t.type === "expense" && tDate >= startOfMonth && tDate <= endOfMonth;
           })
           .reduce((sum, t) => {
@@ -253,11 +254,12 @@ const Finance = () => {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const fallbackTxCurrency = defaultCurrency || "USD";
+      const parseLocalDate = (value: string) => new Date(`${value}T00:00:00`);
 
       const categoryTotals: Record<string, number> = {};
 
       safeTransactions
-        .filter((t) => t?.type === "expense" && t?.date && new Date(t.date) >= startOfMonth)
+        .filter((t) => t?.type === "expense" && t?.date && parseLocalDate(t.date) >= startOfMonth)
         .forEach((t) => {
           if (!t?.category) return;
           const raw = Number(t?.amount || 0);
@@ -287,13 +289,14 @@ const Finance = () => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const fallbackTxCurrency = defaultCurrency || "USD";
     const result: Record<string, number> = {};
+    const parseLocalDate = (value: string) => new Date(`${value}T00:00:00`);
 
     budgets.forEach((budget) => {
       const budgetCurrency = budget.currency || activeCurrency || defaultCurrency || "USD";
       const total = safeTransactions
         .filter((t) => {
           if (!t?.date) return false;
-          const tDate = new Date(t.date);
+          const tDate = parseLocalDate(t.date);
           return t.type === "expense" && t.category === budget.category && tDate >= startOfMonth;
         })
         .reduce((sum, t) => {
