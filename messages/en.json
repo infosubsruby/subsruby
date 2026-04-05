@@ -80,7 +80,9 @@
   },
   "Finance": {
     "health_score": "Financial Health Score",
+    "healthy": "Healthy",
     "risky": "Risky",
+    "warning": "Warning",
     "health_desc": "Your subscriptions use {percent}% of your income.",
     "monthly_cash_flow": "Monthly Cash Flow",
     "expenses_subs": "Expenses + Subs",

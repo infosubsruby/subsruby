@@ -270,7 +270,14 @@ const Finance = () => {
 
   const cashFlowData = getMonthlyCashFlow();
   const spendingData = getSpendingDistribution();
-  const displayedHealthLabel = financialHealth.label === "Risky" ? tFinance("risky") : financialHealth.label;
+  const displayedHealthLabel =
+    financialHealth.label === "Risky"
+      ? tFinance("risky")
+      : financialHealth.label === "Healthy"
+        ? tFinance("healthy")
+        : financialHealth.label === "Warning"
+          ? tFinance("warning")
+          : financialHealth.label;
 
   return (
     <div className="min-h-screen pb-20">

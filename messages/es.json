@@ -80,7 +80,9 @@
   },
   "Finance": {
     "health_score": "Puntuación de salud financiera",
+    "healthy": "Saludable",
     "risky": "Riesgoso",
+    "warning": "Advertencia",
     "health_desc": "Tus suscripciones usan {percent}% de tus ingresos.",
     "monthly_cash_flow": "Flujo de caja mensual",
     "expenses_subs": "Gastos + Suscr.",

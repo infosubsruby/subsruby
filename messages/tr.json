@@ -80,7 +80,9 @@
   },
   "Finance": {
     "health_score": "Finansal Sağlık Skoru",
+    "healthy": "Sağlıklı",
     "risky": "Riskli",
+    "warning": "Uyarı",
     "health_desc": "Abonelikleriniz gelirinizin {percent}%'ini kullanıyor.",
     "monthly_cash_flow": "Aylık Nakit Akışı",
     "expenses_subs": "Giderler + Abon.",

@@ -109,7 +109,9 @@
   },
   "Finance": {
     "health_score": "Finanzielle Gesundheit",
+    "healthy": "Gesund",
     "risky": "Riskant",
+    "warning": "Warnung",
     "health_desc": "Ihre Abonnements verbrauchen {percent}% Ihres Einkommens.",
     "monthly_cash_flow": "Monatlicher Cashflow",
     "expenses_subs": "Ausgaben + Abos",

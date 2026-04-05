@@ -109,7 +109,9 @@
   },
   "Finance": {
     "health_score": "Score de santé financière",
+    "healthy": "Sain",
     "risky": "Risque",
+    "warning": "Avertissement",
     "health_desc": "Vos abonnements utilisent {percent}% de vos revenus.",
     "monthly_cash_flow": "Flux de trésorerie mensuel",
     "expenses_subs": "Dépenses + Abonn.",
