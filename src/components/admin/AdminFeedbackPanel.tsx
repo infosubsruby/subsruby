@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { formatDate } from "@/i18n/date";
 import { 
   MessageSquare, 
   Bug, 
@@ -207,7 +207,7 @@ export const AdminFeedbackPanel = () => {
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {format(new Date(feedback.created_at), "MMM d, yyyy")}
+                    {formatDate(feedback.created_at, { dateStyle: "medium" })}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button

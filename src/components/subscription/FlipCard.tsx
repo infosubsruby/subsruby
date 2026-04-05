@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "@/i18n/useTranslations";
+import { formatDate } from "@/i18n/date";
 
 interface FlipCardProps {
   subscription: Subscription;
@@ -32,6 +33,8 @@ interface FlipCardProps {
 export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) => {
   const t = useTranslations("Dashboard");
   const tProfile = useTranslations("Profile");
+  const tSubscriptions = useTranslations("Subscriptions");
+  const tModals = useTranslations("Modals");
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -224,7 +227,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                   
                   <div className="space-y-3 flex-1">
                     <div>
-                      <Label className="text-xs">Name</Label>
+                      <Label className="text-xs">{tSubscriptions("edit_name")}</Label>
                       <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
@@ -233,7 +236,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-xs">Price</Label>
+                        <Label className="text-xs">{tSubscriptions("price")}</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -243,7 +246,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Currency</Label>
+                        <Label className="text-xs">{tSubscriptions("edit_currency")}</Label>
                         <Select value={editCurrency} onValueChange={setEditCurrency}>
                           <SelectTrigger className="h-8 text-sm input-ruby">
                             <SelectValue />
@@ -259,14 +262,14 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs">Billing</Label>
+                      <Label className="text-xs">{tSubscriptions("edit_billing")}</Label>
                       <Select value={editBillingCycle} onValueChange={(v) => setEditBillingCycle(v as "monthly" | "yearly")}>
                         <SelectTrigger className="h-8 text-sm input-ruby">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-popover border-border">
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="yearly">Yearly</SelectItem>
+                          <SelectItem value="monthly">{tModals("monthly")}</SelectItem>
+                          <SelectItem value="yearly">{tModals("yearly")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -307,13 +310,13 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                   <div className="space-y-2 flex-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{t("start_date")}</span>
-                    <span>{format(new Date(subscription.start_date), "yyyy-MM-dd")}</span>
+                    <span>{formatDate(subscription.start_date, { dateStyle: "medium" })}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{t("next_payment")}</span>
                       <span>
                         {subscription.next_payment_date 
-                          ? format(new Date(subscription.next_payment_date), "yyyy-MM-dd")
+                          ? formatDate(subscription.next_payment_date, { dateStyle: "medium" })
                           : "—"
                         }
                       </span>

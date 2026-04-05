@@ -37,7 +37,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { formatDate } from "@/i18n/date";
 import { errorMessageOrValue } from "@/lib/error";
 
 interface UserData {
@@ -238,7 +238,7 @@ const Admin = () => {
                             {userData.email || "-"}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {format(new Date(userData.created_at), "MMM d, yyyy")}
+                            {formatDate(userData.created_at, { dateStyle: "medium" })}
                           </TableCell>
                           <TableCell>
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">

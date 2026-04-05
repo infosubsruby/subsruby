@@ -28,6 +28,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
+import { formatDate } from "@/i18n/date";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -208,7 +209,7 @@ export const AddTransactionModal = ({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : tFinance("table_date")}
+                  {selectedDate ? formatDate(selectedDate, { dateStyle: "long" }) : tFinance("table_date")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

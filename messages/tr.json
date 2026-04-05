@@ -117,6 +117,35 @@
     "free_plan": "Ücretsiz Plan",
     "per_month": "{price}/ay"
   },
+  "Subscriptions": {
+    "add_title": "Abonelik Ekle",
+    "search_placeholder": "Servis ara...",
+    "custom_btn": "Özel",
+    "custom_title": "Özel Abonelik",
+    "sub_name": "Abonelik Adı",
+    "enter_name": "Servis adı girin",
+    "region_currency": "Bölge ve Para Birimi",
+    "billing_cycle": "Fatura Döngüsü",
+    "billing_day": "Fatura Günü",
+    "billed_on": "Her ayın {day}. günü faturalandırılacaksınız",
+    "plan": "Plan",
+    "select_plan": "Bir plan seçin",
+    "select_plan_error": "Devam etmek için lütfen bir plan seçin",
+    "price": "Fiyat",
+    "management_url": "Yönetim URL'si (isteğe bağlı)",
+    "url_helper": "Arama bağlantısını otomatik oluşturmak için boş bırakın",
+    "card_color": "Kart Rengi",
+    "add_btn": "Abonelik Ekle",
+    "edit_name": "İsim",
+    "edit_currency": "Para Birimi",
+    "edit_billing": "Fatura",
+    "unused_info": "Bu abonelikler kullanılmıyor olarak işaretlendi. Bunları iptal etmek düzenli giderlerinizi önemli ölçüde azaltabilir."
+  },
+  "Budgets": {
+    "spent": "Harcanan",
+    "remaining": "%{percent} kaldı",
+    "over_budget": "{amount} bütçe aşıldı"
+  },
   "profile": {
     "security": {
       "title": "Güvenlik",

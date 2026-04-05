@@ -23,6 +23,7 @@ import { Search, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLimitModal";
 import type { Database } from "@/integrations/supabase/types";
+import { useTranslations } from "@/i18n/useTranslations";
 
 const GLOBAL_CURRENCIES = ['USD', 'TRY', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CNY', 'INR', 'BRL', 'MXN', 'RUB', 'CHF', 'SEK', 'NOK', 'DKK', 'SAR', 'AED', 'Other'];
 
@@ -36,6 +37,8 @@ interface AddSubscriptionModalProps {
 type Step = "select" | "configure";
 
 export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCreated }: AddSubscriptionModalProps) => {
+  const tSubscriptions = useTranslations("Subscriptions");
+  const tModals = useTranslations("Modals");
   const { createSubscription, canAddSubscription, subscriptions } = useSubscriptions();
   const { communityData } = useCommunityData();
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
@@ -345,7 +348,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
             {step === "select" ? (
               <>
                 <Plus className="w-5 h-5 text-primary" />
-                Add Subscription
+                {tSubscriptions("add_title")}
               </>
             ) : (
               <>
@@ -357,12 +360,12 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
                     <selectedPreset.icon className="w-4 h-4 text-white" />
                   </div>
                 )}
-                <span style={{ color: accentColor }}>{name || "Custom Subscription"}</span>
+                <span style={{ color: accentColor }}>{name || tSubscriptions("custom_title")}</span>
               </>
             )}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Add a new subscription to your dashboard.
+            {tSubscriptions("add_title")}
           </DialogDescription>
         </DialogHeader>
 
@@ -373,7 +376,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search services..."
+                placeholder={tSubscriptions("search_placeholder")}
                 className="pl-10 input-ruby"
               />
             </div>
@@ -395,7 +398,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
                   <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
                 <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors text-center">
-                  Custom
+                  {tSubscriptions("custom_btn")}
                 </span>
               </button>
             </div>
@@ -411,7 +414,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
         ) : (
           <form onSubmit={handleSubmit} className="p-6 pt-2 space-y-5">
             <div className="space-y-2 relative">
-              <Label>Subscription Name</Label>
+              <Label>{tSubscriptions("sub_name")}</Label>
               <div className="relative">
                 <Input
                   value={name}
@@ -422,7 +425,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
                   onBlur={() => {
                     setTimeout(() => setShowSuggestions(false), 200);
                   }}
-                  placeholder="Enter service name"
+                  placeholder={tSubscriptions("enter_name")}
                   className="input-ruby"
                   autoFocus={isCustom}
                   autoComplete="off"
@@ -432,13 +435,13 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
             </div>
 
             <div className="space-y-2">
-              <Label>Region & Currency</Label>
+              <Label>{tSubscriptions("region_currency")}</Label>
               <Select 
                 value={selectedCurrency || ""} 
                 onValueChange={handleCurrencyChange}
               >
                 <SelectTrigger className="input-ruby">
-                  <SelectValue placeholder="Select currency" />
+                  <SelectValue placeholder={tSubscriptions("region_currency")} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border max-h-[300px]">
                   {availableCurrencies.map((cur) => (
@@ -451,7 +454,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
             </div>
 
             <div className="space-y-2">
-              <Label>Billing Cycle</Label>
+              <Label>{tSubscriptions("billing_cycle")}</Label>
               <RadioGroup 
                 value={billingPeriod} 
                 onValueChange={(v) => setBillingPeriod(v as "monthly" | "yearly")}
@@ -459,11 +462,11 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="monthly" id="monthly" />
-                  <Label htmlFor="monthly" className="font-normal cursor-pointer">Monthly</Label>
+                  <Label htmlFor="monthly" className="font-normal cursor-pointer">{tModals("monthly")}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="yearly" id="yearly" />
-                  <Label htmlFor="yearly" className="font-normal cursor-pointer">Yearly</Label>
+                  <Label htmlFor="yearly" className="font-normal cursor-pointer">{tModals("yearly")}</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -478,7 +481,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
 
             {(!isCustom && selectedService) && (
               <div className="space-y-2">
-                <Label>Plan <span className="text-red-500">*</span></Label>
+                <Label>{tSubscriptions("plan")} <span className="text-red-500">*</span></Label>
                 {filteredPlans.length > 0 ? (
                   <>
                     <Select 
@@ -489,7 +492,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
                       }}
                     >
                       <SelectTrigger className={!selectedPlan ? "border-red-300" : ""}>
-                        <SelectValue placeholder="Select a plan" />
+                        <SelectValue placeholder={tSubscriptions("select_plan")} />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredPlans.map((p) => (
@@ -500,7 +503,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
                       </SelectContent>
                     </Select>
                     {!selectedPlan && (
-                      <p className="text-xs text-red-500">Please select a plan to continue</p>
+                      <p className="text-xs text-red-500">{tSubscriptions("select_plan_error")}</p>
                     )}
                   </>
                 ) : plansLoading ? (
@@ -526,7 +529,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Price</Label>
+                <Label>{tSubscriptions("price")}</Label>
                 {priceSuggestedByCommunity && communityData && (
                   <CommunitySuggestionBadge matchCount={communityData.priceCount} />
                 )}
@@ -559,7 +562,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
             {isCustom && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Management URL (optional)</Label>
+                  <Label>{tSubscriptions("management_url")}</Label>
                   {urlSuggestedByCommunity && communityData && (
                     <CommunitySuggestionBadge matchCount={communityData.urlCount} />
                   )}
@@ -574,14 +577,14 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave empty to auto-generate a search link
+                  {tSubscriptions("url_helper")}
                 </p>
               </div>
             )}
 
             {isCustom && (
               <div className="space-y-2">
-                <Label>Card Color</Label>
+                <Label>{tSubscriptions("card_color")}</Label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -610,10 +613,10 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Adding...
+                  {tSubscriptions("add_btn")}
                 </>
               ) : (
-                "Add Subscription"
+                tSubscriptions("add_btn")
               )}
             </Button>
           </form>

@@ -117,6 +117,35 @@
     "free_plan": "Free Plan",
     "per_month": "{price}/month"
   },
+  "Subscriptions": {
+    "add_title": "Add Subscription",
+    "search_placeholder": "Search services...",
+    "custom_btn": "Custom",
+    "custom_title": "Custom Subscription",
+    "sub_name": "Subscription Name",
+    "enter_name": "Enter service name",
+    "region_currency": "Region & Currency",
+    "billing_cycle": "Billing Cycle",
+    "billing_day": "Billing Day",
+    "billed_on": "You'll be billed on the {day} of each month",
+    "plan": "Plan",
+    "select_plan": "Select a plan",
+    "select_plan_error": "Please select a plan to continue",
+    "price": "Price",
+    "management_url": "Management URL (optional)",
+    "url_helper": "Leave empty to auto-generate a search link",
+    "card_color": "Card Color",
+    "add_btn": "Add Subscription",
+    "edit_name": "Name",
+    "edit_currency": "Currency",
+    "edit_billing": "Billing",
+    "unused_info": "These subscriptions are marked as unused. Cancelling them could significantly reduce your recurring expenses."
+  },
+  "Budgets": {
+    "spent": "Spent",
+    "remaining": "{percent}% remaining",
+    "over_budget": "Over budget by {amount}"
+  },
   "profile": {
     "security": {
       "title": "Security",

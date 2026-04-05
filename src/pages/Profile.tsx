@@ -22,6 +22,7 @@ import { AlertTriangle, Camera, CreditCard, Loader2, Lock, LogOut, Trash2, User 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslations } from "@/i18n/useTranslations";
+import { formatDate, getActiveLocale } from "@/i18n/date";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ const Profile = () => {
         const createdAt = authUser?.created_at ?? null;
         if (createdAt) {
           const d = new Date(createdAt);
-          const monthYear = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(d);
+          const monthYear = new Intl.DateTimeFormat(getActiveLocale(), { month: "long", year: "numeric" }).format(d);
           setMemberSince(tProfile("member_since", { date: monthYear }));
         } else {
           setMemberSince(null);
@@ -415,9 +416,7 @@ const Profile = () => {
   const isPro = ["active", "trialing"].includes(subscriptionStatus ?? "");
   const formattedRenews =
     currentPeriodEnd && !Number.isNaN(new Date(currentPeriodEnd).getTime())
-      ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(
-          new Date(currentPeriodEnd)
-        )
+      ? formatDate(currentPeriodEnd, { dateStyle: "medium" })
       : null;
 
   const handleUpdatePassword = async () => {

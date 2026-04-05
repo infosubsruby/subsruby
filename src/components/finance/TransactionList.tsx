@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
+import { formatDate } from "@/i18n/date";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -105,7 +106,7 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {format(new Date(transaction.date), "yyyy-MM-dd")}
+                {formatDate(transaction.date, { dateStyle: "medium" })}
               </TableCell>
               <TableCell
                 className={cn(

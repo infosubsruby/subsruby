@@ -19,6 +19,7 @@ import { currencies } from "@/data/subscriptionPresets";
 import { convertCurrency, getCurrencySymbol } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
+import { formatMonthShortYear } from "@/i18n/date";
 import {
   Plus,
   Wallet,
@@ -176,10 +177,7 @@ const Finance = () => {
 
       for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStr = date.toLocaleDateString(undefined, {
-          month: "short",
-          year: "2-digit",
-        });
+        const monthStr = formatMonthShortYear(date);
         const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
         const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 

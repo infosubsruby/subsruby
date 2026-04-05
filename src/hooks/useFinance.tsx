@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useSubscriptions, Subscription } from "./useSubscriptions";
 import { toast } from "sonner";
+import { formatMonthShortYear } from "@/i18n/date";
 
 export interface Transaction {
   id: string;
@@ -449,10 +450,7 @@ export const useFinance = () => {
 
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthStr = date.toLocaleDateString("en-US", {
-        month: "short",
-        year: "2-digit",
-      });
+      const monthStr = formatMonthShortYear(date);
       const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
       const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 

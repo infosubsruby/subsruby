@@ -1,6 +1,8 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
+import { useTranslations } from "@/i18n/useTranslations";
+import { getActiveLocale } from "@/i18n/date";
 
 interface BillingDayPickerProps {
   billingCycle: "monthly" | "yearly";
@@ -11,20 +13,6 @@ interface BillingDayPickerProps {
 }
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
-const MONTHS = [
-  { value: 1, label: "January" },
-  { value: 2, label: "February" },
-  { value: 3, label: "March" },
-  { value: 4, label: "April" },
-  { value: 5, label: "May" },
-  { value: 6, label: "June" },
-  { value: 7, label: "July" },
-  { value: 8, label: "August" },
-  { value: 9, label: "September" },
-  { value: 10, label: "October" },
-  { value: 11, label: "November" },
-  { value: 12, label: "December" },
-];
 
 export const BillingDayPicker = ({
   billingCycle,
@@ -33,21 +21,18 @@ export const BillingDayPicker = ({
   onBillingDayChange,
   onBillingMonthChange,
 }: BillingDayPickerProps) => {
-  const getDaySuffix = (day: number): string => {
-    if (day >= 11 && day <= 13) return "th";
-    switch (day % 10) {
-      case 1: return "st";
-      case 2: return "nd";
-      case 3: return "rd";
-      default: return "th";
-    }
-  };
+  const t = useTranslations("Subscriptions");
+  const locale = getActiveLocale();
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const label = new Intl.DateTimeFormat(locale, { month: "long" }).format(new Date(2020, i, 1));
+    return { value: i + 1, label };
+  });
 
   return (
     <div className="space-y-2">
       <Label className="flex items-center gap-2">
         <Calendar className="w-4 h-4 text-muted-foreground" />
-        {billingCycle === "monthly" ? "Billing Day" : "Billing Date"}
+        {t("billing_day")}
       </Label>
       
       <div className={`grid gap-3 ${billingCycle === "yearly" ? "grid-cols-2" : "grid-cols-1"}`}>
@@ -58,10 +43,10 @@ export const BillingDayPicker = ({
             onValueChange={(v) => onBillingMonthChange(parseInt(v))}
           >
             <SelectTrigger className="input-ruby">
-              <SelectValue placeholder="Month" />
+              <SelectValue placeholder={t("billing_day")} />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border max-h-60">
-              {MONTHS.map((month) => (
+              {months.map((month) => (
                 <SelectItem key={month.value} value={month.value.toString()}>
                   {month.label}
                 </SelectItem>
@@ -76,12 +61,12 @@ export const BillingDayPicker = ({
           onValueChange={(v) => onBillingDayChange(parseInt(v))}
         >
           <SelectTrigger className="input-ruby">
-            <SelectValue placeholder="Day" />
+            <SelectValue placeholder={t("billing_day")} />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border max-h-60">
             {DAYS.map((day) => (
               <SelectItem key={day} value={day.toString()}>
-                {day}{getDaySuffix(day)}{billingCycle === "monthly" ? " of every month" : ""}
+                {billingCycle === "yearly" ? `${months[billingMonth - 1]?.label ?? ""} ${day}` : String(day)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -89,10 +74,7 @@ export const BillingDayPicker = ({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        {billingCycle === "monthly" 
-          ? `You'll be billed on the ${billingDay}${getDaySuffix(billingDay)} of each month`
-          : `You'll be billed on ${MONTHS.find(m => m.value === billingMonth)?.label} ${billingDay}${getDaySuffix(billingDay)} each year`
-        }
+        {t("billed_on", { day: billingDay })}
       </p>
     </div>
   );

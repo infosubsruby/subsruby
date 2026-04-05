@@ -30,6 +30,7 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
   currencySymbol,
 }) => {
   const t = useTranslations("Modals");
+  const tSubscriptions = useTranslations("Subscriptions");
   const hasUnused = unusedSubscriptions.length > 0;
   const isMultipleUnused = unusedSubscriptions.length > 2;
 
@@ -98,8 +99,7 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
             <div className="flex gap-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
               <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground leading-relaxed">
-                These subscriptions are marked as unused. 
-                Cancelling them could significantly reduce your recurring expenses.
+                {tSubscriptions("unused_info")}
               </p>
             </div>
           )}
