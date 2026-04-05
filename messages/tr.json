@@ -89,6 +89,7 @@
     "income_percent": "Gelirinizin {percent}%'i",
     "spending_change": "Harcama Değişimi",
     "spending_change_desc": "Harcama trendlerini görmek için aboneliklerinizi zaman içinde takip edin",
+    "no_previous_data": "Geçmiş veri yok",
     "potential_savings": "Potansiyel Tasarruf",
     "view_details": "Detayları Gör",
     "managing_well": "Aboneliklerinizi iyi yönetiyorsunuz 🎉",

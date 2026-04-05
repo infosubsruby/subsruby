@@ -89,6 +89,7 @@
     "income_percent": "{percent}% of your income",
     "spending_change": "Spending Change",
     "spending_change_desc": "Track your subscriptions over time to see spending trends",
+    "no_previous_data": "No previous data",
     "potential_savings": "Potential Savings",
     "view_details": "View Details",
     "managing_well": "You're managing your subscriptions well 🎉",

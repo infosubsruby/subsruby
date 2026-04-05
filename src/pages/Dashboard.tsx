@@ -573,7 +573,7 @@ const Dashboard = () => {
                             </>
                           ) : (
                             <>
-                              <h3 className="text-base font-semibold mt-1 text-muted-foreground">No previous data</h3>
+                              <h3 className="text-base font-semibold mt-1 text-muted-foreground">{tt("no_previous_data")}</h3>
                               <p className="text-[10px] text-muted-foreground mt-0.5">{tt("spending_change_desc")}</p>
                             </>
                           )}
