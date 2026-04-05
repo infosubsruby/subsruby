@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface TimeLeft {
   days: number;
@@ -12,6 +13,7 @@ interface CountdownTimerProps {
 }
 
 export const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
+  const t = useTranslations("Dashboard");
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 0,
     hours: 0,
@@ -51,28 +53,36 @@ export const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
         <div className="countdown-number text-foreground font-bold text-lg">
           {formatNumber(timeLeft.days)}
         </div>
-        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Days</div>
+        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+          {t("days")}
+        </div>
       </div>
       <span className="text-primary font-bold text-lg">:</span>
       <div className="countdown-box text-center min-w-[40px]">
         <div className="countdown-number text-foreground font-bold text-lg">
           {formatNumber(timeLeft.hours)}
         </div>
-        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Hours</div>
+        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+          {t("hours")}
+        </div>
       </div>
       <span className="text-primary font-bold text-lg">:</span>
       <div className="countdown-box text-center min-w-[40px]">
         <div className="countdown-number text-foreground font-bold text-lg">
           {formatNumber(timeLeft.minutes)}
         </div>
-        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Min</div>
+        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+          {t("min")}
+        </div>
       </div>
       <span className="text-primary font-bold text-lg">:</span>
       <div className="countdown-box text-center min-w-[40px]">
         <div className="countdown-number text-foreground font-bold text-lg">
           {formatNumber(timeLeft.seconds)}
         </div>
-        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Sec</div>
+        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+          {t("sec")}
+        </div>
       </div>
     </div>
   );

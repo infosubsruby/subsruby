@@ -29,6 +29,8 @@ void i18n.use(initReactI18next).init({
   lng: initialLanguage,
   fallbackLng: "en",
   interpolation: {
+    prefix: "{",
+    suffix: "}",
     escapeValue: false,
   },
 });

@@ -4,12 +4,14 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "@/i18n/useTranslations";
 
 export const TrialBanner = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { isPro } = useSubscription();
   const { subscriptions } = useSubscriptions();
+  const t = useTranslations("Dashboard");
 
   const FREE_PLAN_LIMIT = 3;
   const used = Math.min(Array.isArray(subscriptions) ? subscriptions.length : 0, FREE_PLAN_LIMIT);
@@ -24,16 +26,16 @@ export const TrialBanner = () => {
         </div>
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold text-foreground">Free Plan</p>
+            <p className="font-semibold text-foreground">{t("free_plan")}</p>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-secondary text-muted-foreground">
-              {used} / {FREE_PLAN_LIMIT} subscriptions used
+              {t("subs_used", { used, limit: FREE_PLAN_LIMIT })}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Track up to 3 subscriptions for free
+            {t("track_free", { limit: FREE_PLAN_LIMIT })}
           </p>
           <p className="text-xs text-muted-foreground/80">
-            Unlock unlimited tracking, smart insights, and full financial control with Pro
+            {t("unlock_pro")}
           </p>
         </div>
       </div>
@@ -44,7 +46,7 @@ export const TrialBanner = () => {
         onClick={() => navigate("/upgrade")}
       >
         <Sparkles className="w-4 h-4" />
-        Upgrade to Pro
+        {t("upgrade_btn")}
       </Button>
     </div>
   );

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface SubscriptionLimitModalProps {
   open: boolean;
@@ -19,6 +20,8 @@ export const SubscriptionLimitModal = ({
   onOpenChange,
 }: SubscriptionLimitModalProps) => {
   const navigate = useNavigate();
+  const t = useTranslations("Dashboard");
+  const FREE_PLAN_LIMIT = 3;
 
   const handleUpgrade = () => {
     onOpenChange(false);
@@ -34,11 +37,10 @@ export const SubscriptionLimitModal = ({
           </div>
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-2xl font-display text-white">
-              Upgrade to add more subscriptions
+              {t("limit_warning", { limit: FREE_PLAN_LIMIT })}
             </DialogTitle>
             <DialogDescription className="text-white/80">
-              You’ve reached the free limit of 3 subscriptions. Upgrade to track
-              unlimited subscriptions and unlock insights.
+              {t("unlock_pro")}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -49,7 +51,7 @@ export const SubscriptionLimitModal = ({
             className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong text-lg py-6 gap-2"
           >
             <Sparkles className="w-5 h-5" />
-            Upgrade
+            {t("upgrade_btn")}
           </Button>
         </div>
       </DialogContent>

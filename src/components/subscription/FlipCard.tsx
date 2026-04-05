@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
 import { Switch } from "@/components/ui/switch";
+import { useTranslations } from "@/i18n/useTranslations";
 
 interface FlipCardProps {
   subscription: Subscription;
@@ -29,6 +30,7 @@ interface FlipCardProps {
 }
 
 export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) => {
+  const t = useTranslations("Dashboard");
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -168,7 +170,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                     {symbol}{subscription.price.toFixed(2)}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                    / {subscription.billing_cycle === "yearly" ? "year" : "month"}
+                    {t("per_month")}
                   </div>
                 </div>
               </div>
@@ -187,7 +189,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
               {/* Countdown */}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                  Next Payment In
+                  {t("countdown_title")}
                 </p>
                 <CountdownTimer targetDate={subscription.next_payment_date} />
               </div>
@@ -213,7 +215,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                 // Edit Mode
                 <div className="flex flex-col h-full" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-display text-lg font-semibold">Edit</h3>
+                    <h3 className="font-display text-lg font-semibold">{t("edit")}</h3>
                     <Button variant="ghost" size="icon" onClick={handleCancelEdit}>
                       <X className="w-4 h-4" />
                     </Button>
@@ -296,35 +298,35 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                     <div>
                       <h3 className="font-display text-lg font-semibold">{subscription.name}</h3>
                       <p className="text-xs text-muted-foreground capitalize">
-                        {subscription.billing_cycle} subscription
+                        {t("monthly_sub")}
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-2 flex-1">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Start Date</span>
-                      <span>{format(new Date(subscription.start_date), "MMM d, yyyy")}</span>
+                      <span className="text-muted-foreground">{t("start_date")}</span>
+                    <span>{format(new Date(subscription.start_date), "yyyy-MM-dd")}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Next Payment</span>
+                      <span className="text-muted-foreground">{t("next_payment")}</span>
                       <span>
                         {subscription.next_payment_date 
-                          ? format(new Date(subscription.next_payment_date), "MMM d, yyyy")
-                          : "N/A"
+                          ? format(new Date(subscription.next_payment_date), "yyyy-MM-dd")
+                          : "—"
                         }
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Amount</span>
+                      <span className="text-muted-foreground">{t("amount")}</span>
                       <span className="font-semibold">
-                        {symbol}{subscription.price.toFixed(2)} / {subscription.billing_cycle === "yearly" ? "yr" : "mo"}
+                        {symbol}{subscription.price.toFixed(2)} {t("per_month")}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between mt-3 text-xs">
-                    <span className="text-muted-foreground">Mark as unused</span>
+                    <span className="text-muted-foreground">{t("mark_unused")}</span>
                     <Switch
                       checked={subscription.is_marked_unused ?? false}
                       onCheckedChange={handleToggleUnused}
@@ -343,7 +345,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                       onClick={handleExternalLink}
                     >
                       <ExternalLink className="w-3 h-3" />
-                      Manage
+                      {t("manage")}
                     </Button>
                     <Button 
                       size="sm" 
@@ -352,7 +354,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                       onClick={handleEdit}
                     >
                       <Edit className="w-3 h-3" />
-                      Edit
+                      {t("edit")}
                     </Button>
                     <Button 
                       size="sm" 

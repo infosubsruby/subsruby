@@ -29,12 +29,14 @@ import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsMod
 import { useFinance } from "@/hooks/useFinance";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/hooks/useSettings";
+import { useTranslations } from "@/i18n/useTranslations";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, isAdmin } = useAuth();
   const { isPro, status: proStatus, loading: subStatusLoading } = useSubscription();
   const { t } = useLanguage();
+  const tt = useTranslations("Dashboard");
   const { defaultCurrency } = useSettings();
   const { 
     subscriptions, 
@@ -229,11 +231,11 @@ const Dashboard = () => {
       return {
         severity: "info",
         icon: "🔵",
-        title: "Personalized Insight",
-        message: "Add income to get financial insights about your subscription health.",
+        title: tt("spending_moderate"),
+        message: tt("spending_moderate_desc"),
         color: "bg-blue-50 border-blue-200",
         textColor: "text-blue-700",
-        cta: "Add Income"
+        cta: tt("review_subs")
       };
     }
 
@@ -241,33 +243,33 @@ const Dashboard = () => {
       return {
         severity: "danger",
         icon: "⚠",
-        title: "You are spending too much on subscriptions",
-        message: "Your subscriptions take a large portion of your income. Consider reviewing your active plans.",
+        title: tt("spending_moderate"),
+        message: tt("spending_moderate_desc"),
         color: "bg-red-50 border-red-200",
         textColor: "text-red-700",
-        cta: "Review subscriptions"
+        cta: tt("review_subs")
       };
     } else if (ratio >= 0.2) {
       return {
         severity: "warning",
         icon: "🟡",
-        title: "Your subscription spending is moderate",
-        message: "Consider reviewing your subscriptions to optimize your budget.",
+        title: tt("spending_moderate"),
+        message: tt("spending_moderate_desc"),
         color: "bg-amber-50 border-amber-200",
         textColor: "text-amber-700",
-        cta: "Review subscriptions"
+        cta: tt("review_subs")
       };
     } else {
       return {
         severity: "good",
         icon: "✅",
-        title: "Your subscription spending is healthy",
-        message: "You are managing your subscriptions well and staying within a safe range.",
+        title: tt("managing_well"),
+        message: tt("find_hidden_savings"),
         color: "bg-green-50 border-green-200",
         textColor: "text-green-700"
       };
     }
-  }, [subscriptions, transactions]);
+  }, [subscriptions, transactions, tt]);
 
   // Calculate month-over-month spending change
   const spendingChange = useMemo(() => {
@@ -339,10 +341,10 @@ const Dashboard = () => {
                   onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
                 >
                   <SelectTrigger className="w-[140px] bg-background border-input hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                    <SelectValue placeholder="Select currency" />
+                    <SelectValue placeholder={t.dashboard.auto} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="auto">Auto ({autoCurrency})</SelectItem>
+                    <SelectItem value="auto">{t.dashboard.auto} ({autoCurrency})</SelectItem>
                     {currencies.map((currency) => (
                       <SelectItem key={currency.value} value={currency.value}>
                         {currency.value} ({currency.symbol})
@@ -362,11 +364,11 @@ const Dashboard = () => {
               {isFreeLimited && (
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-muted-foreground">
-                    {Math.min(subscriptions.length, FREE_PLAN_LIMIT)}/{FREE_PLAN_LIMIT} Free used
+                    {tt("subs_used", { used: Math.min(subscriptions.length, FREE_PLAN_LIMIT), limit: FREE_PLAN_LIMIT })}
                   </span>
                   {subscriptions.length === FREE_PLAN_LIMIT - 1 && (
                     <span className="text-[10px] font-medium text-amber-600 dark:text-amber-500">
-                      You're almost at your free limit (3 subscriptions)
+                      {tt("limit_warning", { limit: FREE_PLAN_LIMIT })}
                     </span>
                   )}
                 </div>
@@ -395,12 +397,7 @@ const Dashboard = () => {
                 size="sm" 
                 className={cn("whitespace-nowrap bg-background/50 hover:bg-background border-border/40 font-medium", financialInsight.textColor)}
                 onClick={() => {
-                  if (financialInsight.cta === "Add Income") {
-                    navigate("/finance");
-                  } else {
-                    // Scroll to subscriptions
-                    window.scrollTo({ top: 600, behavior: 'smooth' });
-                  }
+                  window.scrollTo({ top: 600, behavior: "smooth" });
                 }}
               >
                 {financialInsight.cta}
@@ -456,11 +453,11 @@ const Dashboard = () => {
                   <BarChart3 className="w-6 h-6 text-blue-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">Subs vs Income</p>
+                  <p className="text-sm text-muted-foreground">{tt("subs_vs_income")}</p>
                   {(() => {
                     try {
                       if (financeLoading) {
-                        return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">Loading income data...</p>;
+                        return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{tt("spending_change_desc")}</p>;
                       }
 
                       const income = Number(currentMonthlyIncome) || 0;
@@ -469,7 +466,7 @@ const Dashboard = () => {
                       if (income <= 0) {
                         return (
                           <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                            Add income to see subscription ratio
+                            {tt("spending_moderate_desc")}
                           </p>
                         );
                       }
@@ -477,7 +474,7 @@ const Dashboard = () => {
                       if (income < 100) {
                         return (
                           <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                            Income data is too low to calculate accurately
+                            {tt("spending_moderate_desc")}
                           </p>
                         );
                       }
@@ -485,7 +482,7 @@ const Dashboard = () => {
                       const safePercentage = subscriptionPercentage;
                       if (safePercentage === null) return null;
 
-                      const displayPercentage = safePercentage > 200 ? "200%+" : `${safePercentage}%`;
+                      const percentValue = safePercentage > 200 ? "200+" : String(safePercentage);
 
                       return (
                         <>
@@ -493,13 +490,13 @@ const Dashboard = () => {
                             {currencySymbol}{safeMonthlySpend.toFixed(0)} / {currencySymbol}{income.toFixed(0)}
                           </h3>
                           <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
-                            {displayPercentage} of your income
+                            {tt("income_percent", { percent: percentValue })}
                           </p>
                         </>
                       );
                     } catch (e) {
                       console.error("Error rendering Subscriptions vs Income card:", e);
-                      return <h3 className="text-sm font-bold mt-1 text-muted-foreground">Data unavailable</h3>;
+                      return <h3 className="text-sm font-bold mt-1 text-muted-foreground">{tt("spending_change_desc")}</h3>;
                     }
                   })()}
                 </div>
@@ -516,16 +513,16 @@ const Dashboard = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">Spending Change</p>
+                  <p className="text-sm text-muted-foreground">{tt("spending_change")}</p>
                   {(() => {
                     try {
-                      if (!spendingChange) return <p className="text-[10px] text-muted-foreground mt-1">Unable to calculate spending change</p>;
+                      if (!spendingChange) return <p className="text-[10px] text-muted-foreground mt-1">{tt("spending_change_desc")}</p>;
                       if (!spendingChange.hasPreviousData) {
                         return (
                           <div className="flex items-start gap-1.5 mt-1">
                             <Info className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
                             <p className="text-[10px] text-muted-foreground leading-tight">
-                              Track your subscriptions over time to see spending trends
+                              {tt("spending_change_desc")}
                             </p>
                           </div>
                         );
@@ -541,12 +538,12 @@ const Dashboard = () => {
                             {isIncrease ? "+" : ""}{change.toFixed(1)}%
                           </h3>
                           <p className={cn("text-[10px] font-medium mt-0.5", isIncrease ? "text-orange-500" : "text-green-500")}>
-                            {isIncrease ? "⚠ Increased" : isDecrease ? "✅ Decreased" : "No change"} this month
+                            {tt("spending_change_desc")}
                           </p>
                         </>
                       );
                     } catch (e) {
-                      return <p className="text-[10px] text-muted-foreground mt-1">Unable to calculate spending change</p>;
+                      return <p className="text-[10px] text-muted-foreground mt-1">{tt("spending_change_desc")}</p>;
                     }
                   })()}
                 </div>
@@ -560,7 +557,7 @@ const Dashboard = () => {
                   <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center">
                     <PiggyBank className="w-4.5 h-4.5 text-green-500" />
                   </div>
-                  <p className="text-sm text-muted-foreground font-medium">Potential Savings</p>
+                  <p className="text-sm text-muted-foreground font-medium">{tt("potential_savings")}</p>
                 </div>
                 <Button 
                   variant="ghost"
@@ -568,7 +565,7 @@ const Dashboard = () => {
                   onClick={() => setIsSavingsModalOpen(true)}
                   className="h-6 px-0 text-[10px] text-muted-foreground hover:text-red-500 hover:bg-transparent transition-colors flex items-center gap-1"
                 >
-                  View Details
+                  {tt("view_details")}
                   <span className="text-xs">→</span>
                 </Button>
               </div>
@@ -577,7 +574,7 @@ const Dashboard = () => {
               <div className="mb-2">
                 <h3 className="text-2xl font-bold">
                   {currencySymbol}{potentialSavings.toFixed(2)}
-                  {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">/ month</span>}
+                  {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">{tt("per_month")}</span>}
                 </h3>
               </div>
 
@@ -585,15 +582,15 @@ const Dashboard = () => {
               <div>
                 {potentialSavings > 0 ? (
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    You could save this by cancelling unused subscriptions
+                    {tt("find_hidden_savings")}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-0.5">
                     <p className="text-[11px] font-medium text-muted-foreground leading-tight">
-                      You're managing your subscriptions well 🎉
+                      {tt("managing_well")}
                     </p>
                     <p className="text-[10px] text-muted-foreground/70 leading-tight">
-                      Review your subscriptions to find hidden savings
+                      {tt("find_hidden_savings")}
                     </p>
                   </div>
                 )}
