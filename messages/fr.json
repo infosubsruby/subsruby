@@ -16,12 +16,20 @@
       "title": "Sécurité",
       "subtitle": "Mettez à jour votre mot de passe",
       "currentPassword": "Mot de passe actuel",
+      "currentPasswordPlaceholder": "********",
       "forgotPassword": "Mot de passe oublié ?",
       "newPassword": "Nouveau mot de passe",
+      "newPasswordPlaceholder": "********",
       "confirmNewPassword": "Confirmer le nouveau mot de passe",
+      "confirmNewPasswordPlaceholder": "********",
       "updatePassword": "Mettre à jour le mot de passe",
-      "passwordMismatch": "Les mots de passe ne correspondent pas"
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "emailNotFound": "E-mail introuvable",
+      "currentPasswordRequired": "Veuillez saisir votre mot de passe actuel",
+      "newPasswordRequired": "Veuillez saisir un nouveau mot de passe",
+      "currentPasswordIncorrect": "Le mot de passe actuel est incorrect",
+      "updateFailed": "Impossible de mettre à jour le mot de passe",
+      "updateSuccess": "Mot de passe mis à jour"
     }
   }
 }
-

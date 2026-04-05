@@ -421,15 +421,15 @@ const Profile = () => {
   const handleUpdatePassword = async () => {
     const email = formEmail || accountEmail || "";
     if (!email) {
-      toast.error("Email not found");
+      toast.error(tt("emailNotFound"));
       return;
     }
     if (!currentPassword) {
-      toast.error("Please enter your current password");
+      toast.error(tt("currentPasswordRequired"));
       return;
     }
     if (!newPassword) {
-      toast.error("Please enter a new password");
+      toast.error(tt("newPasswordRequired"));
       return;
     }
     if (newPassword !== confirmNewPassword) {
@@ -443,24 +443,24 @@ const Profile = () => {
         password: currentPassword,
       });
       if (signInError) {
-        toast.error("Current password is incorrect");
+        toast.error(tt("currentPasswordIncorrect"));
         return;
       }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
         console.error("Supabase Güncelleme Hatası:", error);
-        toast.error("Failed to update password");
+        toast.error(tt("updateFailed"));
         return;
       }
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
       setPasswordMismatch(null);
-      toast.success("Password updated");
+      toast.success(tt("updateSuccess"));
     } catch (error) {
       console.error("Supabase Güncelleme Hatası:", error);
-      toast.error("Failed to update password");
+      toast.error(tt("updateFailed"));
     } finally {
       setUpdatingPassword(false);
     }
@@ -539,7 +539,7 @@ const Profile = () => {
                       value="security"
                       className="rounded-none px-0 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
                     >
-                      Security
+                      {tt("title")}
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -807,7 +807,7 @@ const Profile = () => {
                       type="password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="********"
+                      placeholder={tt("currentPasswordPlaceholder")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
@@ -820,7 +820,7 @@ const Profile = () => {
                         setNewPassword(e.target.value);
                         setPasswordMismatch(null);
                       }}
-                      placeholder="********"
+                      placeholder={tt("newPasswordPlaceholder")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                   </div>
@@ -833,7 +833,7 @@ const Profile = () => {
                         setConfirmNewPassword(e.target.value);
                         setPasswordMismatch(null);
                       }}
-                      placeholder="********"
+                      placeholder={tt("confirmNewPasswordPlaceholder")}
                       className="h-9 border-border/40 focus-visible:ring-1 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
                     />
                     {passwordMismatch ? <p className="text-sm text-red-500">{passwordMismatch}</p> : null}

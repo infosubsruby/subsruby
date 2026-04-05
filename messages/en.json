@@ -16,12 +16,20 @@
       "title": "Security",
       "subtitle": "Update your password",
       "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "********",
       "forgotPassword": "Forgot password?",
       "newPassword": "New Password",
+      "newPasswordPlaceholder": "********",
       "confirmNewPassword": "Confirm New Password",
+      "confirmNewPasswordPlaceholder": "********",
       "updatePassword": "Update Password",
-      "passwordMismatch": "Passwords do not match"
+      "passwordMismatch": "Passwords do not match",
+      "emailNotFound": "Email not found",
+      "currentPasswordRequired": "Please enter your current password",
+      "newPasswordRequired": "Please enter a new password",
+      "currentPasswordIncorrect": "Current password is incorrect",
+      "updateFailed": "Failed to update password",
+      "updateSuccess": "Password updated"
     }
   }
 }
-

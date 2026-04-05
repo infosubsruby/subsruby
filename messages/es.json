@@ -16,12 +16,20 @@
       "title": "Seguridad",
       "subtitle": "Actualiza tu contraseña",
       "currentPassword": "Contraseña actual",
+      "currentPasswordPlaceholder": "********",
       "forgotPassword": "¿Olvidaste tu contraseña?",
       "newPassword": "Nueva contraseña",
+      "newPasswordPlaceholder": "********",
       "confirmNewPassword": "Confirmar nueva contraseña",
+      "confirmNewPasswordPlaceholder": "********",
       "updatePassword": "Actualizar contraseña",
-      "passwordMismatch": "Las contraseñas no coinciden"
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "emailNotFound": "No se encontró el correo electrónico",
+      "currentPasswordRequired": "Introduce tu contraseña actual",
+      "newPasswordRequired": "Introduce una nueva contraseña",
+      "currentPasswordIncorrect": "La contraseña actual es incorrecta",
+      "updateFailed": "No se pudo actualizar la contraseña",
+      "updateSuccess": "Contraseña actualizada"
     }
   }
 }
-

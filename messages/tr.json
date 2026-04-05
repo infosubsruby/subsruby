@@ -16,12 +16,20 @@
       "title": "Güvenlik",
       "subtitle": "Şifrenizi güncelleyin",
       "currentPassword": "Mevcut Şifre",
+      "currentPasswordPlaceholder": "********",
       "forgotPassword": "Şifremi unuttum?",
       "newPassword": "Yeni Şifre",
+      "newPasswordPlaceholder": "********",
       "confirmNewPassword": "Yeni Şifreyi Onayla",
+      "confirmNewPasswordPlaceholder": "********",
       "updatePassword": "Şifreyi Güncelle",
-      "passwordMismatch": "Şifreler eşleşmiyor"
+      "passwordMismatch": "Şifreler eşleşmiyor",
+      "emailNotFound": "E-posta bulunamadı",
+      "currentPasswordRequired": "Lütfen mevcut şifrenizi girin",
+      "newPasswordRequired": "Lütfen yeni şifrenizi girin",
+      "currentPasswordIncorrect": "Mevcut şifre hatalı",
+      "updateFailed": "Şifre güncellenemedi",
+      "updateSuccess": "Şifre güncellendi"
     }
   }
 }
-

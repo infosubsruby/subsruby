@@ -16,12 +16,20 @@
       "title": "Sicherheit",
       "subtitle": "Passwort aktualisieren",
       "currentPassword": "Aktuelles Passwort",
+      "currentPasswordPlaceholder": "********",
       "forgotPassword": "Passwort vergessen?",
       "newPassword": "Neues Passwort",
+      "newPasswordPlaceholder": "********",
       "confirmNewPassword": "Neues Passwort bestätigen",
+      "confirmNewPasswordPlaceholder": "********",
       "updatePassword": "Passwort aktualisieren",
-      "passwordMismatch": "Passwörter stimmen nicht überein"
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "emailNotFound": "E-Mail nicht gefunden",
+      "currentPasswordRequired": "Bitte aktuelles Passwort eingeben",
+      "newPasswordRequired": "Bitte ein neues Passwort eingeben",
+      "currentPasswordIncorrect": "Aktuelles Passwort ist falsch",
+      "updateFailed": "Passwort konnte nicht aktualisiert werden",
+      "updateSuccess": "Passwort aktualisiert"
     }
   }
 }
-
