@@ -31,7 +31,10 @@ interface AuthContextType {
     password: string,
     metadata: { first_name: string; last_name: string; phone?: string }
   ) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: Error | null; hasCompletedOnboarding?: boolean | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -160,18 +163,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    return { error };
+    if (error) return { error };
+
+    const userId = data.user?.id ?? data.session?.user?.id ?? null;
+    if (!userId) return { error: null, hasCompletedOnboarding: null };
+
+    const { data: profileRow, error: profileError } = await supabase
+      .from("profiles")
+      .select("has_completed_onboarding")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileError) return { error: null, hasCompletedOnboarding: null };
+
+    const hasCompletedOnboarding =
+      typeof profileRow?.has_completed_onboarding === "boolean"
+        ? profileRow.has_completed_onboarding
+        : null;
+
+    return { error: null, hasCompletedOnboarding };
   };
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/control`,
+        redirectTo: `${window.location.origin}/dashboard`,
         scopes: 'https://www.googleapis.com/auth/gmail.readonly',
         queryParams: {
           access_type: 'offline',

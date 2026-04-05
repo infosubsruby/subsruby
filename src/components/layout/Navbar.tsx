@@ -50,7 +50,7 @@ export const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to={user ? "/control" : "/"} className="flex items-center gap-2 group">
+        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 group">
           <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden">
             <img
               src="/logo.png"
@@ -67,7 +67,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link to="/control">
+              <Link to="/dashboard">
                 <Button variant="ghost" size="sm">
                   {t.nav.dashboard}
                 </Button>

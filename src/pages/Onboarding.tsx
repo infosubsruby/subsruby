@@ -54,7 +54,7 @@ const Onboarding = () => {
       localStorage.setItem(`hasCompletedOnboarding:${user.id}`, "true");
       void supabase.from("profiles").update({ has_completed_onboarding: true }).eq("id", user.id);
     }
-    navigate("/control");
+    navigate("/dashboard");
   };
 
   // WOW Screen Calculations using REAL data from hooks

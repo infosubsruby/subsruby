@@ -39,7 +39,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (hasCompletedOnboarding && location.pathname === "/onboarding") {
-    return <Navigate to="/control" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

@@ -27,7 +27,7 @@ const Login = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signIn(email, password);
+    const { error, hasCompletedOnboarding } = await signIn(email, password);
     
     if (error) {
       toast.error(error.message || "Failed to sign in");
@@ -36,7 +36,7 @@ const Login = () => {
     }
 
     toast.success("Welcome back!");
-    navigate("/control");
+    navigate(hasCompletedOnboarding === false ? "/onboarding" : "/dashboard");
   };
 
   return (
