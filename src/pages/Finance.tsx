@@ -431,8 +431,8 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-5 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-2 md:pb-0 mb-8">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner">
                   <ArrowDownLeft className="w-6 h-6 text-success" />
@@ -446,7 +446,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner">
                   <ArrowUpRight className="w-6 h-6 text-destructive" />
@@ -460,7 +460,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner">
                   <TrendingDown className="w-6 h-6 text-primary" />
@@ -477,7 +477,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner">
                   <TrendingUp className="w-6 h-6 text-warning" />
@@ -495,7 +495,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col items-center text-center justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col items-center text-center justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
               <p className="text-sm text-muted-foreground font-medium mb-2">{tFinance("health_score")}</p>
               
               {financialHealth.score !== null ? (

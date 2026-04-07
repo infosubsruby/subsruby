@@ -74,91 +74,166 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-border">
-      <Table className="min-w-[640px]">
-        <TableHeader>
-          <TableRow className="bg-secondary/50 hover:bg-secondary/50">
-            <TableHead className="w-12"></TableHead>
-            <TableHead>{tFinance("table_desc")}</TableHead>
-            <TableHead>{tFinance("table_category")}</TableHead>
-            <TableHead>{tFinance("table_date")}</TableHead>
-            <TableHead className="text-right">{tFinance("table_amount")}</TableHead>
-            <TableHead className="w-12"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactions.map((transaction) => {
-            const rawDesc = (transaction.description ?? "").trim();
-            const categoryLabel = getCategoryLabel(transaction.category);
-            const isFallback = !rawDesc || rawDesc === transaction.category;
-            const isEnglishCategoryDesc = rawDesc in CATEGORY_KEY_MAP;
-            const displayDesc = isFallback
-              ? categoryLabel
-              : isEnglishCategoryDesc
-                ? getCategoryLabel(rawDesc)
-                : rawDesc;
+    <>
+      <div className="space-y-3 md:hidden">
+        {transactions.map((transaction) => {
+          const rawDesc = (transaction.description ?? "").trim();
+          const categoryLabel = getCategoryLabel(transaction.category);
+          const isFallback = !rawDesc || rawDesc === transaction.category;
+          const isEnglishCategoryDesc = rawDesc in CATEGORY_KEY_MAP;
+          const displayDesc = isFallback
+            ? categoryLabel
+            : isEnglishCategoryDesc
+              ? getCategoryLabel(rawDesc)
+              : rawDesc;
 
-            const absAmount = Math.abs(Number(transaction.amount) || 0);
-            const currency = transaction.currency || defaultCurrency || "USD";
-            const formattedAmount =
-              transaction.type === "income"
-                ? `+${formatCurrency(absAmount, currency)}`
-                : formatCurrency(-absAmount, currency);
+          const absAmount = Math.abs(Number(transaction.amount) || 0);
+          const currency = transaction.currency || defaultCurrency || "USD";
+          const formattedAmount =
+            transaction.type === "income"
+              ? `+${formatCurrency(absAmount, currency)}`
+              : formatCurrency(-absAmount, currency);
 
-            return (
-              <TableRow key={transaction.id} className="hover:bg-secondary/30">
-              <TableCell>
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center",
-                    transaction.type === "income"
-                      ? "bg-success/20 text-success"
-                      : "bg-destructive/20 text-destructive"
-                  )}
-                >
-                  {transaction.type === "income" ? (
-                    <ArrowDownLeft className="w-4 h-4" />
-                  ) : (
-                    <ArrowUpRight className="w-4 h-4" />
-                  )}
+          return (
+            <div key={transaction.id} className="glass-card rounded-2xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                      transaction.type === "income"
+                        ? "bg-success/20 text-success"
+                        : "bg-destructive/20 text-destructive"
+                    )}
+                  >
+                    {transaction.type === "income" ? (
+                      <ArrowDownLeft className="w-5 h-5" />
+                    ) : (
+                      <ArrowUpRight className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{displayDesc}</div>
+                    <div className="mt-1">
+                      <Badge variant="secondary" className="font-normal">
+                        {categoryLabel}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-              </TableCell>
-              <TableCell className="font-medium">
-                {displayDesc}
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary" className="font-normal">
-                  {categoryLabel}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {formatDate(transaction.date, { dateStyle: "medium" })}
-              </TableCell>
-              <TableCell
-                className={cn(
-                  "text-right font-semibold",
-                  transaction.type === "income"
-                    ? "text-success"
-                    : "text-foreground"
-                )}
-              >
-                {formattedAmount}
-              </TableCell>
-              <TableCell>
+
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div
+                    className={cn(
+                      "font-semibold",
+                      transaction.type === "income" ? "text-success" : "text-foreground"
+                    )}
+                  >
+                    {formattedAmount}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatDate(transaction.date, { dateStyle: "medium" })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex justify-end">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  className="h-9 w-9 text-muted-foreground hover:text-destructive"
                   onClick={() => handleDelete(transaction.id)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
-              </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden md:block w-full overflow-x-auto rounded-lg border border-border">
+        <Table className="min-w-[640px]">
+          <TableHeader>
+            <TableRow className="bg-secondary/50 hover:bg-secondary/50">
+              <TableHead className="w-12"></TableHead>
+              <TableHead>{tFinance("table_desc")}</TableHead>
+              <TableHead>{tFinance("table_category")}</TableHead>
+              <TableHead>{tFinance("table_date")}</TableHead>
+              <TableHead className="text-right">{tFinance("table_amount")}</TableHead>
+              <TableHead className="w-12"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {transactions.map((transaction) => {
+              const rawDesc = (transaction.description ?? "").trim();
+              const categoryLabel = getCategoryLabel(transaction.category);
+              const isFallback = !rawDesc || rawDesc === transaction.category;
+              const isEnglishCategoryDesc = rawDesc in CATEGORY_KEY_MAP;
+              const displayDesc = isFallback
+                ? categoryLabel
+                : isEnglishCategoryDesc
+                  ? getCategoryLabel(rawDesc)
+                  : rawDesc;
+
+              const absAmount = Math.abs(Number(transaction.amount) || 0);
+              const currency = transaction.currency || defaultCurrency || "USD";
+              const formattedAmount =
+                transaction.type === "income"
+                  ? `+${formatCurrency(absAmount, currency)}`
+                  : formatCurrency(-absAmount, currency);
+
+              return (
+                <TableRow key={transaction.id} className="hover:bg-secondary/30">
+                  <TableCell>
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center",
+                        transaction.type === "income"
+                          ? "bg-success/20 text-success"
+                          : "bg-destructive/20 text-destructive"
+                      )}
+                    >
+                      {transaction.type === "income" ? (
+                        <ArrowDownLeft className="w-4 h-4" />
+                      ) : (
+                        <ArrowUpRight className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium">{displayDesc}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-normal">
+                      {categoryLabel}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {formatDate(transaction.date, { dateStyle: "medium" })}
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "text-right font-semibold",
+                      transaction.type === "income" ? "text-success" : "text-foreground"
+                    )}
+                  >
+                    {formattedAmount}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDelete(transaction.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 };
