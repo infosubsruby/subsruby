@@ -37,22 +37,28 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
     Travel: "travel",
     Subscriptions: "subscriptions",
     Other: "other",
+    Salary: "salary",
+    Freelance: "freelance",
+    Investments: "investments",
+    Gifts: "gifts",
+    "Other Income": "other_income",
   };
 
   const getCategoryLabel = (cat: string) => {
-    const key = CATEGORY_KEY_MAP[cat] ?? (cat in CATEGORY_KEY_MAP ? CATEGORY_KEY_MAP[cat] : null);
-    if (key) return tCategories(key);
-    if (cat === "food_dining") return tCategories("food_dining");
-    if (cat === "entertainment") return tCategories("entertainment");
-    if (cat === "shopping") return tCategories("shopping");
-    if (cat === "transportation") return tCategories("transportation");
-    if (cat === "utilities") return tCategories("utilities");
-    if (cat === "health") return tCategories("health");
-    if (cat === "education") return tCategories("education");
-    if (cat === "travel") return tCategories("travel");
-    if (cat === "subscriptions") return tCategories("subscriptions");
-    if (cat === "other") return tCategories("other");
-    return cat;
+    const categoryToKey = (value: string) =>
+      value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/&/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+
+    const mappedKey = CATEGORY_KEY_MAP[cat];
+    if (mappedKey) return tCategories(mappedKey, { defaultValue: cat });
+
+    const normalizedKey = categoryToKey(cat);
+    return normalizedKey ? tCategories(normalizedKey, { defaultValue: cat }) : cat;
   };
 
   const handleDelete = async (id: string) => {
