@@ -378,7 +378,7 @@ const Finance = () => {
           : financialHealth.label;
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-28 md:pb-20">
       <Navbar />
 
       <main className="pt-20 sm:pt-24 px-3 sm:px-4">
@@ -386,8 +386,8 @@ const Finance = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="font-display text-3xl font-bold flex items-center gap-3">
-                <Wallet className="w-8 h-8 text-primary" />
+              <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-3">
+                <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                 {t.finance.title}
               </h1>
               <p className="text-muted-foreground mt-1">
@@ -431,45 +431,45 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-5 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-2 md:pb-0 mb-8">
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
-              <div className="flex flex-col items-center text-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner">
-                  <ArrowDownLeft className="w-6 h-6 text-success" />
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4 mb-8">
+            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner shrink-0">
+                  <ArrowDownLeft className="w-4 h-4 md:w-6 md:h-6 text-success" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.income}</p>
-                  <p className="font-display text-3xl font-bold text-success mt-1">
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.income}</p>
+                  <p className="font-display text-xl md:text-3xl font-bold text-success mt-0.5 truncate">
                     {formatCurrency(totalIncome, activeCurrency)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
-              <div className="flex flex-col items-center text-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner">
-                  <ArrowUpRight className="w-6 h-6 text-destructive" />
+            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner shrink-0">
+                  <ArrowUpRight className="w-4 h-4 md:w-6 md:h-6 text-destructive" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.expenses}</p>
-                  <p className="font-display text-3xl font-bold mt-1">
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.expenses}</p>
+                  <p className="font-display text-xl md:text-3xl font-bold mt-0.5 truncate">
                     {formatCurrency(totalExpenses, activeCurrency)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
-              <div className="flex flex-col items-center text-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner">
-                  <TrendingDown className="w-6 h-6 text-primary" />
+            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner shrink-0">
+                  <TrendingDown className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.subscriptions}</p>
-                  <p className="font-display text-3xl font-bold mt-1">
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.subscriptions}</p>
+                  <p className="font-display text-xl md:text-3xl font-bold mt-0.5 truncate">
                     {formatCurrency(totalMonthlyCost, activeCurrency)}
-                    <span className="text-sm font-normal text-muted-foreground ml-1">
+                    <span className="text-xs md:text-sm font-normal text-muted-foreground ml-1">
                       {tDashboard("per_month")}
                     </span>
                   </p>
@@ -477,17 +477,18 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
-              <div className="flex flex-col items-center text-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner">
-                  <TrendingUp className="w-6 h-6 text-warning" />
+            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner shrink-0">
+                  <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-warning" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.balance}</p>
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.balance}</p>
                   <p
-                    className={`font-display text-3xl font-bold mt-1 ${
+                    className={cn(
+                      "font-display text-xl md:text-3xl font-bold mt-0.5 truncate",
                       netWorth >= 0 ? "text-success" : "text-destructive"
-                    }`}
+                    )}
                   >
                     {formatCurrency(netWorth, activeCurrency)}
                   </p>
@@ -495,13 +496,13 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col items-center text-center justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center">
-              <p className="text-sm text-muted-foreground font-medium mb-2">{tFinance("health_score")}</p>
+            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col items-center text-center justify-center min-h-[110px] md:min-h-[180px] shadow-sm col-span-2 lg:col-span-1">
+              <p className="text-xs md:text-sm text-muted-foreground font-medium mb-2">{tFinance("health_score")}</p>
               
               {financialHealth.score !== null ? (
                 <div className="flex flex-col items-center gap-3 w-full">
                   <div className="flex items-baseline justify-center">
-                    <span className="text-5xl font-bold tracking-tight">{financialHealth.score}</span>
+                    <span className="text-4xl md:text-5xl font-bold tracking-tight">{financialHealth.score}</span>
                     <span className="text-sm text-muted-foreground ml-1">/100</span>
                   </div>
 

@@ -75,7 +75,7 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
 
   return (
     <>
-      <div className="space-y-3 md:hidden">
+      <div className="md:hidden glass-card rounded-xl overflow-hidden border border-border/50">
         {transactions.map((transaction) => {
           const rawDesc = (transaction.description ?? "").trim();
           const categoryLabel = getCategoryLabel(transaction.category);
@@ -95,53 +95,51 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
               : formatCurrency(-absAmount, currency);
 
           return (
-            <div key={transaction.id} className="glass-card rounded-2xl p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
+            <div
+              key={transaction.id}
+              className="flex items-center justify-between gap-3 px-3 py-2 border-b border-border/50 last:border-b-0"
+            >
+              <div className="flex items-center gap-3 min-w-0">
                   <div
                     className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
                       transaction.type === "income"
                         ? "bg-success/20 text-success"
                         : "bg-destructive/20 text-destructive"
                     )}
                   >
                     {transaction.type === "income" ? (
-                      <ArrowDownLeft className="w-5 h-5" />
+                      <ArrowDownLeft className="w-4 h-4" />
                     ) : (
-                      <ArrowUpRight className="w-5 h-5" />
+                      <ArrowUpRight className="w-4 h-4" />
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{displayDesc}</div>
-                    <div className="mt-1">
-                      <Badge variant="secondary" className="font-normal">
-                        {categoryLabel}
-                      </Badge>
-                    </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium truncate">{displayDesc}</span>
+                    <Badge variant="secondary" className="font-normal text-[10px] px-1.5 py-0.5 shrink-0">
+                      {categoryLabel}
+                    </Badge>
                   </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <div
-                    className={cn(
-                      "font-semibold",
-                      transaction.type === "income" ? "text-success" : "text-foreground"
-                    )}
-                  >
-                    {formattedAmount}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground truncate">
                     {formatDate(transaction.date, { dateStyle: "medium" })}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-3 flex justify-end">
+              <div className="flex items-center gap-2 shrink-0">
+                <div
+                  className={cn(
+                    "font-semibold text-sm",
+                    transaction.type === "income" ? "text-success" : "text-foreground"
+                  )}
+                >
+                  {formattedAmount}
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => handleDelete(transaction.id)}
                 >
                   <Trash2 className="w-4 h-4" />

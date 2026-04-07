@@ -510,17 +510,17 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-28 md:pb-20">
       <Navbar />
 
-      <main className="pt-24 px-4">
+      <main className="pt-20 sm:pt-24 px-3 sm:px-4">
         <div className="container mx-auto max-w-3xl">
           <Tabs defaultValue="account" className="space-y-6">
             <div className="mb-8">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h1 className="font-display text-3xl font-bold flex items-center gap-3">
-                    <User className="w-8 h-8 text-primary" />
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-3">
+                    <User className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                     {tLegacy.nav.profile}
                   </h1>
                   <TabsList className="mt-3 bg-transparent p-0 gap-4">

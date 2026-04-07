@@ -134,36 +134,69 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
 
   return (
     <>
-      <div 
-        className="flip-card-container h-[280px] cursor-pointer perspective-1000"
+      <div className="sm:hidden">
+        <div
+          className="glass-card rounded-xl p-3 border"
+          style={{ borderColor: `${subscription.card_color}20` }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: subscription.card_color }}
+              >
+                <IconComponent className="w-5 h-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-medium truncate">{subscription.name}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  <div className="inline-flex scale-[0.75] origin-left">
+                    <CountdownTimer targetDate={subscription.next_payment_date} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-right shrink-0">
+              <div className="font-display font-bold text-sm">
+                {symbol}{subscription.price.toFixed(2)}
+              </div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                {t("per_month")}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="hidden sm:block flip-card-container h-[280px] cursor-pointer perspective-1000"
         onClick={handleFlip}
         style={{ perspective: "1000px" }}
       >
-        <div 
+        <div
           className={cn(
             "flip-card-inner relative w-full h-full transition-transform duration-500",
             isFlipped && "rotate-y-180"
           )}
-          style={{ 
+          style={{
             transformStyle: "preserve-3d",
             transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
           }}
         >
-          {/* FRONT SIDE */}
-          <div 
+          <div
             className="flip-card-front absolute w-full h-full backface-hidden"
             style={{ backfaceVisibility: "hidden" }}
           >
             <div
               className="sub-card glass-card rounded-xl p-6 h-full group transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl"
-              style={{ 
+              style={{
                 ["--card-bg-color" as string]: subscription.card_color,
-                borderColor: `${subscription.card_color}20`
+                borderColor: `${subscription.card_color}20`,
               }}
             >
-              {/* Header with icon and price */}
               <div className="flex items-start justify-between mb-6">
-                <div 
+                <div
                   className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
                   style={{ backgroundColor: subscription.card_color }}
                 >
@@ -179,18 +212,12 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                 </div>
               </div>
 
-              {/* Name */}
               <h3 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                 {subscription.name}
               </h3>
 
-              {/* Divider */}
-              <div 
-                className="h-px my-4 opacity-20"
-                style={{ backgroundColor: subscription.card_color }}
-              />
+              <div className="h-px my-4 opacity-20" style={{ backgroundColor: subscription.card_color }} />
 
-              {/* Countdown */}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">
                   {t("countdown_title")}

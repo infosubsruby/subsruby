@@ -344,7 +344,7 @@ const Dashboard = () => {
 
   // 2. Render Dashboard (Show content for everyone)
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-28 md:pb-20">
       <Navbar />
       
       <main className="pt-20 sm:pt-24 px-3 sm:px-4">
@@ -354,7 +354,7 @@ const Dashboard = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="font-display text-3xl font-bold">{t.dashboard.title}</h1>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold">{t.dashboard.title}</h1>
               <p className="text-muted-foreground mt-1">
                 {t.dashboard.subtitle}
               </p>
@@ -404,7 +404,7 @@ const Dashboard = () => {
           {/* Smart Financial Insight Card */}
           <div
             className={cn(
-              "mb-8 p-4 rounded-2xl border backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4",
+              "mb-8 p-3 md:p-4 rounded-2xl border backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4",
               financialInsight.containerClass
             )}
           >
@@ -439,54 +439,54 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
-            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-primary" />
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Wallet className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
-                  <h3 className="text-2xl font-bold">
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
+                  <h3 className="text-xl md:text-2xl font-bold truncate">
                     {formatCurrency(monthlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-primary" />
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <CreditCard className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
-                  <h3 className="text-2xl font-bold">
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
+                  <h3 className="text-xl md:text-2xl font-bold truncate">
                     {formatCurrency(yearlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
-                  <h3 className="text-2xl font-bold">{subscriptions.length}</h3>
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
+                  <h3 className="text-xl md:text-2xl font-bold truncate">{subscriptions.length}</h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-blue-500" />
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <BarChart3 className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">{tt("subs_vs_income")}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">{tt("subs_vs_income")}</p>
                   {(() => {
                     try {
                       if (financeLoading) {
@@ -503,7 +503,7 @@ const Dashboard = () => {
 
                       return (
                         <>
-                          <h3 className="text-xl font-bold mt-0.5 truncate">
+                          <h3 className="text-sm sm:text-base md:text-xl font-bold mt-0.5 truncate">
                             {formatCurrency(safeSubs, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
                             {safeIncome > 0
                               ? formatCurrency(safeIncome, activeCurrency, { maximumFractionDigits: 0 })
@@ -525,26 +525,26 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
                   {(() => {
                     const previousSpending = Number(spendingChange?.previousTotal) || 0;
                     const currentSpending = Number(spendingChange?.currentTotal) || 0;
                     if (previousSpending <= 0) {
-                      return <Info className="w-6 h-6 text-muted-foreground" />;
+                      return <Info className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />;
                     }
                     const rawChange = ((currentSpending - previousSpending) / previousSpending) * 100;
                     const changeNumber = Number.isFinite(rawChange) ? rawChange : 0;
                     return changeNumber > 0 ? (
-                      <ArrowUp className="w-6 h-6 text-destructive" />
+                      <ArrowUp className="w-4 h-4 md:w-6 md:h-6 text-destructive" />
                     ) : (
-                      <ArrowDown className="w-6 h-6 text-green-500" />
+                      <ArrowDown className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
                     );
                   })()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">{tt("spending_change")}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">{tt("spending_change")}</p>
                   {(() => {
                     try {
                       const currentSpending = Number(spendingChange?.currentTotal) || 0;
@@ -581,7 +581,7 @@ const Dashboard = () => {
                           {spendingChangeValue !== null ? (
                             <>
                               <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-2xl font-bold">
+                                <h3 className="text-xl md:text-2xl font-bold">
                                   {isIncrease ? "+" : ""}{spendingChangeValue}%
                                 </h3>
                                 <svg width="60" height="18" viewBox="0 0 60 18" className="shrink-0">
