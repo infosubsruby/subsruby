@@ -30,7 +30,7 @@ export const SubscriptionLimitModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border p-0 overflow-hidden">
+      <DialogContent className="w-[95%] sm:w-full sm:max-w-md bg-card border-border p-0 overflow-hidden max-h-[85vh] overflow-y-auto">
         <div className="ruby-gradient p-6 text-center">
           <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-white" />

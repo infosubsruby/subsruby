@@ -133,7 +133,7 @@ export const AddTransactionModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="w-[95%] sm:w-full sm:max-w-md bg-card border-border max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
             {tModals("add_transaction")}

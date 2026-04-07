@@ -36,7 +36,7 @@ export const SavingsDetailsModal: React.FC<SavingsDetailsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md bg-card border-border">
+      <DialogContent className="w-[95%] sm:w-full sm:max-w-md bg-card border-border max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-display font-bold">{t("savings_title")}</DialogTitle>
           <DialogDescription>

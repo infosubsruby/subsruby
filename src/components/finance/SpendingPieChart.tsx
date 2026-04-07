@@ -61,11 +61,11 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
 
   if (data.length === 0) {
     return (
-      <div className="glass-card rounded-xl p-5">
+      <div className="glass-card rounded-xl p-4 md:p-5">
         <h3 className="font-display font-semibold text-lg mb-4">
           {tFinance("spending_dist")}
         </h3>
-        <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+        <div className="h-64 md:h-80 w-full flex items-center justify-center text-muted-foreground">
           —
         </div>
       </div>
@@ -73,11 +73,11 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
   }
 
   return (
-    <div className="glass-card rounded-xl p-5">
+    <div className="glass-card rounded-xl p-4 md:p-5">
       <h3 className="font-display font-semibold text-lg mb-4">
         {tFinance("spending_dist")}
       </h3>
-      <div className="h-[300px]">
+      <div className="h-64 md:h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

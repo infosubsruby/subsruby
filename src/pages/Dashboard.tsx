@@ -347,7 +347,7 @@ const Dashboard = () => {
     <div className="min-h-screen pb-20">
       <Navbar />
       
-      <main className="pt-24 px-4">
+      <main className="pt-20 sm:pt-24 px-3 sm:px-4">
         <div className="container mx-auto max-w-6xl">
           {!isPro && <TrialBanner />}
 
@@ -439,8 +439,8 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <Wallet className="w-6 h-6 text-primary" />
@@ -454,7 +454,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <CreditCard className="w-6 h-6 text-primary" />
@@ -468,7 +468,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-primary" />
@@ -480,7 +480,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-blue-500" />
@@ -525,7 +525,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
                   {(() => {
@@ -625,7 +625,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-5 rounded-2xl border shadow-sm flex flex-col h-full group">
+            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col h-full group">
               {/* Top row */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
@@ -701,7 +701,7 @@ const Dashboard = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {subscriptions.map((subscription) => (
                 <FlipCard
                   key={subscription.id}

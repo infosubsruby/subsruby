@@ -381,7 +381,7 @@ const Finance = () => {
     <div className="min-h-screen pb-20">
       <Navbar />
 
-      <main className="pt-24 px-4">
+      <main className="pt-20 sm:pt-24 px-3 sm:px-4">
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -431,8 +431,8 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner">
                   <ArrowDownLeft className="w-6 h-6 text-success" />
@@ -446,7 +446,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner">
                   <ArrowUpRight className="w-6 h-6 text-destructive" />
@@ -460,7 +460,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner">
                   <TrendingDown className="w-6 h-6 text-primary" />
@@ -477,7 +477,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 flex flex-col justify-center h-full min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner">
                   <TrendingUp className="w-6 h-6 text-warning" />
@@ -495,7 +495,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 flex flex-col items-center text-center justify-center h-full min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col items-center text-center justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
               <p className="text-sm text-muted-foreground font-medium mb-2">{tFinance("health_score")}</p>
               
               {financialHealth.score !== null ? (
@@ -538,7 +538,7 @@ const Finance = () => {
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
             <CashFlowChart data={cashFlowData} currency={activeCurrency} />
             <SpendingPieChart data={spendingData} currency={activeCurrency} />
           </div>

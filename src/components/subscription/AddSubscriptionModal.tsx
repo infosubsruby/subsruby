@@ -325,7 +325,7 @@ export const AddSubscriptionModal = ({ open, onOpenChange, defaultService, onCre
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg bg-card border-border p-0 gap-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95%] sm:w-full sm:max-w-lg bg-card border-border p-0 gap-0 overflow-hidden max-h-[85vh] overflow-y-auto">
         <DialogHeader 
           className="p-6 pb-4"
           style={{ 
