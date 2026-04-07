@@ -162,7 +162,12 @@
     "education": "Education",
     "travel": "Travel",
     "subscriptions": "Subscriptions",
-    "other": "Other"
+    "other": "Other",
+    "salary": "Salary",
+    "freelance": "Freelance",
+    "investments": "Investments",
+    "gifts": "Gifts",
+    "other_income": "Other Income"
   },
   "Profile": {
     "tab_account": "Account",

@@ -52,11 +52,14 @@ export const AddTransactionModal = ({
   const { defaultCurrency } = useSettings();
   const initialType = forcedType ?? "expense";
   const currencyOptions = ["USD", "EUR", "GBP", "TRY", "MXN", "CAD", "AUD", "JPY", "INR", "BRL"];
+  const INCOME_CATEGORIES = ["Salary", "Freelance", "Investments", "Gifts", "Other Income"];
+  const getCategoriesForType = (type: "income" | "expense") =>
+    type === "income" ? INCOME_CATEGORIES : CATEGORIES;
   const initialFormData = useMemo<CreateTransactionData>(
     () => ({
       amount: 0,
       type: initialType,
-      category: CATEGORIES[0],
+      category: initialType === "income" ? INCOME_CATEGORIES[0] : CATEGORIES[0],
       description: "",
       date: format(new Date(), "yyyy-MM-dd"),
     }),
@@ -68,6 +71,16 @@ export const AddTransactionModal = ({
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
+      case "Salary":
+        return tCategories("salary");
+      case "Freelance":
+        return tCategories("freelance");
+      case "Investments":
+        return tCategories("investments");
+      case "Gifts":
+        return tCategories("gifts");
+      case "Other Income":
+        return tCategories("other_income");
       case "Entertainment":
         return tCategories("entertainment");
       case "Food & Dining":
@@ -141,7 +154,13 @@ export const AddTransactionModal = ({
                   formData.type === "income" &&
                     "bg-success hover:bg-success/90 text-success-foreground"
                 )}
-                onClick={() => setFormData((prev) => ({ ...prev, type: "income" }))}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    type: "income",
+                    category: INCOME_CATEGORIES[0],
+                  }))
+                }
               >
                 {tModals("income")}
               </Button>
@@ -152,7 +171,13 @@ export const AddTransactionModal = ({
                   formData.type === "expense" &&
                     "ruby-gradient border-0"
                 )}
-                onClick={() => setFormData((prev) => ({ ...prev, type: "expense" }))}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    type: "expense",
+                    category: CATEGORIES[0],
+                  }))
+                }
               >
                 {tModals("expense")}
               </Button>
@@ -209,7 +234,7 @@ export const AddTransactionModal = ({
                 <SelectValue placeholder={tModals("select_category")} />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
-                {CATEGORIES.map((cat) => (
+                {getCategoriesForType(forcedType ?? formData.type).map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {getCategoryLabel(cat)}
                   </SelectItem>

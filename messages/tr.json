@@ -162,7 +162,12 @@
     "education": "Eğitim",
     "travel": "Seyahat",
     "subscriptions": "Abonelikler",
-    "other": "Diğer"
+    "other": "Diğer",
+    "salary": "Maaş",
+    "freelance": "Serbest Çalışma",
+    "investments": "Yatırımlar",
+    "gifts": "Hediye",
+    "other_income": "Diğer Gelir"
   },
   "Profile": {
     "tab_account": "Hesap",
