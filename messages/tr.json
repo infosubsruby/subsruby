@@ -42,7 +42,10 @@
     "sign_in_to_account": "Hesabınıza giriş yapın",
     "sign_in_btn": "Giriş Yap",
     "dont_have_account": "Hesabınız yok mu?",
-    "sign_up": "Kayıt ol"
+    "sign_up": "Kayıt ol",
+    "check_email_title": "E-postanızı kontrol edin",
+    "check_email_desc": "Gelen kutunuza bir onay bağlantısı gönderdik. Hesabınızı aktifleştirmek için lütfen bağlantıya tıklayın. Bulamazsanız Spam (Gereksiz) klasörünü kontrol etmeyi unutmayın.",
+    "back_to_sign_in": "Giriş sayfasına dön"
   },
   "Features": {
     "f1_title": "Gelir ve Gider Takibi",

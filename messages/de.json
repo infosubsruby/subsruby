@@ -42,7 +42,10 @@
     "sign_in_to_account": "Melden Sie sich bei Ihrem Konto an",
     "sign_in_btn": "Anmelden",
     "dont_have_account": "Haben Sie kein Konto?",
-    "sign_up": "Registrieren"
+    "sign_up": "Registrieren",
+    "check_email_title": "Überprüfen Sie Ihre E-Mails",
+    "check_email_desc": "Wir haben einen Bestätigungslink an Ihren Posteingang gesendet. Bitte klicken Sie auf den Link, um Ihr Konto zu aktivieren. Vergessen Sie nicht, Ihren Spam-Ordner zu überprüfen, falls Sie ihn nicht finden können.",
+    "back_to_sign_in": "Zurück zum Anmelden"
   },
   "Features": {
     "f1_title": "Einnahmen- & Ausgabenverfolgung",

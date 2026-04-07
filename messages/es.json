@@ -42,7 +42,10 @@
     "sign_in_to_account": "Inicia sesión en tu cuenta",
     "sign_in_btn": "Iniciar Sesión",
     "dont_have_account": "¿No tienes una cuenta?",
-    "sign_up": "Regístrate"
+    "sign_up": "Regístrate",
+    "check_email_title": "Revisa tu correo electrónico",
+    "check_email_desc": "Hemos enviado un enlace de confirmación a tu bandeja de entrada. Por favor, haz clic en el enlace para activar tu cuenta. No olvides revisar tu carpeta de spam si no lo encuentras.",
+    "back_to_sign_in": "Volver a Iniciar Sesión"
   },
   "Features": {
     "f1_title": "Seguimiento de Ingresos y Gastos",

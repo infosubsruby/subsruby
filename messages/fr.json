@@ -42,7 +42,10 @@
     "sign_in_to_account": "Connectez-vous à votre compte",
     "sign_in_btn": "Se connecter",
     "dont_have_account": "Vous n'avez pas de compte ?",
-    "sign_up": "S'inscrire"
+    "sign_up": "S'inscrire",
+    "check_email_title": "Vérifiez vos e-mails",
+    "check_email_desc": "Nous avons envoyé un lien de confirmation dans votre boîte de réception. Veuillez cliquer sur le lien pour activer votre compte. N'oubliez pas de vérifier votre dossier spam si vous ne le trouvez pas.",
+    "back_to_sign_in": "Retour à la connexion"
   },
   "Features": {
     "f1_title": "Suivi des revenus et dépenses",

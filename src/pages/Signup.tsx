@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Navbar } from "@/components/layout/Navbar";
-import { Mail, Lock, User, Phone, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Lock, User, Phone, ArrowRight, MailCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "@/i18n/useTranslations";
 
@@ -21,6 +21,7 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmailSent, setIsEmailSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,13 +60,8 @@ const Signup = () => {
       }
 
       console.log('Signup başarılı! Email:', email);
-      toast.success("Kayıt başarılı, yönlendiriliyorsunuz...");
-      
-      // Kısa bir gecikme ekleyerek kullanıcının toast mesajını görmesini sağlıyoruz
-      setTimeout(() => {
-        setIsLoading(false);
-        navigate("/onboarding");
-      }, 1500);
+      setIsLoading(false);
+      setIsEmailSent(true);
 
     } catch (err) {
       console.error('Beklenmeyen hata:', err);
@@ -93,114 +89,129 @@ const Signup = () => {
 
           {/* Form */}
           <div className="glass-card rounded-2xl p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Name fields */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {isEmailSent ? (
+              <div className="flex flex-col items-center text-center gap-4 py-6">
+                <MailCheck className="w-14 h-14 text-red-500" />
+                <div className="space-y-1">
+                  <h2 className="font-display text-xl font-bold">{tAuth("check_email_title")}</h2>
+                  <p className="text-sm text-muted-foreground">{tAuth("check_email_desc")}</p>
+                </div>
+                <Button className="mt-2" variant="outline" onClick={() => navigate("/login")}>
+                  {tAuth("back_to_sign_in")}
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Name fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      {tAuth("first_name")} *
+                    </Label>
+                    <Input
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="John"
+                      className="input-ruby"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      {tAuth("last_name")} *
+                    </Label>
+                    <Input
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Doe"
+                      className="input-ruby"
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    {tAuth("first_name")} *
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    {tAuth("email")} *
                   </Label>
                   <Input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="John"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
                     className="input-ruby"
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    {tAuth("last_name")} *
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    {tAuth("phone_optional")}
                   </Label>
                   <Input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                    className="input-ruby"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    {tAuth("password")} *
+                  </Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
                     className="input-ruby"
                     required
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  {tAuth("email")} *
-                </Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="input-ruby"
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    {tAuth("confirm_password")} *
+                  </Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="input-ruby"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  {tAuth("phone_optional")}
-                </Label>
-                <Input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 123-4567"
-                  className="input-ruby"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-muted-foreground" />
-                  {tAuth("password")} *
-                </Label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="input-ruby"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-muted-foreground" />
-                  {tAuth("confirm_password")} *
-                </Label>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="input-ruby"
-                  required
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
-                disabled={isLoading}
-              >
-                {tAuth("create_btn")}
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
+                  disabled={isLoading}
+                >
+                  {tAuth("create_btn")}
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </form>
+            )}
           </div>
 
           {/* Footer */}
-          <p className="text-center mt-6 text-muted-foreground">
-            {tAuth("already_account")}{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">
-              {tAuth("sign_in_btn")}
-            </Link>
-          </p>
+          {isEmailSent ? null : (
+            <p className="text-center mt-6 text-muted-foreground">
+              {tAuth("already_account")}{" "}
+              <Link to="/login" className="text-primary hover:underline font-medium">
+                {tAuth("sign_in_btn")}
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>
