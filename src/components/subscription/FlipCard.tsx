@@ -189,36 +189,38 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
             style={{ backfaceVisibility: "hidden" }}
           >
             <div
-              className="sub-card glass-card rounded-xl p-5 h-full overflow-hidden group transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl"
+              className="sub-card glass-card rounded-xl p-5 h-full overflow-hidden flex flex-col justify-between group transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl"
               style={{
                 ["--card-bg-color" as string]: subscription.card_color,
                 borderColor: `${subscription.card_color}20`,
               }}
             >
-              <div className="flex items-start justify-between mb-6">
-                <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
-                  style={{ backgroundColor: subscription.card_color }}
-                >
-                  <IconComponent className="w-7 h-7 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-xl font-display font-bold text-foreground">
-                    {symbol}{subscription.price.toFixed(2)}
+              <div>
+                <div className="flex items-start justify-between mb-6">
+                  <div
+                    className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
+                    style={{ backgroundColor: subscription.card_color }}
+                  >
+                    <IconComponent className="w-7 h-7 text-white" />
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                    {t("per_month")}
+                  <div className="text-right">
+                    <div className="text-xl font-display font-bold text-foreground">
+                      {symbol}{subscription.price.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                      {t("per_month")}
+                    </div>
                   </div>
                 </div>
+
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors truncate">
+                  {subscription.name}
+                </h3>
+
+                <div className="h-px my-4 opacity-20" style={{ backgroundColor: subscription.card_color }} />
               </div>
 
-              <h3 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors truncate">
-                {subscription.name}
-              </h3>
-
-              <div className="h-px my-4 opacity-20" style={{ backgroundColor: subscription.card_color }} />
-
-              <div className="space-y-2">
+              <div className="space-y-2 mt-auto">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">
                   {t("countdown_title")}
                 </p>

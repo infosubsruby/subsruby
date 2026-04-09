@@ -5,7 +5,6 @@ interface TimeLeft {
   days: number;
   hours: number;
   minutes: number;
-  seconds: number;
 }
 
 interface CountdownTimerProps {
@@ -18,7 +17,6 @@ export const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
     days: 0,
     hours: 0,
     minutes: 0,
-    seconds: 0,
   });
 
   useEffect(() => {
@@ -32,10 +30,9 @@ export const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
         });
       } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setTimeLeft({ days: 0, hours: 0, minutes: 0 });
       }
     };
 
@@ -48,8 +45,8 @@ export const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="countdown-box text-center min-w-[32px]">
+    <div className="grid grid-cols-3 gap-2 w-full mt-auto">
+      <div className="countdown-box text-center w-full">
         <div className="countdown-number text-foreground font-semibold text-sm sm:text-base">
           {formatNumber(timeLeft.days)}
         </div>
@@ -57,8 +54,7 @@ export const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
           {t("days")}
         </div>
       </div>
-      <span className="hidden sm:block text-primary font-semibold text-sm">:</span>
-      <div className="countdown-box text-center min-w-[32px]">
+      <div className="countdown-box text-center w-full">
         <div className="countdown-number text-foreground font-semibold text-sm sm:text-base">
           {formatNumber(timeLeft.hours)}
         </div>
@@ -66,22 +62,12 @@ export const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
           {t("hours")}
         </div>
       </div>
-      <span className="hidden sm:block text-primary font-semibold text-sm">:</span>
-      <div className="countdown-box text-center min-w-[32px]">
+      <div className="countdown-box text-center w-full">
         <div className="countdown-number text-foreground font-semibold text-sm sm:text-base">
           {formatNumber(timeLeft.minutes)}
         </div>
         <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
           {t("min")}
-        </div>
-      </div>
-      <span className="hidden sm:block text-primary font-semibold text-sm">:</span>
-      <div className="countdown-box text-center min-w-[32px]">
-        <div className="countdown-number text-foreground font-semibold text-sm sm:text-base">
-          {formatNumber(timeLeft.seconds)}
-        </div>
-        <div className="countdown-label text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
-          {t("sec")}
         </div>
       </div>
     </div>
