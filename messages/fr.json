@@ -113,7 +113,9 @@
     "sec": "SEC",
     "per_month": "/ MOIS",
     "upcoming_payments": "Paiements à Venir",
-    "no_upcoming": "Aucun paiement à venir"
+    "no_upcoming": "Aucun paiement à venir",
+    "subscription_breakdown": "Répartition des Abonnements",
+    "top_spenders": "Plus Gros Dépenseurs"
   },
   "Subscriptions": {
     "add_title": "Ajouter un abonnement",

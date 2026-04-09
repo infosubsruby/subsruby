@@ -113,7 +113,9 @@
     "sec": "SEC",
     "per_month": "/ MONTH",
     "upcoming_payments": "Upcoming Payments",
-    "no_upcoming": "No upcoming payments"
+    "no_upcoming": "No upcoming payments",
+    "subscription_breakdown": "Subscription Breakdown",
+    "top_spenders": "Top Spenders"
   },
   "Modals": {
     "savings_title": "Potential Savings Details",

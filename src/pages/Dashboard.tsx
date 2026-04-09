@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
@@ -9,24 +9,17 @@ import { Navbar } from "@/components/layout/Navbar";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { FlipCard } from "@/components/subscription/FlipCard";
 import { UpcomingTimeline } from "@/components/dashboard/UpcomingTimeline";
+import { SubscriptionBreakdownChart } from "@/components/dashboard/SubscriptionBreakdownChart";
+import { TopSpenders } from "@/components/dashboard/TopSpenders";
 import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
 import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLimitModal";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, Loader2, PiggyBank, MoreHorizontal, BarChart3, ArrowUp, ArrowDown, Info, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, BarChart3, AlertTriangle, AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { currencies } from "@/data/subscriptionPresets";
-import { convertWithDynamicRates, getCurrencySymbol } from "@/lib/currency";
-import { 
-  calculatePotentialSavings, 
-  subscriptionPercentageOfIncome, 
-  SubscriptionInput,
-  currentMonthSubscriptionTotal,
-  previousMonthSubscriptionTotal,
-  monthOverMonthChangePercentage
-} from "@/lib/subscriptionInsights";
-import { SavingsDetailsModal } from "@/components/subscription/SavingsDetailsModal";
+import { convertWithDynamicRates } from "@/lib/currency";
 import { useFinance } from "@/hooks/useFinance";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/hooks/useSettings";
@@ -34,7 +27,6 @@ import { useTranslations } from "@/i18n/useTranslations";
 import { formatCurrency } from "@/i18n/currency";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading: authLoading, isAdmin } = useAuth();
   const { isPro, status: proStatus, loading: subStatusLoading } = useSubscription();
@@ -55,10 +47,10 @@ const Dashboard = () => {
     updateSubscription,
     deleteSubscription,
   } = useSubscriptions();
-  const { transactions, totalIncome, currentMonthlyIncome, isLoading: financeLoading } = useFinance();
+  const { transactions, isLoading: financeLoading } = useFinance();
 
   // Fetch dynamic exchange rates
-  const { data: exchangeRatesList, isLoading: ratesLoading } = useExchangeRates();
+  const { data: exchangeRatesList } = useExchangeRates();
 
   // Convert rates array to Record<string, number> for easier lookup
   const exchangeRates = useMemo(() => {
@@ -73,7 +65,6 @@ const Dashboard = () => {
   console.log("Active Exchange Rates:", exchangeRates);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSavingsModalOpen, setIsSavingsModalOpen] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
 
@@ -119,7 +110,6 @@ const Dashboard = () => {
   // Use user-selected currency or auto-detected
   const autoCurrency = defaultCurrency || autoDetectedCurrency;
   const activeCurrency = displayCurrency || autoCurrency;
-  const currencySymbol = getCurrencySymbol(activeCurrency);
 
   // Calculate total monthly cost with currency conversion
   const monthlySpend = useMemo(() => {
@@ -147,27 +137,6 @@ const Dashboard = () => {
   }, [subscriptions, activeCurrency, exchangeRates]);
 
   const yearlySpend = isFinite(monthlySpend * 12) ? monthlySpend * 12 : 0;
-
-  // Calculate potential savings from unused subscriptions
-  const { potentialSavings, unusedSubscriptions } = useMemo(() => {
-    const safeSubscriptions = subscriptions ?? [];
-    const convertedSubscriptions: SubscriptionInput[] = safeSubscriptions.map(sub => {
-      const price = convertWithDynamicRates(Number(sub?.price ?? 0), sub?.currency, activeCurrency, exchangeRates);
-      return {
-        price: isFinite(price) ? price : 0,
-        billing_cycle: sub?.billing_cycle,
-        is_marked_unused: sub?.is_marked_unused
-      };
-    });
-    
-    const savings = calculatePotentialSavings(convertedSubscriptions);
-    const unused = safeSubscriptions.filter(sub => sub?.is_marked_unused);
-    
-    return { 
-      potentialSavings: isFinite(savings) ? savings : 0, 
-      unusedSubscriptions: unused 
-    };
-  }, [subscriptions, activeCurrency, exchangeRates]);
 
   const convertedCurrentMonthlyIncome = useMemo(() => {
     const safeTransactions = Array.isArray(transactions) ? transactions : [];
@@ -223,7 +192,6 @@ const Dashboard = () => {
 
   // Smart Financial Insight Logic (Updated with safe calculations)
   const financialInsight = useMemo(() => {
-    const safeSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
     const safeTransactions = Array.isArray(transactions) ? transactions : [];
     const now = new Date();
 
@@ -304,39 +272,7 @@ const Dashboard = () => {
         messageClass: "text-zinc-400"
       };
     }
-  }, [subscriptions, transactions, tt, activeCurrency, exchangeRates, defaultCurrency, monthlySpend]);
-
-  // Calculate month-over-month spending change
-  const spendingChange = useMemo(() => {
-    try {
-      const safeSubscriptions = subscriptions ?? [];
-      
-      // Convert all subscriptions to display currency first for consistent totals
-      const convertedSubscriptions: SubscriptionInput[] = safeSubscriptions.map(sub => {
-        const price = convertWithDynamicRates(Number(sub?.price ?? 0), sub?.currency, activeCurrency, exchangeRates);
-        return {
-          price: isFinite(price) ? price : 0,
-          billing_cycle: sub?.billing_cycle,
-          start_date: sub?.start_date
-        };
-      });
-
-      const currentTotal = currentMonthSubscriptionTotal(convertedSubscriptions);
-      const previousTotal = previousMonthSubscriptionTotal(convertedSubscriptions);
-      
-      const percentageChange = monthOverMonthChangePercentage(currentTotal, previousTotal);
-      
-      return {
-        currentTotal,
-        previousTotal,
-        percentageChange: isFinite(percentageChange) ? percentageChange : 0,
-        hasPreviousData: previousTotal > 0
-      };
-    } catch (error) {
-      console.error("Error calculating spending change:", error);
-      return null;
-    }
-  }, [subscriptions, activeCurrency, exchangeRates]);
+  }, [transactions, tt, activeCurrency, exchangeRates, defaultCurrency, monthlySpend]);
 
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
@@ -535,162 +471,20 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
-                  {(() => {
-                    const previousSpending = Number(spendingChange?.previousTotal) || 0;
-                    const currentSpending = Number(spendingChange?.currentTotal) || 0;
-                    if (previousSpending <= 0) {
-                      return <Info className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />;
-                    }
-                    const rawChange = ((currentSpending - previousSpending) / previousSpending) * 100;
-                    const changeNumber = Number.isFinite(rawChange) ? rawChange : 0;
-                    return changeNumber > 0 ? (
-                      <ArrowUp className="w-4 h-4 md:w-6 md:h-6 text-destructive" />
-                    ) : (
-                      <ArrowDown className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
-                    );
-                  })()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground">{tt("spending_change")}</p>
-                  {(() => {
-                    try {
-                      const currentSpending = Number(spendingChange?.currentTotal) || 0;
-                      const previousSpending = Number(spendingChange?.previousTotal) || 0;
-                      const safeCurrent = Number.isFinite(currentSpending) ? currentSpending : 0;
-                      const safePrevious = Number.isFinite(previousSpending) ? previousSpending : 0;
-
-                      const spendingChangeValue =
-                        safePrevious > 0
-                          ? (((safeCurrent - safePrevious) / safePrevious) * 100).toFixed(1)
-                          : null;
-
-                      const changeNumber = spendingChangeValue !== null ? Number(spendingChangeValue) || 0 : 0;
-                      const isIncrease = changeNumber > 0;
-                      const sparklineColor = isIncrease ? "hsl(358, 82%, 55%)" : "hsl(142, 70%, 45%)";
-                      const sparklinePoints =
-                        spendingChangeValue !== null
-                          ? (() => {
-                              const a = safePrevious;
-                              const b = safeCurrent;
-                              const min = Math.min(a, b);
-                              const max = Math.max(a, b);
-                              const span = max - min || 1;
-                              const x1 = 0;
-                              const x2 = 60;
-                              const y1 = 16 - ((a - min) / span) * 16;
-                              const y2 = 16 - ((b - min) / span) * 16;
-                              return `${x1},${y1} ${x2},${y2}`;
-                            })()
-                          : "0,12 60,12";
-                      
-                      return (
-                        <>
-                          {spendingChangeValue !== null ? (
-                            <>
-                              <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-xl md:text-2xl font-bold">
-                                  {isIncrease ? "+" : ""}{spendingChangeValue}%
-                                </h3>
-                                <svg width="60" height="18" viewBox="0 0 60 18" className="shrink-0">
-                                  <polyline
-                                    fill="none"
-                                    stroke={sparklineColor}
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    points={sparklinePoints}
-                                  />
-                                </svg>
-                              </div>
-                              <p className={cn("text-[10px] font-medium mt-0.5", isIncrease ? "text-destructive" : "text-green-500")}>
-                                {tt("spending_change_desc")}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <h3 className="text-base font-semibold mt-1 text-muted-foreground">{tt("no_previous_data")}</h3>
-                              <svg width="60" height="18" viewBox="0 0 60 18" className="mt-1">
-                                <polyline
-                                  fill="none"
-                                  stroke="hsl(220, 10%, 55%)"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  points="0,12 60,12"
-                                />
-                              </svg>
-                              <p className="text-[10px] text-muted-foreground mt-0.5">{tt("spending_change_desc")}</p>
-                            </>
-                          )}
-                        </>
-                      );
-                    } catch (e) {
-                      return <p className="text-[10px] text-muted-foreground mt-1">{tt("spending_change_desc")}</p>;
-                    }
-                  })()}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card p-4 md:p-6 rounded-2xl border shadow-sm flex flex-col h-full group">
-              {/* Top row */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <PiggyBank className="w-4.5 h-4.5 text-green-500" />
-                  </div>
-                  <p className="text-sm text-muted-foreground font-medium">{tt("potential_savings")}</p>
-                </div>
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsSavingsModalOpen(true)}
-                  className="h-6 px-0 text-[10px] text-muted-foreground hover:text-red-500 hover:bg-transparent transition-colors flex items-center gap-1"
-                >
-                  {tt("view_details")}
-                  <span className="text-xs">→</span>
-                </Button>
-              </div>
-
-              {/* Middle row */}
-              <div className="mb-2">
-                <h3 className="text-2xl font-bold">
-                  {formatCurrency(potentialSavings, activeCurrency)}
-                  {potentialSavings > 0 && <span className="text-sm font-normal text-muted-foreground ml-1">{tt("per_month")}</span>}
-                </h3>
-              </div>
-
-              {/* Bottom row */}
-              <div>
-                {potentialSavings > 0 ? (
-                  <p className="text-[11px] text-muted-foreground leading-snug">
-                    {tt("find_hidden_savings")}
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-[11px] font-medium text-muted-foreground leading-tight">
-                      {tt("managing_well")}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/70 leading-tight">
-                      {tt("find_hidden_savings")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
-          <SavingsDetailsModal
-            isOpen={isSavingsModalOpen}
-            onClose={() => setIsSavingsModalOpen(false)}
-            unusedSubscriptions={unusedSubscriptions}
-            monthlySavings={potentialSavings}
-            yearlySavings={potentialSavings * 12}
-            currencySymbol={currencySymbol}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+            <SubscriptionBreakdownChart
+              subscriptions={subscriptions}
+              currency={activeCurrency}
+              exchangeRates={exchangeRates}
+            />
+            <TopSpenders
+              subscriptions={subscriptions}
+              currency={activeCurrency}
+              exchangeRates={exchangeRates}
+            />
+          </div>
 
           {/* Selector moved to header */}
 

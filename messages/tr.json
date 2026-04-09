@@ -113,7 +113,9 @@
     "sec": "SAN",
     "per_month": "/ AY",
     "upcoming_payments": "Yaklaşan Ödemeler",
-    "no_upcoming": "Yaklaşan ödeme yok"
+    "no_upcoming": "Yaklaşan ödeme yok",
+    "subscription_breakdown": "Abonelik Dağılımı",
+    "top_spenders": "En Çok Harcatanlar"
   },
   "Modals": {
     "savings_title": "Potansiyel Tasarruf Detayları",

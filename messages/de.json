@@ -113,7 +113,9 @@
     "sec": "SEK",
     "per_month": "/ MONAT",
     "upcoming_payments": "Kommende Zahlungen",
-    "no_upcoming": "Keine kommenden Zahlungen"
+    "no_upcoming": "Keine kommenden Zahlungen",
+    "subscription_breakdown": "Abonnement-Aufschlüsselung",
+    "top_spenders": "Top-Ausgaben"
   },
   "Subscriptions": {
     "add_title": "Abonnement hinzufügen",
