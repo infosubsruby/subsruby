@@ -83,10 +83,11 @@ export const SmartInsights = ({
         id: `yearly-${s.id}`,
         tone: "good",
         icon: "💡",
-        message: `${s.name} aboneliğini yıllığa geçirerek yılda ${formatCurrency(
-          yearlySavings,
-          currency
-        )} (%${Math.round(discount * 100)}) tasarruf edebilirsin.`,
+        message: t("insights.annual_savings", {
+          planName: s.name,
+          amount: formatCurrency(yearlySavings, currency),
+          percentage: Math.round(discount * 100),
+        }),
       });
       break;
     }
@@ -97,7 +98,9 @@ export const SmartInsights = ({
         id: "budget",
         tone: "warn",
         icon: "⚠️",
-        message: `Abonelik giderlerin bütçenin %10'unu aştı, gözden geçirmek ister misin?`,
+        message: t("insights.budget_exceeded", {
+          percentage: Math.round((monthlySpend / income) * 100),
+        }),
       });
     }
 
@@ -114,18 +117,18 @@ export const SmartInsights = ({
         id: "category",
         tone: "info",
         icon: "💡",
-        message: `Aynı kategoride birden fazla aboneliğin var, birini iptal ederek tasarruf edebilirsin.`,
+        message: t("insights.category_overlap"),
       });
     }
 
     return result.slice(0, 3);
-  }, [subscriptions, currency, exchangeRates, monthlyIncome]);
+  }, [subscriptions, currency, exchangeRates, monthlyIncome, t]);
 
   return (
     <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full h-full">
       <h3 className="font-display text-lg font-semibold">{t("smart_insights")}</h3>
       {insights.length === 0 ? (
-        <div className="mt-4 text-sm text-gray-400">Henüz analiz edilecek veri yok</div>
+        <div className="mt-4 text-sm text-gray-400">{t("insights.empty")}</div>
       ) : (
         <div className="mt-4 space-y-3">
           {insights.map((insight) => (

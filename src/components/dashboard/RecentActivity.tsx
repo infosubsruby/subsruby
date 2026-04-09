@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { Subscription } from "@/hooks/useSubscriptions";
 import { convertWithDynamicRates } from "@/lib/currency";
 import { formatCurrency } from "@/i18n/currency";
-import { formatDate, getActiveLocale } from "@/i18n/date";
+import { formatDate } from "@/i18n/date";
 import { useTranslations } from "@/i18n/useTranslations";
 
 type ActivityItem = {
@@ -49,18 +49,7 @@ const relativeLabel = (date: Date) => {
   const a = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const b = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const diffDays = Math.round((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays >= 0 && diffDays <= 7) {
-    try {
-      return new Intl.RelativeTimeFormat(getActiveLocale(), { numeric: "auto" }).format(-diffDays, "day");
-    } catch {
-      if (diffDays === 0) return "Bugün";
-      if (diffDays === 1) return "Dün";
-      return `${diffDays} gün önce`;
-    }
-  }
-
-  return formatDate(date, { day: "numeric", month: "long" });
+  return { diffDays, absolute: formatDate(date, { day: "numeric", month: "long" }) };
 };
 
 export const RecentActivity = ({
@@ -98,24 +87,34 @@ export const RecentActivity = ({
         const converted = convertWithDynamicRates(rawAmount, s.currency, currency, exchangeRates);
         const amount = Number.isFinite(converted) ? converted : rawAmount;
 
+        const { diffDays, absolute } = relativeLabel(last);
+        const dateLabel =
+          diffDays === 0
+            ? t("activity.today")
+            : diffDays === 1
+              ? t("activity.yesterday")
+              : diffDays > 1 && diffDays <= 7
+                ? t("activity.days_ago", { days: diffDays })
+                : absolute;
+
         return {
           id: s.id,
           name: s.name,
-          dateLabel: relativeLabel(last),
-          amountLabel: `${formatCurrency(amount, currency)} ödendi`,
+          dateLabel,
+          amountLabel: `${formatCurrency(amount, currency)} ${t("activity.paid")}`,
           date: last,
         };
       })
       .filter((i) => i.date.getTime() <= now.getTime())
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, 4);
-  }, [subscriptions, currency, exchangeRates]);
+  }, [subscriptions, currency, exchangeRates, t]);
 
   return (
     <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full h-full">
       <h3 className="font-display text-lg font-semibold">{t("recent_activity")}</h3>
       {items.length === 0 ? (
-        <div className="mt-4 text-sm text-gray-400">Henüz analiz edilecek veri yok</div>
+        <div className="mt-4 text-sm text-gray-400">{t("activity.empty")}</div>
       ) : (
         <div className="mt-4 relative">
           <div className="absolute left-2 top-1 bottom-1 w-px bg-gray-800" />

@@ -117,7 +117,20 @@
     "subscription_breakdown": "Répartition des Abonnements",
     "top_spenders": "Plus Gros Dépenseurs",
     "smart_insights": "Analyses Intelligentes",
-    "recent_activity": "Activité Récente"
+    "recent_activity": "Activité Récente",
+    "insights": {
+      "annual_savings": "En passant votre abonnement {planName} à un forfait annuel, vous pouvez économiser {amount} ({percentage}%) par an.",
+      "budget_exceeded": "Vos dépenses d'abonnement ont dépassé {percentage}% de votre budget. Souhaitez-vous les revoir ?",
+      "category_overlap": "Vous avez plusieurs abonnements dans la même catégorie. Pensez à en annuler un pour faire des économies.",
+      "empty": "Aucune donnée à analyser pour le moment"
+    },
+    "activity": {
+      "paid": "payé",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "days_ago": "il y a {days} jours",
+      "empty": "Aucune donnée à analyser pour le moment"
+    }
   },
   "Subscriptions": {
     "add_title": "Ajouter un abonnement",

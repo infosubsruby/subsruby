@@ -117,7 +117,20 @@
     "subscription_breakdown": "Abonnement-Aufschlüsselung",
     "top_spenders": "Top-Ausgaben",
     "smart_insights": "Intelligente Einblicke",
-    "recent_activity": "Letzte Aktivitäten"
+    "recent_activity": "Letzte Aktivitäten",
+    "insights": {
+      "annual_savings": "Wenn Sie Ihr {planName}-Abonnement auf einen Jahresplan umstellen, können Sie jährlich {amount} ({percentage}%) sparen.",
+      "budget_exceeded": "Deine Abokosten haben {percentage}% deines Budgets überschritten. Möchtest du sie überprüfen?",
+      "category_overlap": "Sie haben mehrere Abonnements in derselben Kategorie. Erwägen Sie die Kündigung eines Abonnements, um Geld zu sparen.",
+      "empty": "Noch keine Daten zum Analysieren"
+    },
+    "activity": {
+      "paid": "bezahlt",
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "days_ago": "vor {days} Tagen",
+      "empty": "Noch keine Daten zum Analysieren"
+    }
   },
   "Subscriptions": {
     "add_title": "Abonnement hinzufügen",

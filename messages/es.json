@@ -117,7 +117,20 @@
     "subscription_breakdown": "Distribución de Suscripciones",
     "top_spenders": "Mayores Gastos",
     "smart_insights": "Ideas Inteligentes",
-    "recent_activity": "Actividad Reciente"
+    "recent_activity": "Actividad Reciente",
+    "insights": {
+      "annual_savings": "Al cambiar tu suscripción de {planName} a un plan anual, puedes ahorrar {amount} ({percentage}%) al año.",
+      "budget_exceeded": "Tus gastos de suscripción han superado el {percentage}% de tu presupuesto. ¿Te gustaría revisarlos?",
+      "category_overlap": "Tienes múltiples suscripciones en la misma categoría. Considera cancelar una para ahorrar.",
+      "empty": "Aún no hay datos para analizar"
+    },
+    "activity": {
+      "paid": "pagado",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "days_ago": "hace {days} días",
+      "empty": "Aún no hay datos para analizar"
+    }
   },
   "Modals": {
     "savings_title": "Detalles de ahorros potenciales",

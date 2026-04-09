@@ -117,7 +117,20 @@
     "subscription_breakdown": "Subscription Breakdown",
     "top_spenders": "Top Spenders",
     "smart_insights": "Smart Insights",
-    "recent_activity": "Recent Activity"
+    "recent_activity": "Recent Activity",
+    "insights": {
+      "annual_savings": "By switching your {planName} subscription to a yearly plan, you can save {amount} ({percentage}%) a year.",
+      "budget_exceeded": "Your subscription expenses have exceeded {percentage}% of your budget. Would you like to review them?",
+      "category_overlap": "You have multiple subscriptions in the same category. Consider canceling one to save money.",
+      "empty": "No data to analyze yet"
+    },
+    "activity": {
+      "paid": "paid",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "days_ago": "{days} days ago",
+      "empty": "No data to analyze yet"
+    }
   },
   "Modals": {
     "savings_title": "Potential Savings Details",

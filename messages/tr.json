@@ -117,7 +117,20 @@
     "subscription_breakdown": "Abonelik Dağılımı",
     "top_spenders": "En Çok Harcatanlar",
     "smart_insights": "Akıllı Öneriler",
-    "recent_activity": "Son İşlemler"
+    "recent_activity": "Son İşlemler",
+    "insights": {
+      "annual_savings": "{planName} aboneliğini yıllığa geçirerek yılda {amount} ({percentage}%) tasarruf edebilirsin.",
+      "budget_exceeded": "Abonelik giderlerin bütçenin %{percentage}'unu aştı, gözden geçirmek ister misin?",
+      "category_overlap": "Aynı kategoride birden fazla aboneliğin var, birini iptal ederek tasarruf edebilirsin.",
+      "empty": "Henüz analiz edilecek veri yok"
+    },
+    "activity": {
+      "paid": "ödendi",
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "days_ago": "{days} gün önce",
+      "empty": "Henüz analiz edilecek veri yok"
+    }
   },
   "Modals": {
     "savings_title": "Potansiyel Tasarruf Detayları",
