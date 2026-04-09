@@ -358,11 +358,11 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 sm:pt-24 px-3 sm:px-4">
-        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-start gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 w-full max-w-[1400px] mx-auto items-start">
           {!isPro && <TrialBanner />}
 
           <div className="flex flex-col xl:flex-row gap-8">
-            <div className="flex-1 w-full flex flex-col gap-6">
+            <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="font-display text-2xl sm:text-3xl font-bold">{t.dashboard.title}</h1>
@@ -449,7 +449,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -535,7 +535,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
                   {(() => {
