@@ -16,15 +16,29 @@ import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLi
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, BarChart3, AlertTriangle, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, BarChart3, AlertTriangle, AlertCircle, CheckCircle2, Info, PiggyBank, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates } from "@/lib/currency";
+import { calculatePotentialSavings, currentMonthSubscriptionTotal, previousMonthSubscriptionTotal, monthOverMonthChangePercentage, type SubscriptionInput } from "@/lib/subscriptionInsights";
 import { useFinance } from "@/hooks/useFinance";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/hooks/useSettings";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatCurrency } from "@/i18n/currency";
+
+const parseAmount = (value: unknown): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string") return 0;
+  const cleaned = value.trim().replace(/[^0-9,.-]/g, "");
+  if (!cleaned) return 0;
+  const normalized =
+    cleaned.includes(",") && cleaned.includes(".")
+      ? cleaned.replace(/,/g, "")
+      : cleaned.replace(",", ".");
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 const Dashboard = () => {
   const location = useLocation();
@@ -116,8 +130,8 @@ const Dashboard = () => {
     const safeSubscriptions = subscriptions ?? [];
     return safeSubscriptions.reduce((total, sub) => {
       if (!sub) return total;
-      const rawPrice = Number(sub.price ?? 0);
-      if (isNaN(rawPrice) || !isFinite(rawPrice)) return total;
+      const rawPrice = parseAmount(sub.price);
+      if (!Number.isFinite(rawPrice)) return total;
       
       // Normalize yearly to monthly
       const monthlyPrice = sub.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
@@ -137,6 +151,40 @@ const Dashboard = () => {
   }, [subscriptions, activeCurrency, exchangeRates]);
 
   const yearlySpend = isFinite(monthlySpend * 12) ? monthlySpend * 12 : 0;
+
+  const insightSubscriptions = useMemo<SubscriptionInput[]>(() => {
+    const safeSubscriptions = subscriptions ?? [];
+    return safeSubscriptions.map((sub) => {
+      const raw = parseAmount(sub.price);
+      const converted = convertWithDynamicRates(raw, sub.currency, activeCurrency, exchangeRates);
+      const price = Number.isFinite(converted) ? converted : raw;
+      return {
+        price,
+        billing_cycle: sub.billing_cycle,
+        start_date: sub.start_date,
+        is_marked_unused: sub.is_marked_unused,
+      };
+    });
+  }, [subscriptions, activeCurrency, exchangeRates]);
+
+  const spendingChange = useMemo(() => {
+    const now = new Date();
+    const currentTotal = currentMonthSubscriptionTotal(insightSubscriptions, now);
+    const previousTotal = previousMonthSubscriptionTotal(insightSubscriptions, now);
+    const percentageChange = monthOverMonthChangePercentage(currentTotal, previousTotal);
+    return {
+      currentTotal,
+      previousTotal,
+      percentageChange,
+      hasPreviousData: previousTotal > 0,
+    };
+  }, [insightSubscriptions]);
+
+  const potentialSavings = useMemo(() => calculatePotentialSavings(insightSubscriptions), [insightSubscriptions]);
+  const unusedCount = useMemo(
+    () => insightSubscriptions.filter((s) => s.is_marked_unused).length,
+    [insightSubscriptions]
+  );
 
   const convertedCurrentMonthlyIncome = useMemo(() => {
     const safeTransactions = Array.isArray(transactions) ? transactions : [];
@@ -385,7 +433,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -467,6 +515,60 @@ const Dashboard = () => {
                       return <h3 className="text-sm font-bold mt-1 text-muted-foreground">{tt("spending_change_desc")}</h3>;
                     }
                   })()}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                  {!spendingChange.hasPreviousData ? (
+                    <Info className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
+                  ) : spendingChange.percentageChange > 0 ? (
+                    <ArrowUp className="w-4 h-4 md:w-6 md:h-6 text-destructive" />
+                  ) : (
+                    <ArrowDown className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground">{tt("spending_change")}</p>
+                  {spendingChange.hasPreviousData ? (
+                    <>
+                      <h3 className="text-xl md:text-2xl font-bold break-words">
+                        {spendingChange.percentageChange > 0 ? "+" : ""}
+                        {spendingChange.percentageChange.toFixed(1)}%
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {formatCurrency(spendingChange.currentTotal, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
+                        {formatCurrency(spendingChange.previousTotal, activeCurrency, { maximumFractionDigits: 0 })}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-base md:text-lg font-semibold text-muted-foreground mt-1 break-words">
+                        {tt("no_previous_data")}
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{tt("spending_change_desc")}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                  <PiggyBank className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm text-muted-foreground">{tt("potential_savings")}</p>
+                  <h3 className="text-xl md:text-2xl font-bold break-words">
+                    {formatCurrency(potentialSavings, activeCurrency)}
+                    <span className="text-xs md:text-sm font-normal text-muted-foreground ml-1">{tt("per_month")}</span>
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {unusedCount > 0 ? tt("find_hidden_savings") : tt("managing_well")}
+                  </p>
                 </div>
               </div>
             </div>

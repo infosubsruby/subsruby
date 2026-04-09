@@ -17,6 +17,19 @@ type Item = {
 
 const COLORS = ["#EF4444", "#F97316", "#3B82F6"];
 
+const parseAmount = (value: unknown): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string") return 0;
+  const cleaned = value.trim().replace(/[^0-9,.-]/g, "");
+  if (!cleaned) return 0;
+  const normalized =
+    cleaned.includes(",") && cleaned.includes(".")
+      ? cleaned.replace(/,/g, "")
+      : cleaned.replace(",", ".");
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export const TopSpenders = ({
   subscriptions,
   currency,
@@ -29,12 +42,12 @@ export const TopSpenders = ({
   const t = useTranslations("Dashboard");
 
   const { total, top } = useMemo(() => {
-    const active = (subscriptions ?? []).filter((s) => !s.is_marked_unused);
-    const mapped: Item[] = active.map((s, idx) => {
-      const raw = Number(s.price ?? 0);
+    const list = subscriptions ?? [];
+    const mapped: Item[] = list.map((s, idx) => {
+      const raw = parseAmount(s.price);
       const monthly = s.billing_cycle === "yearly" ? raw / 12 : raw;
       const converted = convertWithDynamicRates(monthly, s.currency, currency, exchangeRates);
-      const monthlyValue = Number.isFinite(converted) ? converted : 0;
+      const monthlyValue = Number.isFinite(converted) ? converted : monthly;
       return {
         id: s.id,
         name: s.name,
@@ -46,7 +59,6 @@ export const TopSpenders = ({
 
     const totalMonthly = mapped.reduce((sum, i) => sum + i.monthlyValue, 0);
     const top3 = mapped
-      .filter((i) => i.monthlyValue > 0)
       .sort((a, b) => b.monthlyValue - a.monthlyValue)
       .slice(0, 3)
       .map((i, idx) => ({ ...i, color: COLORS[idx] ?? i.color }));
@@ -101,4 +113,3 @@ export const TopSpenders = ({
     </div>
   );
 };
-

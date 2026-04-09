@@ -9,6 +9,7 @@ import { formatCurrency } from "@/i18n/currency";
 type BreakdownItem = {
   id: number;
   name: string;
+  slug: string;
   value: number;
   color: string;
 };
@@ -24,6 +25,19 @@ const COLORS = [
   "#10B981",
 ];
 
+const parseAmount = (value: unknown): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string") return 0;
+  const cleaned = value.trim().replace(/[^0-9,.-]/g, "");
+  if (!cleaned) return 0;
+  const normalized =
+    cleaned.includes(",") && cleaned.includes(".")
+      ? cleaned.replace(/,/g, "")
+      : cleaned.replace(",", ".");
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export const SubscriptionBreakdownChart = ({
   subscriptions,
   currency,
@@ -36,21 +50,21 @@ export const SubscriptionBreakdownChart = ({
   const t = useTranslations("Dashboard");
 
   const data = useMemo<BreakdownItem[]>(() => {
-    const active = (subscriptions ?? []).filter((s) => !s.is_marked_unused);
-    return active
+    const list = subscriptions ?? [];
+    return list
       .map((s, idx) => {
-        const raw = Number(s.price ?? 0);
+        const raw = parseAmount(s.price);
         const monthly = s.billing_cycle === "yearly" ? raw / 12 : raw;
         const converted = convertWithDynamicRates(monthly, s.currency, currency, exchangeRates);
-        const value = Number.isFinite(converted) ? converted : 0;
+        const value = Number.isFinite(converted) ? converted : monthly;
         return {
           id: s.id,
           name: s.name,
+          slug: s.slug,
           value,
           color: COLORS[idx % COLORS.length],
         };
       })
-      .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
   }, [subscriptions, currency, exchangeRates]);
 
@@ -108,9 +122,7 @@ export const SubscriptionBreakdownChart = ({
           <div className="max-h-56 overflow-y-auto pr-1">
             <div className="space-y-2">
               {data.map((d) => {
-                const preset = subscriptionPresets.find(
-                  (p) => p.slug === (subscriptions.find((s) => s.id === d.id)?.slug ?? "") || p.name.toLowerCase() === d.name.toLowerCase()
-                );
+                const preset = subscriptionPresets.find((p) => p.slug === d.slug || p.name.toLowerCase() === d.name.toLowerCase());
                 const Icon = preset?.icon;
                 return (
                   <div key={d.id} className="flex items-center justify-between gap-3">
