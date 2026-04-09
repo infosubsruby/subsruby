@@ -76,10 +76,6 @@
     --shadow-glow: 0 0 40px hsl(358, 82%, 55%, 0.2);
   }
 
-  .dark {
-    /* Already dark mode by default */
-  }
-
   .light {
     --background: 0 0% 98%;
     --foreground: 220 20% 10%;
@@ -167,22 +163,37 @@
     background: hsl(0, 0%, 0%, 0.4);
     border: 1px solid hsl(0, 0%, 100%, 0.1);
     border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    min-width: 3.5rem;
+    padding: 0.25rem 0.5rem;
+    min-width: 2.5rem;
   }
 
   .countdown-number {
     font-family: 'Space Grotesk', monospace;
     font-weight: 700;
-    font-size: 1.25rem;
+    font-size: 0.9rem;
     line-height: 1;
   }
 
   .countdown-label {
-    font-size: 0.625rem;
+    font-size: 0.5rem;
     text-transform: uppercase;
     opacity: 0.6;
     letter-spacing: 0.05em;
+  }
+
+  @media (min-width: 640px) {
+    .countdown-box {
+      padding: 0.5rem 0.75rem;
+      min-width: 3.5rem;
+    }
+
+    .countdown-number {
+      font-size: 1.25rem;
+    }
+
+    .countdown-label {
+      font-size: 0.625rem;
+    }
   }
 
   /* Animations */
@@ -198,6 +209,16 @@
   .animate-pulse-ruby {
     animation: pulse-ruby 2s ease-in-out infinite;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
 
   @keyframes float {
     0%, 100% {

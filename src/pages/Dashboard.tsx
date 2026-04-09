@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
@@ -34,11 +34,20 @@ import { formatCurrency } from "@/i18n/currency";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: authLoading, isAdmin } = useAuth();
   const { isPro, status: proStatus, loading: subStatusLoading } = useSubscription();
   const { t } = useLanguage();
   const tt = useTranslations("Dashboard");
   const { defaultCurrency } = useSettings();
+  
+  useEffect(() => {
+    if (!location.hash) return;
+    const el = document.querySelector(location.hash);
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [location.hash]);
   const { 
     subscriptions, 
     isLoading: subsLoading, 
@@ -684,34 +693,36 @@ const Dashboard = () => {
 
           {/* Selector moved to header */}
 
-          {subscriptions.length === 0 ? (
-            <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-8 h-8 text-muted-foreground" />
+          <div id="subscriptions">
+            {subscriptions.length === 0 ? (
+              <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Plus className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  {t.dashboard.noSubscriptionsDesc}
+                </p>
+                <Button
+                  onClick={handleAddSubscription}
+                  className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                >
+                  {t.dashboard.addFirstSubscription}
+                </Button>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
-              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                {t.dashboard.noSubscriptionsDesc}
-              </p>
-              <Button 
-                onClick={handleAddSubscription}
-                className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-              >
-                {t.dashboard.addFirstSubscription}
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {subscriptions.map((subscription) => (
-                <FlipCard
-                  key={subscription.id}
-                  subscription={subscription}
-                  onUpdate={updateSubscription}
-                  onDelete={deleteSubscription}
-                />
-              ))}
-            </div>
-          )}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {subscriptions.map((subscription) => (
+                  <FlipCard
+                    key={subscription.id}
+                    subscription={subscription}
+                    onUpdate={updateSubscription}
+                    onDelete={deleteSubscription}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 

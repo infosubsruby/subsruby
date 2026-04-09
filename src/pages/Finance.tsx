@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useFinance } from "@/hooks/useFinance";
@@ -41,6 +41,7 @@ const Finance = () => {
   const tDashboard = useTranslations("Dashboard");
   const tCategories = useTranslations("Categories");
   const { defaultCurrency } = useSettings();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     transactions,
     budgets,
@@ -431,111 +432,167 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4 mb-8">
-            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+          <div className="sm:hidden flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 scrollbar-hide mb-4">
+            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner shrink-0">
-                  <ArrowDownLeft className="w-4 h-4 md:w-6 md:h-6 text-success" />
+                <div className="w-9 h-9 rounded-full bg-success/20 flex items-center justify-center shadow-inner shrink-0">
+                  <ArrowDownLeft className="w-4 h-4 text-success" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.income}</p>
-                  <p className="font-display text-xl md:text-3xl font-bold text-success mt-0.5 truncate">
+                  <p className="text-xs text-muted-foreground font-medium">{t.finance.income}</p>
+                  <p className="font-display text-xl font-bold text-success mt-0.5 truncate">
                     {formatCurrency(totalIncome, activeCurrency)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner shrink-0">
-                  <ArrowUpRight className="w-4 h-4 md:w-6 md:h-6 text-destructive" />
+                <div className="w-9 h-9 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner shrink-0">
+                  <ArrowUpRight className="w-4 h-4 text-destructive" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.expenses}</p>
-                  <p className="font-display text-xl md:text-3xl font-bold mt-0.5 truncate">
+                  <p className="text-xs text-muted-foreground font-medium">{t.finance.expenses}</p>
+                  <p className="font-display text-xl font-bold mt-0.5 truncate">
                     {formatCurrency(totalExpenses, activeCurrency)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner shrink-0">
-                  <TrendingDown className="w-4 h-4 md:w-6 md:h-6 text-primary" />
+                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shadow-inner shrink-0">
+                  <TrendingDown className="w-4 h-4 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.subscriptions}</p>
-                  <p className="font-display text-xl md:text-3xl font-bold mt-0.5 truncate">
+                  <p className="text-xs text-muted-foreground font-medium">{t.finance.subscriptions}</p>
+                  <p className="font-display text-xl font-bold mt-0.5 truncate">
                     {formatCurrency(totalMonthlyCost, activeCurrency)}
-                    <span className="text-xs md:text-sm font-normal text-muted-foreground ml-1">
-                      {tDashboard("per_month")}
-                    </span>
+                    <span className="text-xs font-normal text-muted-foreground ml-1">{tDashboard("per_month")}</span>
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col justify-center min-h-[110px] md:min-h-[180px] shadow-sm">
+            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner shrink-0">
-                  <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-warning" />
+                <div className="w-9 h-9 rounded-full bg-warning/20 flex items-center justify-center shadow-inner shrink-0">
+                  <TrendingUp className="w-4 h-4 text-warning" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground font-medium">{t.finance.balance}</p>
-                  <p
-                    className={cn(
-                      "font-display text-xl md:text-3xl font-bold mt-0.5 truncate",
-                      netWorth >= 0 ? "text-success" : "text-destructive"
-                    )}
-                  >
+                  <p className="text-xs text-muted-foreground font-medium">{t.finance.balance}</p>
+                  <p className={cn("font-display text-xl font-bold mt-0.5 truncate", netWorth >= 0 ? "text-success" : "text-destructive")}>
                     {formatCurrency(netWorth, activeCurrency)}
                   </p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="glass-card rounded-2xl p-3 md:p-6 flex flex-col items-center text-center justify-center min-h-[110px] md:min-h-[180px] shadow-sm col-span-2 lg:col-span-1">
-              <p className="text-xs md:text-sm text-muted-foreground font-medium mb-2">{tFinance("health_score")}</p>
-              
-              {financialHealth.score !== null ? (
-                <div className="flex flex-col items-center gap-3 w-full">
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-4xl md:text-5xl font-bold tracking-tight">{financialHealth.score}</span>
-                    <span className="text-sm text-muted-foreground ml-1">/100</span>
-                  </div>
-
-                  <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
-                    <span>{financialHealth.emoji}</span>
-                    <span>{displayedHealthLabel}</span>
-                  </div>
-
-                  <div className="w-full max-w-[140px] bg-secondary rounded-full h-2 mt-1 overflow-hidden">
-                    <div 
-                      className={cn("h-full rounded-full transition-all duration-500", 
-                        financialHealth.label === "Excellent" || financialHealth.label === "Healthy" ? "bg-success" :
-                        financialHealth.label === "Warning" ? "bg-warning" : "bg-destructive"
-                      )}
-                      style={{ width: `${financialHealth.score}%` }}
-                    />
-                  </div>
-
-                  <p className="text-sm text-muted-foreground leading-tight mt-1 max-w-[200px]">
-                    {financialHealth.description}
+          <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner shrink-0">
+                  <ArrowDownLeft className="w-5 h-5 md:w-6 md:h-6 text-success" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.income}</p>
+                  <p className="font-display text-2xl md:text-3xl font-bold text-success mt-1 truncate">
+                    {formatCurrency(totalIncome, activeCurrency)}
                   </p>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                    <Sparkles className="w-6 h-6 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-tight px-4">
-                    {financialHealth.description}
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
+
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner shrink-0">
+                  <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6 text-destructive" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.expenses}</p>
+                  <p className="font-display text-2xl md:text-3xl font-bold mt-1 truncate">
+                    {formatCurrency(totalExpenses, activeCurrency)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner shrink-0">
+                  <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.subscriptions}</p>
+                  <p className="font-display text-2xl md:text-3xl font-bold mt-1 truncate">
+                    {formatCurrency(totalMonthlyCost, activeCurrency)}
+                    <span className="text-sm font-normal text-muted-foreground ml-1">{tDashboard("per_month")}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner shrink-0">
+                  <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-warning" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground font-medium">{t.finance.balance}</p>
+                  <p className={cn("font-display text-2xl md:text-3xl font-bold mt-1 truncate", netWorth >= 0 ? "text-success" : "text-destructive")}>
+                    {formatCurrency(netWorth, activeCurrency)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-3 md:p-6 mb-8">
+            <p className="text-xs md:text-sm text-muted-foreground font-medium mb-3 text-center">{tFinance("health_score")}</p>
+
+            {financialHealth.score !== null ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-baseline justify-center">
+                  <span className="text-4xl md:text-5xl font-bold tracking-tight">{financialHealth.score}</span>
+                  <span className="text-sm text-muted-foreground ml-1">/100</span>
+                </div>
+
+                <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
+                  <span>{financialHealth.emoji}</span>
+                  <span>{displayedHealthLabel}</span>
+                </div>
+
+                <div className="w-full max-w-[220px] bg-secondary rounded-full h-2 mt-1 overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      financialHealth.label === "Excellent" || financialHealth.label === "Healthy"
+                        ? "bg-success"
+                        : financialHealth.label === "Warning"
+                          ? "bg-warning"
+                          : "bg-destructive"
+                    )}
+                    style={{ width: `${financialHealth.score}%` }}
+                  />
+                </div>
+
+                <p className="text-sm text-muted-foreground leading-tight mt-1 text-center max-w-[360px]">
+                  {financialHealth.description}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground leading-tight text-center">
+                  {financialHealth.description}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Charts */}
@@ -545,7 +602,11 @@ const Finance = () => {
           </div>
 
           {/* Tabs for Transactions and Budgets */}
-          <Tabs defaultValue="transactions" className="space-y-4">
+          <Tabs
+            value={searchParams.get("tab") === "budgets" ? "budgets" : "transactions"}
+            onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}
+            className="space-y-4"
+          >
             <TabsList className="bg-secondary">
               <TabsTrigger value="transactions">{t.finance.transactions}</TabsTrigger>
               <TabsTrigger value="budgets">{t.finance.budgets}</TabsTrigger>

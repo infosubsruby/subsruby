@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, Shield, Wallet, LayoutDashboard } from "lucide-react";
+import { User, LogOut, Settings, Shield, LayoutDashboard, List, PiggyBank, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Navbar = () => {
@@ -49,6 +49,7 @@ export const Navbar = () => {
     navigate("/");
   };
 
+  const activeTab = new URLSearchParams(location.search).get("tab");
   const isActive = (path: string) => location.pathname === path || (path === "/dashboard" && location.pathname === "/control");
   const showBottomNav = !!user && !location.pathname.startsWith("/onboarding") && !location.pathname.startsWith("/admin");
 
@@ -64,7 +65,7 @@ export const Navbar = () => {
                 className="h-full w-auto max-h-8 sm:max-h-10 object-contain"
               />
             </div>
-            <span className="font-display text-xl font-bold text-foreground">
+            <span className="hidden sm:inline font-display text-xl font-bold text-foreground">
               Subs<span className="ruby-text-gradient">Ruby</span>
             </span>
           </Link>
@@ -80,7 +81,7 @@ export const Navbar = () => {
                   </Link>
                   <Link to="/finance">
                     <Button variant="ghost" size="sm" className="gap-1">
-                      <Wallet className="w-4 h-4" />
+                      <List className="w-4 h-4" />
                       <span className="hidden sm:inline">{t.nav.finance}</span>
                     </Button>
                   </Link>
@@ -190,34 +191,40 @@ export const Navbar = () => {
                   <span>{t.nav.dashboard}</span>
                 </Link>
                 <Link
-                  to="/finance"
+                  to="/finance?tab=transactions"
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 py-3 text-xs font-medium",
-                    isActive("/finance") ? "text-primary" : "text-muted-foreground"
+                    location.pathname === "/finance" && (activeTab === "transactions" || !activeTab)
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   )}
                 >
-                  <Wallet className="w-5 h-5" />
-                  <span>{t.nav.finance}</span>
+                  <List className="w-5 h-5" />
+                  <span>{t.nav.transactions}</span>
                 </Link>
                 <Link
-                  to="/settings"
+                  to="/finance?tab=budgets"
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 py-3 text-xs font-medium",
-                    isActive("/settings") ? "text-primary" : "text-muted-foreground"
+                    location.pathname === "/finance" && activeTab === "budgets"
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   )}
                 >
-                  <Settings className="w-5 h-5" />
-                  <span>{t.nav.settings}</span>
+                  <PiggyBank className="w-5 h-5" />
+                  <span>{t.nav.budgets}</span>
                 </Link>
                 <Link
-                  to="/profile"
+                  to="/dashboard#subscriptions"
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 py-3 text-xs font-medium",
-                    isActive("/profile") ? "text-primary" : "text-muted-foreground"
+                    isActive("/dashboard") && location.hash === "#subscriptions"
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   )}
                 >
-                  <User className="w-5 h-5" />
-                  <span>{t.nav.profile}</span>
+                  <CreditCard className="w-5 h-5" />
+                  <span>{t.nav.subscriptions}</span>
                 </Link>
               </div>
             </div>

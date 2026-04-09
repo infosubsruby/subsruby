@@ -21,6 +21,9 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       finance: "Finance",
+      transactions: "Transactions",
+      budgets: "Budgets",
+      subscriptions: "Subscriptions",
       settings: "Settings",
       adminPanel: "Admin Panel",
       profile: "Profile",
@@ -155,6 +158,9 @@ export const translations = {
     nav: {
       dashboard: "Panel",
       finance: "Finans",
+      transactions: "İşlemler",
+      budgets: "Bütçeler",
+      subscriptions: "Abonelikler",
       settings: "Ayarlar",
       adminPanel: "Admin Paneli",
       profile: "Profil",
@@ -281,6 +287,9 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       finance: "Finanzen",
+      transactions: "Transaktionen",
+      budgets: "Budgets",
+      subscriptions: "Abonnements",
       settings: "Einstellungen",
       adminPanel: "Admin-Panel",
       profile: "Profil",
@@ -407,6 +416,9 @@ export const translations = {
     nav: {
       dashboard: "Panel",
       finance: "Finanzas",
+      transactions: "Transacciones",
+      budgets: "Presupuestos",
+      subscriptions: "Suscripciones",
       settings: "Configuración",
       adminPanel: "Panel de Admin",
       profile: "Perfil",
@@ -533,6 +545,9 @@ export const translations = {
     nav: {
       dashboard: "Tableau de bord",
       finance: "Finances",
+      transactions: "Transactions",
+      budgets: "Budgets",
+      subscriptions: "Abonnements",
       settings: "Paramètres",
       adminPanel: "Panneau Admin",
       profile: "Profil",
@@ -662,6 +677,9 @@ export type Translations = {
   nav: {
     dashboard: string;
     finance: string;
+    transactions: string;
+    budgets: string;
+    subscriptions: string;
     settings: string;
     adminPanel: string;
     profile: string;
