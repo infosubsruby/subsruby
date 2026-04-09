@@ -411,8 +411,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex flex-col xl:flex-row gap-8">
+            <div className="flex-1 min-w-0">
           {/* Smart Financial Insight Card */}
           <div
             className={cn(
@@ -451,7 +451,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -459,7 +459,7 @@ const Dashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
-                  <h3 className="text-xl md:text-2xl font-bold truncate">
+                  <h3 className="text-xl md:text-2xl font-bold">
                     {formatCurrency(monthlySpend, activeCurrency)}
                   </h3>
                 </div>
@@ -473,7 +473,7 @@ const Dashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
-                  <h3 className="text-xl md:text-2xl font-bold truncate">
+                  <h3 className="text-xl md:text-2xl font-bold">
                     {formatCurrency(yearlySpend, activeCurrency)}
                   </h3>
                 </div>
@@ -487,7 +487,7 @@ const Dashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
-                  <h3 className="text-xl md:text-2xl font-bold truncate">{subscriptions.length}</h3>
+                  <h3 className="text-xl md:text-2xl font-bold">{subscriptions.length}</h3>
                 </div>
               </div>
             </div>
@@ -515,7 +515,7 @@ const Dashboard = () => {
 
                       return (
                         <>
-                          <h3 className="text-sm sm:text-base md:text-xl font-bold mt-0.5 truncate">
+                          <h3 className="text-sm sm:text-base md:text-xl font-bold mt-0.5">
                             {formatCurrency(safeSubs, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
                             {safeIncome > 0
                               ? formatCurrency(safeIncome, activeCurrency, { maximumFractionDigits: 0 })
@@ -728,7 +728,7 @@ const Dashboard = () => {
           </div>
             </div>
 
-            <div className="mt-8 lg:mt-0 lg:col-span-1">
+            <div className="mt-8 xl:mt-0 w-full xl:w-96 shrink-0">
               <UpcomingTimeline subscriptions={subscriptions} />
             </div>
           </div>

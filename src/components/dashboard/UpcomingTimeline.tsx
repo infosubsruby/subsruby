@@ -12,16 +12,22 @@ type UpcomingItem = {
   nextPaymentDate: Date;
 };
 
-const computeNextPaymentDate = (subscription: Subscription): Date | null => {
-  const rawBase = subscription.next_payment_date ?? subscription.start_date;
-  const base = new Date(rawBase);
-  if (Number.isNaN(base.getTime())) return null;
+const computeNextPaymentDate = (subscription: Subscription): Date => {
+  const rawBase =
+    subscription.next_payment_date ??
+    subscription.start_date ??
+    subscription.created_at ??
+    new Date().toISOString();
+  let base = new Date(rawBase);
+  if (Number.isNaN(base.getTime())) {
+    base = new Date();
+  }
 
   const today = startOfDay(new Date());
-  let next = base;
-  let guard = 0;
+  let next = startOfDay(base);
+  let guard = 0; // safety to prevent infinite loops
 
-  while (next < today && guard < 60) {
+  while (next < today && guard < 240) {
     next =
       subscription.billing_cycle === "yearly"
         ? addYears(next, 1)
@@ -29,23 +35,23 @@ const computeNextPaymentDate = (subscription: Subscription): Date | null => {
     guard += 1;
   }
 
-  return next;
+  return next < today ? today : next;
 };
 
 export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscription[] }) => {
   const t = useTranslations("Dashboard");
 
-  const items = useMemo<UpcomingItem[]>(() => {
-    return subscriptions
-      .filter((s) => !s.is_marked_unused)
-      .map((subscription) => {
-        const nextPaymentDate = computeNextPaymentDate(subscription);
-        if (!nextPaymentDate) return null;
-        return { subscription, nextPaymentDate };
-      })
-      .filter((v): v is UpcomingItem => v !== null)
-      .sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime());
-  }, [subscriptions]);
+  const items = useMemo<UpcomingItem[]>(
+    () =>
+      subscriptions
+        .filter((s) => !s.is_marked_unused)
+        .map((subscription) => ({
+          subscription,
+          nextPaymentDate: computeNextPaymentDate(subscription),
+        }))
+        .sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime()),
+    [subscriptions]
+  );
 
   return (
     <div className="glass-card rounded-2xl p-4 lg:sticky lg:top-24">
@@ -100,4 +106,3 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
     </div>
   );
 };
-
