@@ -11,6 +11,8 @@ import { FlipCard } from "@/components/subscription/FlipCard";
 import { UpcomingTimeline } from "@/components/dashboard/UpcomingTimeline";
 import { SubscriptionBreakdownChart } from "@/components/dashboard/SubscriptionBreakdownChart";
 import { TopSpenders } from "@/components/dashboard/TopSpenders";
+import { SmartInsights } from "@/components/dashboard/SmartInsights.tsx";
+import { RecentActivity } from "@/components/dashboard/RecentActivity.tsx";
 import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
 import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLimitModal";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
@@ -622,8 +624,10 @@ const Dashboard = () => {
 
           </div>
 
-          <div className="w-full lg:w-96 shrink-0">
+          <div className="w-full lg:w-96 shrink-0 flex flex-col gap-8">
             <UpcomingTimeline subscriptions={subscriptions} />
+            <SmartInsights />
+            <RecentActivity />
           </div>
         </div>
       </main>

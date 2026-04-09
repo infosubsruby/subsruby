@@ -115,7 +115,9 @@
     "upcoming_payments": "Upcoming Payments",
     "no_upcoming": "No upcoming payments",
     "subscription_breakdown": "Subscription Breakdown",
-    "top_spenders": "Top Spenders"
+    "top_spenders": "Top Spenders",
+    "smart_insights": "Smart Insights",
+    "recent_activity": "Recent Activity"
   },
   "Modals": {
     "savings_title": "Potential Savings Details",

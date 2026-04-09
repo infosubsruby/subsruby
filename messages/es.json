@@ -115,7 +115,9 @@
     "upcoming_payments": "Próximos Pagos",
     "no_upcoming": "No hay pagos próximos",
     "subscription_breakdown": "Distribución de Suscripciones",
-    "top_spenders": "Mayores Gastos"
+    "top_spenders": "Mayores Gastos",
+    "smart_insights": "Ideas Inteligentes",
+    "recent_activity": "Actividad Reciente"
   },
   "Modals": {
     "savings_title": "Detalles de ahorros potenciales",
