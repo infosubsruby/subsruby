@@ -344,9 +344,14 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 sm:pt-24">
-        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
-            <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+          <div className="flex flex-col xl:flex-row items-start gap-6 w-full">
+            <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
+              <SmartInsights />
+              <RecentActivity />
+            </div>
+
+            <div className="flex-1 min-w-0 flex flex-col gap-6">
               {!isPro && <TrialBanner />}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -591,14 +596,12 @@ const Dashboard = () => {
 
             </div>
 
-            <div className="w-full xl:w-[380px] shrink-0 xl:sticky xl:top-6 flex flex-col gap-6">
+            <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
               <UpcomingTimeline subscriptions={subscriptions} />
-              <SmartInsights />
-              <RecentActivity />
             </div>
           </div>
 
-          <div className="w-full mt-8 pt-8 border-t border-gray-800">
+          <div className="w-full pt-8 border-t border-gray-800">
             <h2 className="text-xl font-semibold mb-6">Tüm Abonelikler</h2>
             <div id="subscriptions">
               {subscriptions.length === 0 ? (
