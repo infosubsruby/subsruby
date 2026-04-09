@@ -341,12 +341,10 @@ const Dashboard = () => {
     <div className="min-h-screen pb-28 md:pb-20">
       <Navbar />
       
-      <main className="pt-20 sm:pt-24 px-3 sm:px-4">
-        <div className="flex flex-col lg:flex-row gap-8 w-full max-w-[1400px] mx-auto items-start">
-          {!isPro && <TrialBanner />}
-
-          <div className="flex flex-col xl:flex-row gap-8">
-            <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
+      <main className="pt-20 sm:pt-24">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-start gap-8">
+          <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
+            {!isPro && <TrialBanner />}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="font-display text-2xl sm:text-3xl font-bold">{t.dashboard.title}</h1>
@@ -621,11 +619,11 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-            </div>
 
-            <div className="w-full lg:w-96 shrink-0">
-              <UpcomingTimeline subscriptions={subscriptions} />
-            </div>
+          </div>
+
+          <div className="w-full lg:w-96 shrink-0">
+            <UpcomingTimeline subscriptions={subscriptions} />
           </div>
         </div>
       </main>
