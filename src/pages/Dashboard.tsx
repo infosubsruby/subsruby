@@ -358,61 +358,59 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 sm:pt-24 px-3 sm:px-4">
-        <div className="flex flex-col xl:flex-row items-start gap-8 w-full max-w-[1400px] mx-auto">
+        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-start gap-8">
           {!isPro && <TrialBanner />}
 
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold">{t.dashboard.title}</h1>
-              <p className="text-muted-foreground mt-1">
-                {t.dashboard.subtitle}
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-3">
-                <Select
-                  value={displayCurrency || "auto"}
-                  onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
-                >
-                  <SelectTrigger className="w-[140px] bg-background border-input hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                    <SelectValue placeholder={t.dashboard.auto} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto">{t.dashboard.auto} ({autoCurrency})</SelectItem>
-                    {currencies.map((currency) => (
-                      <SelectItem key={currency.value} value={currency.value}>
-                        {currency.value} ({currency.symbol})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={handleAddSubscription}
-                  className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  {t.dashboard.addSubscription}
-                </Button>
-              </div>
-
-              {isFreeLimited && (
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-muted-foreground">
-                    {tt("subs_used", { used: Math.min(subscriptions.length, FREE_PLAN_LIMIT), limit: FREE_PLAN_LIMIT })}
-                  </span>
-                  {subscriptions.length === FREE_PLAN_LIMIT - 1 && (
-                    <span className="text-[10px] font-medium text-amber-600 dark:text-amber-500">
-                      {tt("limit_warning", { limit: FREE_PLAN_LIMIT })}
-                    </span>
+          <div className="flex flex-col xl:flex-row gap-8">
+            <div className="flex-1 w-full flex flex-col gap-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold">{t.dashboard.title}</h1>
+                  <p className="text-muted-foreground mt-1">
+                    {t.dashboard.subtitle}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-3">
+                    <Select
+                      value={displayCurrency || "auto"}
+                      onValueChange={(value) => setDisplayCurrency(value === "auto" ? null : value)}
+                    >
+                      <SelectTrigger className="w-[140px] bg-background border-input hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                        <SelectValue placeholder={t.dashboard.auto} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">{t.dashboard.auto} ({autoCurrency})</SelectItem>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.value} value={currency.value}>
+                            {currency.value} ({currency.symbol})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      onClick={handleAddSubscription}
+                      className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
+                    >
+                      <Plus className="w-5 h-5" />
+                      {t.dashboard.addSubscription}
+                    </Button>
+                  </div>
+  
+                  {isFreeLimited && (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-muted-foreground">
+                        {tt("subs_used", { used: Math.min(subscriptions.length, FREE_PLAN_LIMIT), limit: FREE_PLAN_LIMIT })}
+                      </span>
+                      {subscriptions.length === FREE_PLAN_LIMIT - 1 && (
+                        <span className="text-[10px] font-medium text-amber-600 dark:text-amber-500">
+                          {tt("limit_warning", { limit: FREE_PLAN_LIMIT })}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col xl:flex-row gap-8">
-            <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
+              </div>
           {/* Smart Financial Insight Card */}
           <div
             className={cn(
@@ -729,7 +727,7 @@ const Dashboard = () => {
           </div>
             </div>
 
-            <div className="w-full xl:w-[380px] shrink-0 xl:sticky xl:top-6 flex flex-col gap-6">
+            <div className="w-full lg:w-96 shrink-0">
               <UpcomingTimeline subscriptions={subscriptions} />
             </div>
           </div>
