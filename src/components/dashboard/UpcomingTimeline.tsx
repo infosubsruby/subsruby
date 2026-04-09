@@ -54,7 +54,7 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
   );
 
   return (
-    <div className="glass-card rounded-2xl p-4 lg:sticky lg:top-24">
+    <div className="glass-card rounded-2xl p-4 border-l-2 border-border/70 pl-6">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">{t("upcoming_payments")}</h3>
       </div>
@@ -62,9 +62,8 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
       {items.length === 0 ? (
         <div className="text-sm text-muted-foreground mt-4">{t("no_upcoming")}</div>
       ) : (
-        <div className="mt-4 relative">
-          <div className="absolute left-2 top-1 bottom-1 w-px bg-border/60" />
-          <div className="space-y-4">
+        <div className="mt-4">
+          <div className="space-y-4 divide-y divide-border/60">
             {items.map(({ subscription, nextPaymentDate }) => {
               const preset = subscriptionPresets.find(
                 (p) => p.slug === subscription.slug || p.name.toLowerCase() === subscription.name.toLowerCase()
@@ -72,11 +71,8 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
               const Icon = preset?.icon ?? CreditCard;
 
               return (
-                <div key={subscription.id} className="relative pl-7">
-                  <div
-                    className="absolute left-[5px] top-3 w-3 h-3 rounded-full bg-background border-2"
-                    style={{ borderColor: subscription.card_color }}
-                  />
+                <div key={subscription.id} className="relative pl-4 pt-4 first:pt-0">
+                  <div className="absolute -left-2 top-3 w-3 h-3 rounded-full bg-background border-2" style={{ borderColor: subscription.card_color }} />
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
                       <div

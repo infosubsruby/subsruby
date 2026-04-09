@@ -358,7 +358,7 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 sm:pt-24 px-3 sm:px-4">
-        <div className="container mx-auto max-w-6xl">
+        <div className="flex flex-col xl:flex-row items-start gap-8 w-full max-w-[1400px] mx-auto">
           {!isPro && <TrialBanner />}
 
           {/* Header */}
@@ -412,7 +412,7 @@ const Dashboard = () => {
           </div>
 
           <div className="flex flex-col xl:flex-row gap-8">
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
           {/* Smart Financial Insight Card */}
           <div
             className={cn(
@@ -451,48 +451,48 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Wallet className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
-                  <h3 className="text-xl md:text-2xl font-bold">
+                  <h3 className="text-xl md:text-2xl font-bold break-words">
                     {formatCurrency(monthlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <CreditCard className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
-                  <h3 className="text-xl md:text-2xl font-bold">
+                  <h3 className="text-xl md:text-2xl font-bold break-words">
                     {formatCurrency(yearlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
-                  <h3 className="text-xl md:text-2xl font-bold">{subscriptions.length}</h3>
+                  <h3 className="text-xl md:text-2xl font-bold break-words">{subscriptions.length}</h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full">
+            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
                   <BarChart3 className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
@@ -515,7 +515,7 @@ const Dashboard = () => {
 
                       return (
                         <>
-                          <h3 className="text-sm sm:text-base md:text-xl font-bold mt-0.5">
+                          <h3 className="text-sm sm:text-base md:text-xl font-bold mt-0.5 break-words">
                             {formatCurrency(safeSubs, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
                             {safeIncome > 0
                               ? formatCurrency(safeIncome, activeCurrency, { maximumFractionDigits: 0 })
@@ -716,19 +716,20 @@ const Dashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {subscriptions.map((subscription) => (
-                  <FlipCard
-                    key={subscription.id}
-                    subscription={subscription}
-                    onUpdate={updateSubscription}
-                    onDelete={deleteSubscription}
-                  />
+                  <div key={subscription.id} className="w-full h-full">
+                    <FlipCard
+                      subscription={subscription}
+                      onUpdate={updateSubscription}
+                      onDelete={deleteSubscription}
+                    />
+                  </div>
                 ))}
               </div>
             )}
           </div>
             </div>
 
-            <div className="mt-8 xl:mt-0 w-full xl:w-96 shrink-0">
+            <div className="w-full xl:w-[380px] shrink-0 xl:sticky xl:top-6 flex flex-col gap-6">
               <UpcomingTimeline subscriptions={subscriptions} />
             </div>
           </div>
