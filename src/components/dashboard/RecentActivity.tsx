@@ -9,7 +9,7 @@ export const RecentActivity = () => {
   ];
 
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full">
+    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full h-full">
       <h3 className="font-display text-lg font-semibold">{t("recent_activity")}</h3>
       <div className="mt-4 relative">
         <div className="absolute left-2 top-1 bottom-1 w-px bg-gray-800" />

@@ -3,7 +3,7 @@ import { useTranslations } from "@/i18n/useTranslations";
 export const SmartInsights = () => {
   const t = useTranslations("Dashboard");
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full">
+    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full h-full">
       <h3 className="font-display text-lg font-semibold">{t("smart_insights")}</h3>
       <div className="mt-4 space-y-3">
         <div className="flex items-start gap-3 rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">

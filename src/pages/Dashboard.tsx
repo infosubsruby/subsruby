@@ -588,6 +588,15 @@ const Dashboard = () => {
             />
           </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+            <div className="w-full h-full">
+              <SmartInsights />
+            </div>
+            <div className="w-full h-full">
+              <RecentActivity />
+            </div>
+          </div>
+
           {/* Selector moved to header */}
 
           <div id="subscriptions">
@@ -624,10 +633,8 @@ const Dashboard = () => {
 
           </div>
 
-          <div className="w-full lg:w-96 shrink-0 flex flex-col gap-8">
+          <div className="w-full lg:w-96 shrink-0">
             <UpcomingTimeline subscriptions={subscriptions} />
-            <SmartInsights />
-            <RecentActivity />
           </div>
         </div>
       </main>
