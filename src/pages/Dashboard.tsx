@@ -344,9 +344,10 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 sm:pt-24">
-        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-start gap-8">
-          <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
-            {!isPro && <TrialBanner />}
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
+            <div className="flex-1 w-full min-w-0 flex flex-col gap-8">
+              {!isPro && <TrialBanner />}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="font-display text-2xl sm:text-3xl font-bold">{t.dashboard.title}</h1>
@@ -597,44 +598,46 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Selector moved to header */}
+            </div>
 
-          <div id="subscriptions">
-            {subscriptions.length === 0 ? (
-              <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Plus className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
-                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                  {t.dashboard.noSubscriptionsDesc}
-                </p>
-                <Button
-                  onClick={handleAddSubscription}
-                  className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-                >
-                  {t.dashboard.addFirstSubscription}
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {subscriptions.map((subscription) => (
-                  <div key={subscription.id} className="w-full h-full">
-                    <FlipCard
-                      subscription={subscription}
-                      onUpdate={updateSubscription}
-                      onDelete={deleteSubscription}
-                    />
+            <div className="w-full xl:w-[380px] shrink-0 xl:sticky xl:top-6">
+              <UpcomingTimeline subscriptions={subscriptions} />
+            </div>
+          </div>
+
+          <div className="w-full mt-8 pt-8 border-t border-gray-800">
+            <h2 className="text-xl font-semibold mb-6">Tüm Abonelikler</h2>
+            <div id="subscriptions">
+              {subscriptions.length === 0 ? (
+                <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Plus className="w-8 h-8 text-muted-foreground" />
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          </div>
-
-          <div className="w-full lg:w-96 shrink-0">
-            <UpcomingTimeline subscriptions={subscriptions} />
+                  <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                    {t.dashboard.noSubscriptionsDesc}
+                  </p>
+                  <Button
+                    onClick={handleAddSubscription}
+                    className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                  >
+                    {t.dashboard.addFirstSubscription}
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
+                  {subscriptions.map((subscription) => (
+                    <div key={subscription.id} className="w-full h-full">
+                      <FlipCard
+                        subscription={subscription}
+                        onUpdate={updateSubscription}
+                        onDelete={deleteSubscription}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
