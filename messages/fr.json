@@ -111,7 +111,9 @@
     "hours": "HEURES",
     "min": "MIN",
     "sec": "SEC",
-    "per_month": "/ MOIS"
+    "per_month": "/ MOIS",
+    "upcoming_payments": "Paiements à Venir",
+    "no_upcoming": "Aucun paiement à venir"
   },
   "Subscriptions": {
     "add_title": "Ajouter un abonnement",

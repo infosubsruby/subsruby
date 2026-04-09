@@ -111,7 +111,9 @@
     "hours": "HORAS",
     "min": "MIN",
     "sec": "SEG",
-    "per_month": "/ MES"
+    "per_month": "/ MES",
+    "upcoming_payments": "Próximos Pagos",
+    "no_upcoming": "No hay pagos próximos"
   },
   "Modals": {
     "savings_title": "Detalles de ahorros potenciales",

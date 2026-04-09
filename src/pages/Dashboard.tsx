@@ -8,6 +8,7 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Navbar } from "@/components/layout/Navbar";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { FlipCard } from "@/components/subscription/FlipCard";
+import { UpcomingTimeline } from "@/components/dashboard/UpcomingTimeline";
 import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
 import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLimitModal";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
@@ -410,6 +411,8 @@ const Dashboard = () => {
             </div>
           </div>
 
+          <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+            <div className="lg:col-span-2">
           {/* Smart Financial Insight Card */}
           <div
             className={cn(
@@ -722,6 +725,12 @@ const Dashboard = () => {
                 ))}
               </div>
             )}
+          </div>
+            </div>
+
+            <div className="mt-8 lg:mt-0 lg:col-span-1">
+              <UpcomingTimeline subscriptions={subscriptions} />
+            </div>
           </div>
         </div>
       </main>

@@ -111,7 +111,9 @@
     "hours": "STD",
     "min": "MIN",
     "sec": "SEK",
-    "per_month": "/ MONAT"
+    "per_month": "/ MONAT",
+    "upcoming_payments": "Kommende Zahlungen",
+    "no_upcoming": "Keine kommenden Zahlungen"
   },
   "Subscriptions": {
     "add_title": "Abonnement hinzufügen",

@@ -111,7 +111,9 @@
     "hours": "HOURS",
     "min": "MIN",
     "sec": "SEC",
-    "per_month": "/ MONTH"
+    "per_month": "/ MONTH",
+    "upcoming_payments": "Upcoming Payments",
+    "no_upcoming": "No upcoming payments"
   },
   "Modals": {
     "savings_title": "Potential Savings Details",
