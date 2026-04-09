@@ -589,19 +589,12 @@ const Dashboard = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-            <div className="w-full h-full">
-              <SmartInsights />
-            </div>
-            <div className="w-full h-full">
-              <RecentActivity />
-            </div>
-          </div>
-
             </div>
 
-            <div className="w-full xl:w-[380px] shrink-0 xl:sticky xl:top-6">
+            <div className="w-full xl:w-[380px] shrink-0 xl:sticky xl:top-6 flex flex-col gap-6">
               <UpcomingTimeline subscriptions={subscriptions} />
+              <SmartInsights />
+              <RecentActivity />
             </div>
           </div>
 
