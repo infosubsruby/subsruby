@@ -15,7 +15,7 @@ import { SpendingPieChart } from "@/components/finance/SpendingPieChart";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { QuickAddTransactions } from "@/components/finance/QuickAddTransactions.tsx";
 import { BudgetGoalsTracker } from "@/components/finance/BudgetGoalsTracker.tsx";
-import { PieChart, Pie, Cell } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -552,49 +552,40 @@ const Finance = () => {
             {financialHealth.score !== null ? (
               <div className="flex flex-col items-center gap-4">
                 <div className="relative w-full max-w-[360px] h-[200px] mx-auto">
-                  <PieChart width={360} height={200}>
-                    <Pie
-                      data={[
-                        { name: "risky", value: 40, color: "#ef4444" },
-                        { name: "warn", value: 30, color: "#f59e0b" },
-                        { name: "good", value: 30, color: "#22c55e" },
-                      ]}
-                      dataKey="value"
-                      startAngle={180}
-                      endAngle={0}
-                      innerRadius={70}
-                      outerRadius={100}
-                      cx={180}
-                      cy={180}
-                      stroke="hsl(var(--background))"
-                      strokeWidth={2}
-                    >
-                      {[
-                        { name: "risky", value: 40, color: "#ef4444" },
-                        { name: "warn", value: 30, color: "#f59e0b" },
-                        { name: "good", value: 30, color: "#22c55e" },
-                      ].map((seg, idx) => (
-                        <Cell key={idx} fill={seg.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { value: 40, fill: "#ef4444" },
+                          { value: 30, fill: "#f59e0b" },
+                          { value: 30, fill: "#22c55e" },
+                        ]}
+                        dataKey="value"
+                        startAngle={180}
+                        endAngle={0}
+                        innerRadius="70%"
+                        outerRadius="100%"
+                        cx="50%"
+                        cy="100%"
+                        stroke="none"
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
 
-                  <div className="absolute inset-0 flex items-center justify-center translate-y-6">
-                    <div className="flex items-baseline">
-                      <span
-                        className={cn(
-                          "text-4xl md:text-5xl font-bold tracking-tight",
-                          financialHealth.score >= 70
-                            ? "text-green-500"
-                            : financialHealth.score >= 40
-                              ? "text-amber-500"
-                              : "text-destructive"
-                        )}
-                      >
-                        {financialHealth.score}
-                      </span>
-                      <span className="text-sm text-muted-foreground ml-1">/100</span>
-                    </div>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
+                    <span
+                      className={cn(
+                        "text-4xl md:text-5xl font-bold tracking-tight",
+                        financialHealth.score >= 70
+                          ? "text-green-500"
+                          : financialHealth.score >= 40
+                            ? "text-amber-500"
+                            : "text-destructive"
+                      )}
+                    >
+                      {financialHealth.score}
+                    </span>
+                    <span className="text-sm text-muted-foreground">/100</span>
                   </div>
                 </div>
 
