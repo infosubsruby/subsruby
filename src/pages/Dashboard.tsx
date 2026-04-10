@@ -344,9 +344,9 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 sm:pt-24">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
           <div className="flex flex-col xl:flex-row items-start gap-6 w-full">
-            <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
+            <div className="w-full xl:w-[360px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
               <SmartInsights
                 subscriptions={subscriptions}
                 currency={activeCurrency}
@@ -448,48 +448,48 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Wallet className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
-                  <h3 className="text-xl md:text-2xl font-bold break-words">
+                  <h3 className="text-xl md:text-2xl font-bold whitespace-nowrap truncate">
                     {formatCurrency(monthlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <CreditCard className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
-                  <h3 className="text-xl md:text-2xl font-bold break-words">
+                  <h3 className="text-xl md:text-2xl font-bold whitespace-nowrap truncate">
                     {formatCurrency(yearlySpend, activeCurrency)}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
-                  <h3 className="text-xl md:text-2xl font-bold break-words">{subscriptions.length}</h3>
+                  <h3 className="text-xl md:text-2xl font-bold whitespace-nowrap truncate">{subscriptions.length}</h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
                   <BarChart3 className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
@@ -512,7 +512,7 @@ const Dashboard = () => {
 
                       return (
                         <>
-                          <h3 className="text-sm sm:text-base md:text-xl font-bold mt-0.5 break-words">
+                          <h3 className="text-sm sm:text-base md:text-xl font-bold mt-0.5 whitespace-nowrap truncate">
                             {formatCurrency(safeSubs, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
                             {safeIncome > 0
                               ? formatCurrency(safeIncome, activeCurrency, { maximumFractionDigits: 0 })
@@ -534,7 +534,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
                   {!spendingChange.hasPreviousData ? (
@@ -549,7 +549,7 @@ const Dashboard = () => {
                   <p className="text-xs md:text-sm text-muted-foreground">{tt("spending_change")}</p>
                   {spendingChange.hasPreviousData ? (
                     <>
-                      <h3 className="text-xl md:text-2xl font-bold break-words">
+                      <h3 className="text-xl md:text-2xl font-bold whitespace-nowrap truncate">
                         {spendingChange.percentageChange > 0 ? "+" : ""}
                         {spendingChange.percentageChange.toFixed(1)}%
                       </h3>
@@ -560,7 +560,7 @@ const Dashboard = () => {
                     </>
                   ) : (
                     <>
-                      <h3 className="text-base md:text-lg font-semibold text-muted-foreground mt-1 break-words">
+                      <h3 className="text-base md:text-lg font-semibold text-muted-foreground mt-1 whitespace-nowrap truncate">
                         {tt("no_previous_data")}
                       </h3>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{tt("spending_change_desc")}</p>
@@ -570,14 +570,14 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-3 md:p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                   <PiggyBank className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs md:text-sm text-muted-foreground">{tt("potential_savings")}</p>
-                  <h3 className="text-xl md:text-2xl font-bold break-words">
+                  <h3 className="text-xl md:text-2xl font-bold whitespace-nowrap truncate">
                     {formatCurrency(potentialSavings, activeCurrency)}
                     <span className="text-xs md:text-sm font-normal text-muted-foreground ml-1">{tt("per_month")}</span>
                   </h3>
@@ -605,7 +605,7 @@ const Dashboard = () => {
 
             </div>
 
-            <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
+            <div className="w-full xl:w-[360px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
               <UpcomingTimeline subscriptions={subscriptions} />
             </div>
           </div>

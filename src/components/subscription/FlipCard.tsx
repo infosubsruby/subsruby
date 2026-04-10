@@ -204,7 +204,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                     <IconComponent className="w-7 h-7 text-white" />
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-display font-bold text-foreground">
+                    <div className="text-lg font-display font-bold text-foreground">
                       {symbol}{subscription.price.toFixed(2)}
                     </div>
                     <div className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -213,7 +213,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                   </div>
                 </div>
 
-                <h3 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors truncate">
+                <h3 className="font-display text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors truncate">
                   {subscription.name}
                 </h3>
 
@@ -329,7 +329,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                       <IconComponent className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-display text-lg font-semibold truncate">{subscription.name}</h3>
+                      <h3 className="font-display text-base font-semibold truncate">{subscription.name}</h3>
                       <p className="text-xs text-muted-foreground capitalize">
                         {t("monthly_sub")}
                       </p>
