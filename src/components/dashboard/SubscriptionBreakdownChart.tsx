@@ -82,9 +82,9 @@ export const SubscriptionBreakdownChart = ({
       {data.length === 0 ? (
         <div className="text-sm text-muted-foreground mt-4">—</div>
       ) : (
-        <div className="mt-4">
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-4 flex flex-col items-center justify-start gap-6 h-full w-full">
+          <div className="w-full max-w-sm mx-auto">
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={data}
@@ -108,9 +108,7 @@ export const SubscriptionBreakdownChart = ({
                     return (
                       <div className="rounded-xl border border-border bg-popover/95 px-3 py-2 shadow-lg">
                         <div className="text-sm font-medium">{item.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatCurrency(item.value, currency)}
-                        </div>
+                        <div className="text-xs text-muted-foreground">{formatCurrency(item.value, currency)}</div>
                       </div>
                     );
                   }}
@@ -119,19 +117,20 @@ export const SubscriptionBreakdownChart = ({
             </ResponsiveContainer>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="flex flex-col gap-2 w-full max-w-sm mx-auto overflow-visible">
             {data.map((d) => {
-              const preset = subscriptionPresets.find((p) => p.slug === d.slug || p.name.toLowerCase() === d.name.toLowerCase());
+              const preset = subscriptionPresets.find(
+                (p) => p.slug === d.slug || p.name.toLowerCase() === d.name.toLowerCase()
+              );
               const Icon = preset?.icon;
               return (
-                <div
-                  key={d.id}
-                  className="flex items-center gap-2 rounded-xl border border-border/50 bg-background/40 px-3 py-2"
-                >
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                  {Icon ? <Icon className="w-4 h-4 text-muted-foreground shrink-0" /> : null}
-                  <span className="text-sm truncate max-w-[140px]">{d.name}</span>
-                  <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">
+                <div key={d.id} className="flex items-center justify-between gap-3 w-full">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                    {Icon ? <Icon className="w-4 h-4 text-muted-foreground shrink-0" /> : null}
+                    <span className="text-sm truncate">{d.name}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap shrink-0">
                     {formatCurrency(d.value, currency)}
                   </span>
                 </div>
