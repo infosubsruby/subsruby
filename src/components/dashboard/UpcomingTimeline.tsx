@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { addMonths, addYears, startOfDay } from "date-fns";
+import { addMonths, addYears, differenceInCalendarDays, startOfDay } from "date-fns";
 import { CreditCard } from "lucide-react";
 import type { Subscription } from "@/hooks/useSubscriptions";
 import { subscriptionPresets } from "@/data/subscriptionPresets";
 import { useTranslations } from "@/i18n/useTranslations";
-import { formatDate } from "@/i18n/date";
+import { formatDate, getActiveLocale } from "@/i18n/date";
 import { formatCurrency } from "@/i18n/currency";
 
 type UpcomingItem = {
@@ -41,6 +41,15 @@ const computeNextPaymentDate = (subscription: Subscription): Date => {
 export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscription[] }) => {
   const t = useTranslations("Dashboard");
 
+  const relativeDayLabel = useMemo(() => {
+    const locale = getActiveLocale();
+    try {
+      return new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+    } catch {
+      return null;
+    }
+  }, []);
+
   const items = useMemo<UpcomingItem[]>(
     () =>
       subscriptions
@@ -53,49 +62,51 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
   );
 
   return (
-    <div className="glass-card rounded-2xl p-6 border-l-2 border-border/70 w-full overflow-visible">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg font-semibold">{t("upcoming_payments")}</h3>
-      </div>
+    <div className="w-full flex flex-col gap-6">
+      <h2 className="text-xl font-semibold mb-2">{t("upcoming_payments")}</h2>
 
       {items.length === 0 ? (
-        <div className="text-sm text-muted-foreground mt-4">{t("no_upcoming")}</div>
+        <div className="text-sm text-gray-400">{t("no_upcoming")}</div>
       ) : (
-        <div className="mt-4">
-          <div className="space-y-4 divide-y divide-border/60">
-            {items.map(({ subscription, nextPaymentDate }) => {
-              const preset = subscriptionPresets.find(
-                (p) => p.slug === subscription.slug || p.name.toLowerCase() === subscription.name.toLowerCase()
-              );
-              const Icon = preset?.icon ?? CreditCard;
+        <div className="flex flex-col gap-4">
+          {items.map(({ subscription, nextPaymentDate }) => {
+            const preset = subscriptionPresets.find(
+              (p) => p.slug === subscription.slug || p.name.toLowerCase() === subscription.name.toLowerCase()
+            );
+            const Icon = preset?.icon ?? CreditCard;
+            const daysLeft = differenceInCalendarDays(nextPaymentDate, startOfDay(new Date()));
+            const remainingLabel =
+              relativeDayLabel?.format(daysLeft, "day") ??
+              (daysLeft === 0 ? t("activity.today") : daysLeft > 0 ? `${daysLeft}` : "");
 
-              return (
-                <div key={subscription.id} className="relative pl-4 pt-4 first:pt-0">
-                  <div className="absolute -left-2 top-3 w-3 h-3 rounded-full bg-background border-2" style={{ borderColor: subscription.card_color }} />
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: subscription.card_color }}
-                      >
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{subscription.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(nextPaymentDate, { day: "numeric", month: "long" })}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right font-semibold shrink-0">
-                      {formatCurrency(subscription.price, subscription.currency)}
-                    </div>
-                  </div>
+            return (
+              <div
+                key={subscription.id}
+                className="w-full flex flex-row items-center gap-4 bg-gray-900/50 p-4 border border-gray-800 rounded-xl"
+              >
+                <div
+                  className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: subscription.card_color }}
+                >
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
-              );
-            })}
-          </div>
+
+                <div className="flex flex-col flex-1 min-w-0">
+                  <p className="font-semibold text-gray-100 truncate">{subscription.name}</p>
+                  <p className="text-sm text-gray-400">
+                    {formatDate(nextPaymentDate, { day: "2-digit", month: "short", year: "numeric" })}
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-end text-right shrink-0">
+                  <p className="text-lg font-bold text-gray-100">
+                    {formatCurrency(subscription.price, subscription.currency)}
+                  </p>
+                  <p className="text-sm text-green-400">{remainingLabel}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
