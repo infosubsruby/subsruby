@@ -15,6 +15,7 @@ import { SpendingPieChart } from "@/components/finance/SpendingPieChart";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { QuickAddTransactions } from "@/components/finance/QuickAddTransactions.tsx";
 import { BudgetGoalsTracker } from "@/components/finance/BudgetGoalsTracker.tsx";
+import { AIFinancialInsights } from "@/components/finance/AIFinancialInsights.tsx";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -546,68 +547,72 @@ const Finance = () => {
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-3 md:p-6 mb-8">
-            <p className="text-xs md:text-sm text-muted-foreground font-medium mb-3 text-center">{tFinance("health_score")}</p>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full mb-8">
+            <div className="glass-card rounded-2xl p-3 md:p-6 h-full">
+              <p className="text-xs md:text-sm text-muted-foreground font-medium mb-3 text-center">
+                {tFinance("health_score")}
+              </p>
 
-            {financialHealth.score !== null ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative w-full max-w-[360px] h-[200px] mx-auto">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { value: 40, fill: "#ef4444" },
-                          { value: 30, fill: "#f59e0b" },
-                          { value: 30, fill: "#22c55e" },
-                        ]}
-                        dataKey="value"
-                        startAngle={180}
-                        endAngle={0}
-                        innerRadius="70%"
-                        outerRadius="100%"
-                        cx="50%"
-                        cy="100%"
-                        stroke="none"
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+              {financialHealth.score !== null ? (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative w-full max-w-[360px] h-[200px] mx-auto">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { value: 40, fill: "#ef4444" },
+                            { value: 30, fill: "#f59e0b" },
+                            { value: 30, fill: "#22c55e" },
+                          ]}
+                          dataKey="value"
+                          startAngle={180}
+                          endAngle={0}
+                          innerRadius="70%"
+                          outerRadius="100%"
+                          cx="50%"
+                          cy="100%"
+                          stroke="none"
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
 
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
-                    <span
-                      className={cn(
-                        "text-4xl md:text-5xl font-bold tracking-tight",
-                        financialHealth.score >= 70
-                          ? "text-green-500"
-                          : financialHealth.score >= 40
-                            ? "text-amber-500"
-                            : "text-destructive"
-                      )}
-                    >
-                      {financialHealth.score}
-                    </span>
-                    <span className="text-sm text-muted-foreground">/100</span>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
+                      <span
+                        className={cn(
+                          "text-4xl md:text-5xl font-bold tracking-tight",
+                          financialHealth.score >= 70
+                            ? "text-green-500"
+                            : financialHealth.score >= 40
+                              ? "text-amber-500"
+                              : "text-destructive"
+                        )}
+                      >
+                        {financialHealth.score}
+                      </span>
+                      <span className="text-sm text-muted-foreground">/100</span>
+                    </div>
+                  </div>
+
+                  <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
+                    <span>{financialHealth.emoji}</span>
+                    <span>{displayedHealthLabel}</span>
+                  </div>
+
+                  <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-xs text-muted-foreground">
+                    {financialHealth.description}
                   </div>
                 </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-tight text-center">{financialHealth.description}</p>
+                </div>
+              )}
+            </div>
 
-                <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
-                  <span>{financialHealth.emoji}</span>
-                  <span>{displayedHealthLabel}</span>
-                </div>
-
-                <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-xs text-muted-foreground">
-                  {financialHealth.description}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground leading-tight text-center">
-                  {financialHealth.description}
-                </p>
-              </div>
-            )}
+            <AIFinancialInsights />
           </div>
 
           {/* Charts */}
