@@ -88,9 +88,7 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
               outerRadius={100}
               paddingAngle={2}
               dataKey="value"
-              label={({ name, percent }) =>
-                `${getCategoryLabel(String(name))} ${(percent * 100).toFixed(0)}%`
-              }
+              label={false}
               labelLine={false}
             >
               {data.map((_, index) => (

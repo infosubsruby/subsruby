@@ -202,51 +202,43 @@ const Finance = () => {
 
   const cashFlowData = useMemo(() => {
     try {
-      const months: { month: string; income: number; expenses: number }[] = [];
       const now = new Date();
+      const monthsBack = 5;
+      const monthKeys: { key: string; date: Date }[] = [];
+      for (let i = monthsBack; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        monthKeys.push({ key: formatMonthShortYear(d), date: d });
+      }
+
       const fallbackTxCurrency = defaultCurrency || "USD";
       const parseLocalDate = (value: string) => new Date(`${value}T00:00:00`);
 
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStr = formatMonthShortYear(date);
-        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      const buckets: Record<string, { income: number; expenses: number }> = {};
+      monthKeys.forEach(({ key }) => (buckets[key] = { income: 0, expenses: 0 }));
 
-        const monthlyIncome = safeTransactions
-          .filter((t) => {
-            if (!t?.date) return false;
-            const tDate = parseLocalDate(t.date);
-            return t.type === "income" && tDate >= startOfMonth && tDate <= endOfMonth;
-          })
-          .reduce((sum, t) => {
-            const raw = Number(t?.amount || 0);
-            const from = t?.currency || fallbackTxCurrency;
-            const converted = toActiveCurrency(raw, from);
-            return sum + (isFinite(converted) ? converted : 0);
-          }, 0);
+      safeTransactions.forEach((t) => {
+        if (!t?.date || !t?.type) return;
+        const tDate = parseLocalDate(t.date);
+        const key = formatMonthShortYear(new Date(tDate.getFullYear(), tDate.getMonth(), 1));
+        if (!(key in buckets)) return;
+        const raw = Number(t?.amount || 0);
+        const from = t?.currency || fallbackTxCurrency;
+        const converted = toActiveCurrency(raw, from);
+        const val = isFinite(converted) ? converted : 0;
+        if (t.type === "income") {
+          buckets[key].income += val;
+        } else if (t.type === "expense") {
+          buckets[key].expenses += val;
+        }
+      });
 
-        const monthlyExpenses = safeTransactions
-          .filter((t) => {
-            if (!t?.date) return false;
-            const tDate = parseLocalDate(t.date);
-            return t.type === "expense" && tDate >= startOfMonth && tDate <= endOfMonth;
-          })
-          .reduce((sum, t) => {
-            const raw = Number(t?.amount || 0);
-            const from = t?.currency || fallbackTxCurrency;
-            const converted = toActiveCurrency(raw, from);
-            return sum + (isFinite(converted) ? converted : 0);
-          }, 0);
+      const result = monthKeys.map(({ key }) => ({
+        month: key,
+        income: Math.max(0, buckets[key]?.income || 0),
+        expenses: Math.max(0, (buckets[key]?.expenses || 0) + totalMonthlyCost),
+      }));
 
-        months.push({
-          month: monthStr,
-          income: isFinite(monthlyIncome) ? monthlyIncome : 0,
-          expenses: isFinite(monthlyExpenses + totalMonthlyCost) ? monthlyExpenses + totalMonthlyCost : 0,
-        });
-      }
-
-      return months;
+      return result;
     } catch {
       return [];
     }
