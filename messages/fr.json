@@ -132,6 +132,22 @@
       "empty": "Aucune donnée à analyser pour le moment"
     }
   },
+  "finance_sidebar": {
+    "quick_add_title": "Ajout Rapide",
+    "budget_goals_title": "Objectifs de Budget",
+    "categories": {
+      "coffee": "Café",
+      "groceries": "Courses",
+      "gas": "Essence",
+      "shopping": "Achats",
+      "food": "Alimentation"
+    },
+    "status": {
+      "spent": "Dépensé",
+      "remaining": "Restant",
+      "over_budget": "Budget Dépassé"
+    }
+  },
   "Subscriptions": {
     "add_title": "Ajouter un abonnement",
     "search_placeholder": "Rechercher des services...",

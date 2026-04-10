@@ -132,6 +132,22 @@
       "empty": "No data to analyze yet"
     }
   },
+  "finance_sidebar": {
+    "quick_add_title": "Quick Add",
+    "budget_goals_title": "Budget Goals",
+    "categories": {
+      "coffee": "Coffee",
+      "groceries": "Groceries",
+      "gas": "Gas",
+      "shopping": "Shopping",
+      "food": "Food & Dining"
+    },
+    "status": {
+      "spent": "Spent",
+      "remaining": "Remaining",
+      "over_budget": "Over Budget"
+    }
+  },
   "Modals": {
     "savings_title": "Potential Savings Details",
     "savings_desc": "Detailed breakdown of your potential monthly and yearly savings.",

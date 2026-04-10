@@ -132,6 +132,22 @@
       "empty": "Noch keine Daten zum Analysieren"
     }
   },
+  "finance_sidebar": {
+    "quick_add_title": "Schnell Hinzufügen",
+    "budget_goals_title": "Budgetziele",
+    "categories": {
+      "coffee": "Kaffee",
+      "groceries": "Lebensmittel",
+      "gas": "Tanken",
+      "shopping": "Einkaufen",
+      "food": "Essen & Trinken"
+    },
+    "status": {
+      "spent": "Ausgegeben",
+      "remaining": "Verbleibend",
+      "over_budget": "Budget Überschritten"
+    }
+  },
   "Subscriptions": {
     "add_title": "Abonnement hinzufügen",
     "search_placeholder": "Dienste suchen...",

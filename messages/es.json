@@ -132,6 +132,22 @@
       "empty": "Aún no hay datos para analizar"
     }
   },
+  "finance_sidebar": {
+    "quick_add_title": "Añadir Rápido",
+    "budget_goals_title": "Objetivos de Presupuesto",
+    "categories": {
+      "coffee": "Café",
+      "groceries": "Supermercado",
+      "gas": "Gasolina",
+      "shopping": "Compras",
+      "food": "Comida y Bebida"
+    },
+    "status": {
+      "spent": "Gastado",
+      "remaining": "Restante",
+      "over_budget": "Presupuesto Excedido"
+    }
+  },
   "Modals": {
     "savings_title": "Detalles de ahorros potenciales",
     "savings_desc": "Desglose detallado de tus ahorros potenciales mensuales y anuales.",

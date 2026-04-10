@@ -132,6 +132,22 @@
       "empty": "Henüz analiz edilecek veri yok"
     }
   },
+  "finance_sidebar": {
+    "quick_add_title": "Hızlı Ekle",
+    "budget_goals_title": "Bütçe Hedefleri",
+    "categories": {
+      "coffee": "Kahve",
+      "groceries": "Market",
+      "gas": "Benzin",
+      "shopping": "Alışveriş",
+      "food": "Yeme & İçme"
+    },
+    "status": {
+      "spent": "Harcanan",
+      "remaining": "Kalan",
+      "over_budget": "Bütçe Aşıldı"
+    }
+  },
   "Modals": {
     "savings_title": "Potansiyel Tasarruf Detayları",
     "savings_desc": "Potansiyel aylık ve yıllık tasarruflarınızın detaylı kırılımı.",
