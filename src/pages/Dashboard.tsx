@@ -344,9 +344,9 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 sm:pt-24">
-        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
-          <div className="flex flex-col xl:flex-row items-start gap-6 w-full">
-            <div className="w-full xl:w-[360px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+          <div className="w-full flex flex-col xl:flex-row xl:flex-wrap items-start gap-8">
+            <div className="w-full xl:w-[320px] xl:basis-full shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
               <SmartInsights
                 subscriptions={subscriptions}
                 currency={activeCurrency}
@@ -448,7 +448,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-3 gap-6 w-full">
             <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -605,7 +605,7 @@ const Dashboard = () => {
 
             </div>
 
-            <div className="w-full xl:w-[360px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
+            <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
               <UpcomingTimeline subscriptions={subscriptions} />
             </div>
           </div>

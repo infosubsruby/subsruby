@@ -71,7 +71,7 @@ export const SubscriptionBreakdownChart = ({
   const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
   return (
-    <div className="glass-card rounded-2xl p-5 border border-border/50 w-full overflow-hidden">
+    <div className="glass-card rounded-2xl p-6 border border-border/50 w-full overflow-hidden">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">{t("subscription_breakdown")}</h3>
         <div className="text-sm font-semibold text-muted-foreground">

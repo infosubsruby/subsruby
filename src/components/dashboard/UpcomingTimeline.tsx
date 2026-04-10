@@ -53,7 +53,7 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
   );
 
   return (
-    <div className="glass-card rounded-2xl p-4 border-l-2 border-border/70 pl-6 w-full overflow-visible">
+    <div className="glass-card rounded-2xl p-6 border-l-2 border-border/70 w-full overflow-visible">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">{t("upcoming_payments")}</h3>
       </div>
