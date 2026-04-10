@@ -379,7 +379,11 @@ const Finance = () => {
       <Navbar />
 
       <main className="pt-20 sm:pt-24">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col xl:flex-row items-start gap-6">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col xl:flex-row items-start gap-6">
+          <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
+            <AIFinancialInsights />
+          </div>
+
           <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -547,8 +551,7 @@ const Finance = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full mb-8">
-            <div className="glass-card rounded-2xl p-3 md:p-6 h-full">
+          <div className="glass-card rounded-2xl p-3 md:p-6 mb-8 w-full">
               <p className="text-xs md:text-sm text-muted-foreground font-medium mb-3 text-center">
                 {tFinance("health_score")}
               </p>
@@ -610,9 +613,6 @@ const Finance = () => {
                   <p className="text-sm text-muted-foreground leading-tight text-center">{financialHealth.description}</p>
                 </div>
               )}
-            </div>
-
-            <AIFinancialInsights />
           </div>
 
           {/* Charts */}
@@ -675,7 +675,7 @@ const Finance = () => {
               )}
             </TabsContent>
           </Tabs>
-          </div>
+        </div>
 
           <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
             <QuickAddTransactions />
