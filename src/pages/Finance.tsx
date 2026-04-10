@@ -15,6 +15,7 @@ import { SpendingPieChart } from "@/components/finance/SpendingPieChart";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { QuickAddTransactions } from "@/components/finance/QuickAddTransactions.tsx";
 import { BudgetGoalsTracker } from "@/components/finance/BudgetGoalsTracker.tsx";
+import { PieChart, Pie, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -557,10 +558,52 @@ const Finance = () => {
             <p className="text-xs md:text-sm text-muted-foreground font-medium mb-3 text-center">{tFinance("health_score")}</p>
 
             {financialHealth.score !== null ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="flex items-baseline justify-center">
-                  <span className="text-4xl md:text-5xl font-bold tracking-tight">{financialHealth.score}</span>
-                  <span className="text-sm text-muted-foreground ml-1">/100</span>
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative w-full max-w-[360px] h-[200px] mx-auto">
+                  <PieChart width={360} height={200}>
+                    <Pie
+                      data={[
+                        { name: "risky", value: 40, color: "#ef4444" },
+                        { name: "warn", value: 30, color: "#f59e0b" },
+                        { name: "good", value: 30, color: "#22c55e" },
+                      ]}
+                      dataKey="value"
+                      startAngle={180}
+                      endAngle={0}
+                      innerRadius={70}
+                      outerRadius={100}
+                      cx={180}
+                      cy={180}
+                      stroke="hsl(var(--background))"
+                      strokeWidth={2}
+                    >
+                      {[
+                        { name: "risky", value: 40, color: "#ef4444" },
+                        { name: "warn", value: 30, color: "#f59e0b" },
+                        { name: "good", value: 30, color: "#22c55e" },
+                      ].map((seg, idx) => (
+                        <Cell key={idx} fill={seg.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+
+                  <div className="absolute inset-0 flex items-center justify-center translate-y-6">
+                    <div className="flex items-baseline">
+                      <span
+                        className={cn(
+                          "text-4xl md:text-5xl font-bold tracking-tight",
+                          financialHealth.score >= 70
+                            ? "text-green-500"
+                            : financialHealth.score >= 40
+                              ? "text-amber-500"
+                              : "text-destructive"
+                        )}
+                      >
+                        {financialHealth.score}
+                      </span>
+                      <span className="text-sm text-muted-foreground ml-1">/100</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
@@ -568,23 +611,9 @@ const Finance = () => {
                   <span>{displayedHealthLabel}</span>
                 </div>
 
-                <div className="w-full max-w-[220px] bg-secondary rounded-full h-2 mt-1 overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-500",
-                      financialHealth.label === "Excellent" || financialHealth.label === "Healthy"
-                        ? "bg-success"
-                        : financialHealth.label === "Warning"
-                          ? "bg-warning"
-                          : "bg-destructive"
-                    )}
-                    style={{ width: `${financialHealth.score}%` }}
-                  />
-                </div>
-
-                <p className="text-sm text-muted-foreground leading-tight mt-1 text-center max-w-[360px]">
+                <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-xs text-muted-foreground">
                   {financialHealth.description}
-                </p>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">

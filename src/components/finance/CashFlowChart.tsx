@@ -5,11 +5,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatCurrency } from "@/i18n/currency";
+import { useMemo } from "react";
 
 interface CashFlowChartProps {
   data: { month: string; income: number; expenses: number }[];
@@ -19,6 +20,19 @@ interface CashFlowChartProps {
 export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
   const tFinance = useTranslations("Finance");
   const tModals = useTranslations("Modals");
+  const chartData = useMemo(
+    () =>
+      (data || []).map((d) => {
+        const net = (Number(d.income) || 0) - (Number(d.expenses) || 0);
+        return {
+          month: d.month,
+          pos: Math.max(net, 0),
+          neg: Math.min(net, 0),
+          net,
+        };
+      }),
+    [data]
+  );
   return (
     <div className="glass-card rounded-xl p-4 md:p-5">
       <h3 className="font-display font-semibold text-lg mb-4">
@@ -26,18 +40,30 @@ export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
       </h3>
       <div className="h-64 md:h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
+          <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+            <defs>
+              <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.8} />
+                <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorDeficit" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid horizontal strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" vertical={false} />
             <XAxis
               dataKey="month"
+              axisLine={false}
+              tickLine={false}
               stroke="hsl(220, 10%, 55%)"
               fontSize={12}
-              tickLine={false}
             />
             <YAxis
+              axisLine={false}
+              tickLine={false}
               stroke="hsl(220, 10%, 55%)"
               fontSize={12}
-              tickLine={false}
               tickFormatter={(value) => formatCurrency(Number(value), currency)}
             />
             <Tooltip
@@ -49,19 +75,16 @@ export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
               }}
               formatter={(value: number) => [formatCurrency(value, currency), ""]}
             />
-            <Legend />
-            <Bar
-              dataKey="income"
-              name={tModals("income")}
-              fill="hsl(142, 70%, 45%)"
-              radius={[4, 4, 0, 0]}
-            />
-            <Bar
-              dataKey="expenses"
-              name={tFinance("expenses_subs")}
-              fill="hsl(358, 82%, 55%)"
-              radius={[4, 4, 0, 0]}
-            />
+            <Bar dataKey="pos" stackId="net" radius={[10, 10, 0, 0]}>
+              {chartData.map((entry, idx) => (
+                <Cell key={`pos-${idx}`} fill="url(#colorIncome)" />
+              ))}
+            </Bar>
+            <Bar dataKey="neg" stackId="net" radius={[0, 0, 10, 10]}>
+              {chartData.map((entry, idx) => (
+                <Cell key={`neg-${idx}`} fill="url(#colorDeficit)" />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
