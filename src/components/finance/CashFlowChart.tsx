@@ -11,11 +11,11 @@ export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
   const tFinance = useTranslations("Finance");
   const tModals = useTranslations("Modals");
   return (
-    <div className="glass-card rounded-xl p-4 md:p-5">
+    <div className="glass-card rounded-xl p-6">
       <h3 className="font-display font-semibold text-lg mb-4">
         {tFinance("monthly_cash_flow")}
       </h3>
-      <div className="h-64 md:h-80 w-full">
+      <div className="h-[350px] md:h-[380px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid horizontal strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" vertical={false} />
@@ -25,6 +25,10 @@ export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
               tickLine={false}
               stroke="hsl(220, 10%, 55%)"
               fontSize={12}
+              angle={-45}
+              dx={-10}
+              dy={10}
+              tickFormatter={(value) => String(value).split(" ")[0]}
             />
             <YAxis
               axisLine={false}

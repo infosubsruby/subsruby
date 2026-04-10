@@ -82,8 +82,8 @@ export const SubscriptionBreakdownChart = ({
       {data.length === 0 ? (
         <div className="text-sm text-muted-foreground mt-4">—</div>
       ) : (
-        <div className="mt-4 flex flex-row items-center gap-4 h-[220px]">
-          <div className="w-48 h-48 shrink-0">
+        <div className="mt-4 flex flex-row items-center gap-4 h-[350px]">
+          <div className="w-56 h-56 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -95,6 +95,8 @@ export const SubscriptionBreakdownChart = ({
                   paddingAngle={2}
                   stroke="hsl(var(--background))"
                   strokeWidth={2}
+                  label={false}
+                  labelLine={false}
                 >
                   {data.map((entry) => (
                     <Cell key={entry.id} fill={entry.color} />
