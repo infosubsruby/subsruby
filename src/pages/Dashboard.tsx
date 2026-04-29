@@ -389,7 +389,7 @@ const Dashboard = () => {
                     </Select>
                     <Button 
                       onClick={handleAddSubscription}
-                      className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong transition-all gap-2"
+                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50 gap-2"
                     >
                       <Plus className="w-5 h-5" />
                       {t.dashboard.addSubscription}
@@ -447,9 +447,9 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-6 w-full">
-            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+          {/* Stats Panel */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-6 bg-[#0c0c0e] border border-gray-800/80 rounded-2xl p-6 sm:p-8 w-full shadow-lg">
+            <div className="flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Wallet className="w-4 h-4 md:w-6 md:h-6 text-primary" />
@@ -463,7 +463,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <CreditCard className="w-4 h-4 md:w-6 md:h-6 text-primary" />
@@ -477,7 +477,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-primary" />
@@ -489,7 +489,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
                   <BarChart3 className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
@@ -534,7 +534,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
                   {!spendingChange.hasPreviousData ? (
@@ -570,7 +570,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-card p-6 rounded-2xl border shadow-sm flex flex-col justify-center h-full w-full">
+            <div className="flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                   <PiggyBank className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
@@ -587,7 +587,6 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
@@ -624,7 +623,7 @@ const Dashboard = () => {
                   </p>
                   <Button
                     onClick={handleAddSubscription}
-                    className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
+                    className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50"
                   >
                     {t.dashboard.addFirstSubscription}
                   </Button>
