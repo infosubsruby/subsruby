@@ -375,7 +375,8 @@ const Finance = () => {
           : financialHealth.label;
 
   return (
-    <div className="min-h-screen pb-28 md:pb-20">
+    <div className="relative min-h-screen pb-28 md:pb-20">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-red-900/20 blur-[120px] pointer-events-none rounded-full" />
       <Navbar />
 
       <main className="pt-20 sm:pt-24">

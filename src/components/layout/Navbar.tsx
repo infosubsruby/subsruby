@@ -55,7 +55,7 @@ export const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
+      <nav className="sticky top-0 z-50 bg-[#0c0c0e]/80 backdrop-blur-md border-b border-gray-800/60">
         <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 group">
             <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden">

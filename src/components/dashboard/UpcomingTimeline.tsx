@@ -82,7 +82,7 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
             return (
               <div
                 key={subscription.id}
-                className="w-full flex flex-row items-center gap-4 bg-transparent hover:bg-gray-800/30 transition-colors py-3 px-2 border-b border-gray-800/50 last:border-0"
+                className="w-full flex flex-row items-center gap-4 bg-transparent hover:bg-gray-800/30 py-3 px-2 border-b border-gray-800/50 last:border-0 transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-600/60"
               >
                 <div
                   className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center"
