@@ -455,8 +455,8 @@ const Dashboard = () => {
                   <Wallet className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.monthlyCost}</p>
-                  <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground dark:text-gray-100">
+                  <p className="text-sm text-gray-400 font-medium">{t.dashboard.monthlyCost}</p>
+                  <h3 className="text-2xl font-bold text-gray-100">
                     {formatCurrency(monthlySpend, activeCurrency)}
                   </h3>
                 </div>
@@ -469,8 +469,8 @@ const Dashboard = () => {
                   <CreditCard className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.yearlyCost}</p>
-                  <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground dark:text-gray-100">
+                  <p className="text-sm text-gray-400 font-medium">{t.dashboard.yearlyCost}</p>
+                  <h3 className="text-2xl font-bold text-gray-100">
                     {formatCurrency(yearlySpend, activeCurrency)}
                   </h3>
                 </div>
@@ -483,8 +483,8 @@ const Dashboard = () => {
                   <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground">{t.dashboard.totalSubscriptions}</p>
-                  <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground dark:text-gray-100">{subscriptions.length}</h3>
+                  <p className="text-sm text-gray-400 font-medium">{t.dashboard.totalSubscriptions}</p>
+                  <h3 className="text-2xl font-bold text-gray-100">{subscriptions.length}</h3>
                 </div>
               </div>
             </div>
@@ -495,7 +495,7 @@ const Dashboard = () => {
                   <BarChart3 className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground">{tt("subs_vs_income")}</p>
+                  <p className="text-sm text-gray-400 font-medium">{tt("subs_vs_income")}</p>
                   {(() => {
                     try {
                       if (financeLoading) {
@@ -512,7 +512,7 @@ const Dashboard = () => {
 
                       return (
                         <>
-                          <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground dark:text-gray-100 mt-0.5">
+                          <h3 className="text-2xl font-bold text-gray-100 mt-0.5">
                             {formatCurrency(safeSubs, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
                             {safeIncome > 0
                               ? formatCurrency(safeIncome, activeCurrency, { maximumFractionDigits: 0 })
@@ -546,10 +546,10 @@ const Dashboard = () => {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground">{tt("spending_change")}</p>
+                  <p className="text-sm text-gray-400 font-medium">{tt("spending_change")}</p>
                   {spendingChange.hasPreviousData ? (
                     <>
-                      <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground dark:text-gray-100">
+                      <h3 className="text-2xl font-bold text-gray-100">
                         {spendingChange.percentageChange > 0 ? "+" : ""}
                         {spendingChange.percentageChange.toFixed(1)}%
                       </h3>
@@ -560,7 +560,7 @@ const Dashboard = () => {
                     </>
                   ) : (
                     <>
-                      <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground dark:text-gray-100 mt-1">
+                      <h3 className="text-2xl font-bold text-gray-100 mt-1">
                         {tt("no_previous_data")}
                       </h3>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{tt("spending_change_desc")}</p>
@@ -576,10 +576,10 @@ const Dashboard = () => {
                   <PiggyBank className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted-foreground">{tt("potential_savings")}</p>
-                  <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground dark:text-gray-100">
+                  <p className="text-sm text-gray-400 font-medium">{tt("potential_savings")}</p>
+                  <h3 className="text-2xl font-bold text-gray-100">
                     {formatCurrency(potentialSavings, activeCurrency)}
-                    <span className="text-xs md:text-sm font-normal text-muted-foreground ml-1">{tt("per_month")}</span>
+                    <span className="text-sm text-gray-400 font-medium ml-1">{tt("per_month")}</span>
                   </h3>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
                     {unusedCount > 0 ? tt("find_hidden_savings") : tt("managing_well")}

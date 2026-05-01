@@ -69,7 +69,7 @@ export const TopSpenders = ({
   return (
     <div className="glass-card rounded-2xl p-6 border border-border/50 w-full">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg font-semibold">{t("top_spenders")}</h3>
+        <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("top_spenders")}</h3>
         <div className="text-sm font-semibold text-muted-foreground">{formatCurrency(total, currency)}</div>
       </div>
 
@@ -83,13 +83,19 @@ export const TopSpenders = ({
               (p) => p.slug === item.slug || p.name.toLowerCase() === item.name.toLowerCase()
             );
             const Icon = preset?.icon ?? CreditCard;
+            const iconTone =
+              item.color === "#EF4444"
+                ? "bg-red-500/15 text-red-400"
+                : item.color === "#F97316"
+                  ? "bg-orange-500/15 text-orange-400"
+                  : "bg-blue-500/15 text-blue-400";
 
             return (
               <div key={item.id} className="w-full">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.color }}>
-                      <Icon className="w-4 h-4 text-white" />
+                    <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", iconTone)}>
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
                       <div className="font-medium truncate">{item.name}</div>
@@ -99,7 +105,7 @@ export const TopSpenders = ({
                   <div className="font-semibold shrink-0">{formatCurrency(item.monthlyValue, currency)}</div>
                 </div>
 
-                <div className="mt-2 h-2 w-full rounded-full bg-secondary overflow-hidden">
+                <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
                   <div
                     className={cn("h-full rounded-full")}
                     style={{ width: `${Math.min(100, Math.max(0, percent))}%`, backgroundColor: item.color }}

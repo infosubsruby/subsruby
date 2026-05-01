@@ -126,7 +126,7 @@ export const SmartInsights = ({
 
   return (
     <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full h-full">
-      <h3 className="font-display text-lg font-semibold">{t("smart_insights")}</h3>
+      <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("smart_insights")}</h3>
       {insights.length === 0 ? (
         <div className="mt-4 text-sm text-gray-400">{t("insights.empty")}</div>
       ) : (

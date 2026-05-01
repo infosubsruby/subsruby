@@ -73,7 +73,7 @@ export const SubscriptionBreakdownChart = ({
   return (
     <div className="glass-card rounded-2xl p-6 border border-border/50 w-full overflow-hidden">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg font-semibold">{t("subscription_breakdown")}</h3>
+        <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("subscription_breakdown")}</h3>
         <div className="text-sm font-semibold text-muted-foreground">
           {formatCurrency(total, currency)}
         </div>
