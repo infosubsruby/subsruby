@@ -147,13 +147,15 @@ export const SmartInsights = ({
                   insight.tone === "good"
                     ? "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-500/20 text-gray-200"
                     : insight.tone === "warn"
-                      ? "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-yellow-500/20 text-gray-200"
-                      : "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-blue-500/20 text-gray-200"
+                      ? "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-yellow-500/20 text-yellow-200"
+                      : "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-blue-500/20 text-blue-200"
                 }
               >
                 {insight.icon}
               </div>
-              <p className="text-sm text-gray-200">{insight.message}</p>
+              <p className={insight.tone === "good" ? "text-sm text-gray-200" : "text-sm text-gray-300"}>
+                {insight.message}
+              </p>
             </div>
           ))}
         </div>

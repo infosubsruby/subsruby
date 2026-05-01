@@ -68,7 +68,7 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
       {items.length === 0 ? (
         <div className="text-sm text-gray-400">{t("no_upcoming")}</div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
           {items.map(({ subscription, nextPaymentDate }) => {
             const preset = subscriptionPresets.find(
               (p) => p.slug === subscription.slug || p.name.toLowerCase() === subscription.name.toLowerCase()
@@ -82,7 +82,7 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
             return (
               <div
                 key={subscription.id}
-                className="w-full flex flex-row items-center gap-4 bg-gray-900/50 p-4 border border-gray-800 rounded-xl"
+                className="w-full flex flex-row items-center gap-4 bg-transparent hover:bg-gray-800/30 transition-colors py-3 px-2 border-b border-gray-800/50 last:border-0"
               >
                 <div
                   className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center"
