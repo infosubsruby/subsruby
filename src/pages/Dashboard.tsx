@@ -341,10 +341,10 @@ const Dashboard = () => {
   // 2. Render Dashboard (Show content for everyone)
   return (
     <div className="relative min-h-screen pb-28 md:pb-20">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-red-900/20 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 pointer-events-none w-[800px] h-[400px] bg-red-900/20 blur-[120px] rounded-full" />
       <Navbar />
       
-      <main className="pt-20 sm:pt-24">
+      <main className="pt-8 sm:pt-10">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
           <div className="w-full flex flex-col xl:flex-row items-start gap-6">
             <div className="w-full xl:w-[280px] 2xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
