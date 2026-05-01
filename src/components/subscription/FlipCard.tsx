@@ -140,7 +140,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
   return (
     <>
       <div className="sm:hidden">
-        <div className="bg-[#0c0c0e] hover:bg-gray-900/50 rounded-xl p-4 border border-gray-800 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-gray-600 hover:shadow-lg hover:shadow-red-900/10">
+        <div className="flex flex-col bg-[#0c0c0e] border border-gray-800 rounded-xl p-5 hover:bg-gray-900/50 transition-colors">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
@@ -188,7 +188,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
             className="flip-card-front col-start-1 row-start-1 w-full backface-hidden"
             style={{ backfaceVisibility: "hidden" }}
           >
-            <div className="bg-[#0c0c0e] hover:bg-gray-900/50 rounded-xl px-5 py-4 border border-gray-800 overflow-hidden flex flex-col gap-3 group shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-gray-600 hover:shadow-lg hover:shadow-red-900/10">
+            <div className="flex flex-col bg-[#0c0c0e] border border-gray-800 rounded-xl p-5 hover:bg-gray-900/50 transition-colors">
               <div>
                 <div className="flex items-start justify-between mb-4">
                   <div
@@ -226,7 +226,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
               transform: "rotateY(180deg)",
             }}
           >
-            <div className="bg-[#0c0c0e] rounded-xl px-4 py-4 border border-gray-800 overflow-hidden flex flex-col shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-gray-600 hover:shadow-lg hover:shadow-red-900/10">
+            <div className="flex flex-col bg-[#0c0c0e] border border-gray-800 rounded-xl p-5 hover:bg-gray-900/50 transition-colors">
               {isEditing ? (
                 // Edit Mode
                 <div className="flex flex-col" onClick={(e) => e.stopPropagation()}>

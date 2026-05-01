@@ -610,39 +610,37 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="w-full pt-8 mt-8 border-t border-gray-800">
-            <h2 className="text-xl font-semibold mb-6">Tüm Abonelikler</h2>
-            <div id="subscriptions">
-              {subscriptions.length === 0 ? (
-                <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Plus className="w-8 h-8 text-muted-foreground" />
+          <div id="subscriptions" className="w-full mt-8 mb-10 overflow-visible">
+            <h2 className="text-lg font-semibold text-gray-200 mb-5">Tüm Abonelikler</h2>
+            {subscriptions.length === 0 ? (
+              <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Plus className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  {t.dashboard.noSubscriptionsDesc}
+                </p>
+                <Button
+                  onClick={handleAddSubscription}
+                  className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50"
+                >
+                  {t.dashboard.addFirstSubscription}
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                {subscriptions.map((subscription) => (
+                  <div key={subscription.id}>
+                    <FlipCard
+                      subscription={subscription}
+                      onUpdate={updateSubscription}
+                      onDelete={deleteSubscription}
+                    />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
-                  <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                    {t.dashboard.noSubscriptionsDesc}
-                  </p>
-                  <Button
-                    onClick={handleAddSubscription}
-                    className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50"
-                  >
-                    {t.dashboard.addFirstSubscription}
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full min-h-min pb-10 overflow-visible">
-                  {subscriptions.map((subscription) => (
-                    <div key={subscription.id} className="w-full h-full">
-                      <FlipCard
-                        subscription={subscription}
-                        onUpdate={updateSubscription}
-                        onDelete={deleteSubscription}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -119,25 +119,19 @@ export const SubscriptionBreakdownChart = ({
             </ResponsiveContainer>
           </div>
 
-          <div className="flex flex-col gap-2 flex-1 max-h-full overflow-hidden pr-2 custom-scrollbar">
-            {data.map((d) => {
-              const preset = subscriptionPresets.find(
-                (p) => p.slug === d.slug || p.name.toLowerCase() === d.name.toLowerCase()
-              );
-              const Icon = preset?.icon;
-              return (
-                <div key={d.id} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                    {Icon ? <Icon className="w-4 h-4 text-muted-foreground shrink-0" /> : null}
-                    <span className="text-sm truncate w-28 sm:w-32">{d.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap shrink-0">
-                    {formatCurrency(d.value, currency)}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="flex flex-col gap-3 w-full max-w-[140px] overflow-hidden">
+            {data.map((item) => (
+              <div key={item.id} className="flex items-center gap-2 w-full">
+                <div
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="truncate text-sm text-gray-400 flex-1">{item.name}</span>
+                <span className="text-sm font-medium text-gray-200 shrink-0">
+                  {formatCurrency(item.value, currency)}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
