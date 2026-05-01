@@ -119,7 +119,7 @@ export const SubscriptionBreakdownChart = ({
             </ResponsiveContainer>
           </div>
 
-          <div className="flex flex-col gap-2 flex-1 min-w-[220px] max-h-full overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex flex-col gap-2 flex-1 max-h-full overflow-hidden pr-2 custom-scrollbar">
             {data.map((d) => {
               const preset = subscriptionPresets.find(
                 (p) => p.slug === d.slug || p.name.toLowerCase() === d.name.toLowerCase()
@@ -127,10 +127,10 @@ export const SubscriptionBreakdownChart = ({
               const Icon = preset?.icon;
               return (
                 <div key={d.id} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
                     {Icon ? <Icon className="w-4 h-4 text-muted-foreground shrink-0" /> : null}
-                    <span className="text-sm whitespace-normal break-words">{d.name}</span>
+                    <span className="text-sm truncate w-28 sm:w-32">{d.name}</span>
                   </div>
                   <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap shrink-0">
                     {formatCurrency(d.value, currency)}

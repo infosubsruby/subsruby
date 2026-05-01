@@ -170,7 +170,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
       </div>
 
       <div
-        className="hidden sm:block flip-card-container h-auto cursor-pointer perspective-1000"
+        className="hidden sm:block flip-card-container h-auto min-h-[160px] cursor-pointer perspective-1000"
         onClick={handleFlip}
         style={{ perspective: "1000px" }}
       >
