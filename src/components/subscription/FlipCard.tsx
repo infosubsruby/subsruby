@@ -170,13 +170,13 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
       </div>
 
       <div
-        className="hidden sm:block flip-card-container h-[200px] cursor-pointer perspective-1000"
+        className="hidden sm:block flip-card-container h-auto cursor-pointer perspective-1000"
         onClick={handleFlip}
         style={{ perspective: "1000px" }}
       >
         <div
           className={cn(
-            "flip-card-inner relative w-full h-full transition-transform duration-500",
+            "flip-card-inner relative w-full transition-transform duration-500 grid",
             isFlipped && "rotate-y-180"
           )}
           style={{
@@ -185,10 +185,10 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
           }}
         >
           <div
-            className="flip-card-front absolute w-full h-full backface-hidden"
+            className="flip-card-front col-start-1 row-start-1 w-full backface-hidden"
             style={{ backfaceVisibility: "hidden" }}
           >
-            <div className="bg-[#0c0c0e] hover:bg-gray-900/50 transition-colors rounded-xl p-5 border border-gray-800 h-full overflow-hidden flex flex-col justify-between group shadow-lg">
+            <div className="bg-[#0c0c0e] hover:bg-gray-900/50 transition-colors rounded-xl px-5 py-4 border border-gray-800 overflow-hidden flex flex-col gap-3 group shadow-lg">
               <div>
                 <div className="flex items-start justify-between mb-4">
                   <div
@@ -212,24 +212,24 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                 </h3>
               </div>
 
-              <div className="mt-auto">
-                <p className="text-sm text-gray-400">Next payment in <span className="text-green-400 font-medium">{daysLeft} days</span></p>
-              </div>
+              <p className="text-sm text-gray-400">
+                Next payment in <span className="text-green-400 font-medium">{daysLeft} days</span>
+              </p>
             </div>
           </div>
 
           {/* BACK SIDE */}
           <div 
-            className="flip-card-back absolute w-full h-full backface-hidden rotate-y-180"
+            className="flip-card-back col-start-1 row-start-1 w-full backface-hidden rotate-y-180"
             style={{ 
               backfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
             }}
           >
-            <div className="bg-[#0c0c0e] rounded-xl p-4 border border-gray-800 h-full overflow-hidden flex flex-col shadow-lg">
+            <div className="bg-[#0c0c0e] rounded-xl px-4 py-4 border border-gray-800 overflow-hidden flex flex-col shadow-lg">
               {isEditing ? (
                 // Edit Mode
-                <div className="flex flex-col h-full" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-col" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-display text-sm font-semibold">{t("edit")}</h3>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCancelEdit}>
@@ -237,7 +237,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                     </Button>
                   </div>
                   
-                  <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+                  <div className="space-y-2">
                     <div>
                       <Label className="text-[10px]">{tSubscriptions("edit_name")}</Label>
                       <Input
@@ -299,7 +299,7 @@ export const FlipCard = ({ subscription, onUpdate, onDelete }: FlipCardProps) =>
                     </div>
                   </div>
 
-                  <div className="space-y-1 flex-1">
+                  <div className="space-y-1">
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">{t("next_payment")}</span>
                       <span className="font-medium text-foreground">
