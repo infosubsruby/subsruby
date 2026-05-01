@@ -129,30 +129,36 @@ export const SmartInsights = ({
       {insights.length === 0 ? (
         <div className="text-sm text-gray-400">{t("insights.empty")}</div>
       ) : (
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+        <div className="flex flex-col gap-3 w-full">
           {insights.map((insight) => (
             <div
               key={insight.id}
               className={
                 insight.tone === "good"
-                  ? "flex items-start gap-3 rounded-xl px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 flex-1"
+                  ? "w-full flex items-start gap-3 rounded-xl px-4 py-3 bg-emerald-500/10 border border-emerald-500/20"
                   : insight.tone === "warn"
-                    ? "flex items-start gap-3 rounded-xl px-4 py-3 bg-yellow-500/10 border border-yellow-500/20 flex-1"
-                    : "flex items-start gap-3 rounded-xl px-4 py-3 bg-blue-500/10 border border-blue-500/20 flex-1"
+                    ? "w-full flex items-start gap-3 rounded-xl px-4 py-3 bg-yellow-500/10 border border-yellow-500/20"
+                    : "w-full flex items-start gap-3 rounded-xl px-4 py-3 bg-blue-500/10 border border-blue-500/20"
               }
             >
               <div
                 className={
                   insight.tone === "good"
-                    ? "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-500/20 text-gray-200"
+                    ? "shrink-0 w-7 h-7 rounded-md flex items-center justify-center bg-emerald-500/20 text-gray-200 text-sm"
                     : insight.tone === "warn"
-                      ? "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-yellow-500/20 text-yellow-200"
-                      : "shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-blue-500/20 text-blue-200"
+                      ? "shrink-0 w-7 h-7 rounded-md flex items-center justify-center bg-yellow-500/20 text-yellow-200 text-sm"
+                      : "shrink-0 w-7 h-7 rounded-md flex items-center justify-center bg-blue-500/20 text-blue-200 text-sm"
                 }
               >
                 {insight.icon}
               </div>
-              <p className={insight.tone === "good" ? "text-sm text-gray-200" : "text-sm text-gray-300"}>
+              <p
+                className={
+                  insight.tone === "good"
+                    ? "text-sm text-gray-200 leading-snug line-clamp-2"
+                    : "text-sm text-gray-300 leading-snug line-clamp-2"
+                }
+              >
                 {insight.message}
               </p>
             </div>

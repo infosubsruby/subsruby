@@ -111,29 +111,26 @@ export const RecentActivity = ({
   }, [subscriptions, currency, exchangeRates, t]);
 
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full h-full">
-      <h3 className="font-display text-lg font-semibold">{t("recent_activity")}</h3>
+    <div className="w-full flex flex-col gap-4">
+      <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("recent_activity")}</h3>
       {items.length === 0 ? (
-        <div className="mt-4 text-sm text-gray-400">{t("activity.empty")}</div>
+        <div className="text-sm text-gray-400">{t("activity.empty")}</div>
       ) : (
-        <div className="mt-4 relative">
-          <div className="absolute left-2 top-1 bottom-1 w-px bg-gray-800" />
-          <div className="space-y-4">
-            {items.map((it) => (
-              <div key={it.id} className="relative pl-6">
-                <div className="absolute left-1 top-3 w-2.5 h-2.5 rounded-full bg-gray-400/30 border border-gray-800" />
-                <div className="flex items-start justify-between gap-3 text-gray-400">
-                  <div className="min-w-0">
-                    <div className="text-sm truncate">{it.name}</div>
-                    <div className="text-xs">{it.dateLabel}</div>
-                  </div>
-                  <div className="text-xs sm:text-sm font-semibold text-gray-400 text-right">
-                    {it.amountLabel}
-                  </div>
-                </div>
+        <div className="flex flex-col">
+          {items.map((it) => (
+            <div
+              key={it.id}
+              className="w-full flex items-center justify-between gap-3 bg-transparent hover:bg-gray-800/30 transition-colors py-3 px-2 border-b border-gray-800/50 last:border-0"
+            >
+              <div className="min-w-0">
+                <div className="text-sm text-gray-200 truncate">{it.name}</div>
+                <div className="text-xs text-gray-400">{it.dateLabel}</div>
               </div>
-            ))}
-          </div>
+              <div className="text-xs sm:text-sm font-medium text-gray-200 text-right shrink-0">
+                {it.amountLabel}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
