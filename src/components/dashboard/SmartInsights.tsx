@@ -125,21 +125,20 @@ export const SmartInsights = ({
   }, [subscriptions, currency, exchangeRates, monthlyIncome, t]);
 
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 w-full h-full">
-      <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("smart_insights")}</h3>
+    <div className="w-full">
       {insights.length === 0 ? (
-        <div className="mt-4 text-sm text-gray-400">{t("insights.empty")}</div>
+        <div className="text-sm text-gray-400">{t("insights.empty")}</div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
           {insights.map((insight) => (
             <div
               key={insight.id}
               className={
                 insight.tone === "good"
-                  ? "flex items-start gap-3 rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20"
+                  ? "flex items-start gap-3 rounded-xl px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 flex-1"
                   : insight.tone === "warn"
-                    ? "flex items-start gap-3 rounded-xl p-4 bg-yellow-500/10 border border-yellow-500/20"
-                    : "flex items-start gap-3 rounded-xl p-4 bg-blue-500/10 border border-blue-500/20"
+                    ? "flex items-start gap-3 rounded-xl px-4 py-3 bg-yellow-500/10 border border-yellow-500/20 flex-1"
+                    : "flex items-start gap-3 rounded-xl px-4 py-3 bg-blue-500/10 border border-blue-500/20 flex-1"
               }
             >
               <div

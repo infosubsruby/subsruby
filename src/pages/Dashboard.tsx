@@ -347,20 +347,6 @@ const Dashboard = () => {
       <main className="pt-8 sm:pt-10">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
           <div className="w-full flex flex-col xl:flex-row items-start gap-6">
-            <div className="w-full xl:w-[280px] 2xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
-              <SmartInsights
-                subscriptions={subscriptions}
-                currency={activeCurrency}
-                exchangeRates={exchangeRates}
-                monthlyIncome={convertedCurrentMonthlyIncome}
-              />
-              <RecentActivity
-                subscriptions={subscriptions}
-                currency={activeCurrency}
-                exchangeRates={exchangeRates}
-              />
-            </div>
-
             <div className="flex-1 min-w-0 flex flex-col gap-6">
               {!isPro && <TrialBanner />}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -411,42 +397,51 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-          {/* Smart Financial Insight Card */}
-          <div
-            className={cn(
-              "mb-8 p-3 md:p-4 rounded-2xl border backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4",
-              financialInsight.containerClass
-            )}
-          >
-            <div className="flex items-center gap-4">
-              <div className="shrink-0">
-                {financialInsight.icon}
+
+              <div className="flex flex-col gap-4">
+                <SmartInsights
+                  subscriptions={subscriptions}
+                  currency={activeCurrency}
+                  exchangeRates={exchangeRates}
+                  monthlyIncome={convertedCurrentMonthlyIncome}
+                />
+
+                <div
+                  className={cn(
+                    "p-3 md:p-4 rounded-2xl border backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4",
+                    financialInsight.containerClass
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="shrink-0">
+                      {financialInsight.icon}
+                    </div>
+                    <div className="flex flex-col">
+                      <h4 className={cn("text-base font-semibold", financialInsight.titleClass)}>
+                        {financialInsight.title}
+                      </h4>
+                      <p className={cn("text-sm", financialInsight.messageClass)}>
+                        {financialInsight.message}
+                      </p>
+                    </div>
+                  </div>
+                  {financialInsight.cta && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "whitespace-nowrap border transition-all px-4 py-2 rounded-lg font-medium",
+                        financialInsight.ctaClass
+                      )}
+                      onClick={() => {
+                        window.scrollTo({ top: 600, behavior: "smooth" });
+                      }}
+                    >
+                      {financialInsight.cta}
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-col">
-                <h4 className={cn("text-base font-semibold", financialInsight.titleClass)}>
-                  {financialInsight.title}
-                </h4>
-                <p className={cn("text-sm", financialInsight.messageClass)}>
-                  {financialInsight.message}
-                </p>
-              </div>
-            </div>
-            {financialInsight.cta && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={cn(
-                  "whitespace-nowrap border transition-all px-4 py-2 rounded-lg font-medium",
-                  financialInsight.ctaClass
-                )}
-                onClick={() => {
-                  window.scrollTo({ top: 600, behavior: "smooth" });
-                }}
-              >
-                {financialInsight.cta}
-              </Button>
-            )}
-          </div>
 
           {/* Stats Panel */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-6 bg-[#0c0c0e] border border-gray-800/80 rounded-2xl p-6 sm:p-8 w-full shadow-lg">
@@ -603,44 +598,48 @@ const Dashboard = () => {
             />
           </div>
 
-            </div>
-
-            <div className="w-full xl:w-[280px] 2xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
-              <UpcomingTimeline subscriptions={subscriptions} />
-            </div>
-          </div>
-
-          <div id="subscriptions" className="w-full mt-8 mb-10 overflow-visible">
-            <h2 className="text-lg font-semibold text-gray-200 mb-5">Tüm Abonelikler</h2>
-            {subscriptions.length === 0 ? (
-              <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Plus className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
-                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                  {t.dashboard.noSubscriptionsDesc}
-                </p>
-                <Button
-                  onClick={handleAddSubscription}
-                  className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50"
-                >
-                  {t.dashboard.addFirstSubscription}
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {subscriptions.map((subscription) => (
-                  <div key={subscription.id}>
-                    <FlipCard
-                      subscription={subscription}
-                      onUpdate={updateSubscription}
-                      onDelete={deleteSubscription}
-                    />
+              <div id="subscriptions" className="w-full mt-8 mb-10 overflow-visible">
+                <h2 className="text-lg font-semibold text-gray-200 mb-5">Tüm Abonelikler</h2>
+                {subscriptions.length === 0 ? (
+                  <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Plus className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">{t.dashboard.noSubscriptions}</h3>
+                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                      {t.dashboard.noSubscriptionsDesc}
+                    </p>
+                    <Button
+                      onClick={handleAddSubscription}
+                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50"
+                    >
+                      {t.dashboard.addFirstSubscription}
+                    </Button>
                   </div>
-                ))}
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    {subscriptions.map((subscription) => (
+                      <div key={subscription.id}>
+                        <FlipCard
+                          subscription={subscription}
+                          onUpdate={updateSubscription}
+                          onDelete={deleteSubscription}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            <div className="w-full xl:w-[350px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
+              <UpcomingTimeline subscriptions={subscriptions} />
+              <RecentActivity
+                subscriptions={subscriptions}
+                currency={activeCurrency}
+                exchangeRates={exchangeRates}
+              />
+            </div>
           </div>
         </div>
       </main>
