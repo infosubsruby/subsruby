@@ -398,51 +398,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 w-full">
-                <SmartInsights
-                  subscriptions={subscriptions}
-                  currency={activeCurrency}
-                  exchangeRates={exchangeRates}
-                  monthlyIncome={convertedCurrentMonthlyIncome}
-                />
-
-                <div
-                  className={cn(
-                    "w-full rounded-xl px-4 py-2.5 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3",
-                    financialInsight.containerClass
-                  )}
-                >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="shrink-0 mt-0.5">
-                      {financialInsight.icon}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <h4 className={cn("text-base font-semibold", financialInsight.titleClass)}>
-                        {financialInsight.title}
-                      </h4>
-                      <p className={cn("text-sm leading-tight line-clamp-2", financialInsight.messageClass)}>
-                        {financialInsight.message}
-                      </p>
-                    </div>
-                  </div>
-                  {financialInsight.cta && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "whitespace-nowrap border transition-colors px-3 py-1.5 text-xs rounded-lg font-medium",
-                        financialInsight.ctaClass
-                      )}
-                      onClick={() => {
-                        window.scrollTo({ top: 600, behavior: "smooth" });
-                      }}
-                    >
-                      {financialInsight.cta}
-                    </Button>
-                  )}
-                </div>
-              </div>
-
           {/* Stats Panel */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-6 bg-[#0c0c0e] border border-gray-800/80 rounded-2xl p-6 sm:p-8 w-full shadow-lg">
             <div className="flex flex-col justify-center h-full w-full">
@@ -581,6 +536,51 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+
+              <div className="flex flex-col gap-2 w-full">
+                <SmartInsights
+                  subscriptions={subscriptions}
+                  currency={activeCurrency}
+                  exchangeRates={exchangeRates}
+                  monthlyIncome={convertedCurrentMonthlyIncome}
+                />
+
+                <div
+                  className={cn(
+                    "w-full rounded-xl px-4 py-2.5 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3",
+                    financialInsight.containerClass
+                  )}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="shrink-0 mt-0.5">
+                      {financialInsight.icon}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <h4 className={cn("text-base font-semibold", financialInsight.titleClass)}>
+                        {financialInsight.title}
+                      </h4>
+                      <p className={cn("text-sm leading-tight line-clamp-2", financialInsight.messageClass)}>
+                        {financialInsight.message}
+                      </p>
+                    </div>
+                  </div>
+                  {financialInsight.cta && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "whitespace-nowrap border transition-colors px-3 py-1.5 text-xs rounded-lg font-medium",
+                        financialInsight.ctaClass
+                      )}
+                      onClick={() => {
+                        window.scrollTo({ top: 600, behavior: "smooth" });
+                      }}
+                    >
+                      {financialInsight.cta}
+                    </Button>
+                  )}
+                </div>
+              </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
             <SubscriptionBreakdownChart
