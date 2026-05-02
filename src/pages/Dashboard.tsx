@@ -276,7 +276,7 @@ const Dashboard = () => {
     if (monthlyIncome === 0) {
       return {
         severity: "info",
-        icon: <Info className="w-5 h-5 text-sky-300" />,
+        icon: <Info className="w-4 h-4 text-sky-300" />,
         title: tt("spending_moderate"),
         message: tt("spending_moderate_desc"),
         containerClass: "bg-sky-500/10 border-sky-500/20",
@@ -290,7 +290,7 @@ const Dashboard = () => {
     if (ratio > 0.5) {
       return {
         severity: "danger",
-        icon: <AlertCircle className="w-5 h-5 text-red-300" />,
+        icon: <AlertCircle className="w-4 h-4 text-red-300" />,
         title: tt("spending_moderate"),
         message: tt("spending_moderate_desc"),
         containerClass: "bg-red-500/10 border-red-500/20",
@@ -302,7 +302,7 @@ const Dashboard = () => {
     } else if (ratio >= 0.2) {
       return {
         severity: "warning",
-        icon: <AlertTriangle className="w-5 h-5 text-amber-300" />,
+        icon: <AlertTriangle className="w-4 h-4 text-amber-300" />,
         title: tt("spending_moderate"),
         message: tt("spending_moderate_desc"),
         containerClass: "bg-amber-500/10 border-amber-500/20",
@@ -314,7 +314,7 @@ const Dashboard = () => {
     } else {
       return {
         severity: "good",
-        icon: <CheckCircle2 className="w-5 h-5 text-emerald-300" />,
+        icon: <CheckCircle2 className="w-4 h-4 text-emerald-300" />,
         title: tt("managing_well"),
         message: tt("find_hidden_savings"),
         containerClass: "bg-emerald-500/10 border-emerald-500/20",
@@ -398,7 +398,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 w-full">
+              <div className="flex flex-col gap-2 w-full">
                 <SmartInsights
                   subscriptions={subscriptions}
                   currency={activeCurrency}
@@ -408,7 +408,7 @@ const Dashboard = () => {
 
                 <div
                   className={cn(
-                    "w-full rounded-xl px-4 py-3 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3",
+                    "w-full rounded-xl px-4 py-2.5 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3",
                     financialInsight.containerClass
                   )}
                 >
@@ -420,7 +420,7 @@ const Dashboard = () => {
                       <h4 className={cn("text-base font-semibold", financialInsight.titleClass)}>
                         {financialInsight.title}
                       </h4>
-                      <p className={cn("text-sm leading-snug line-clamp-2", financialInsight.messageClass)}>
+                      <p className={cn("text-sm leading-tight line-clamp-2", financialInsight.messageClass)}>
                         {financialInsight.message}
                       </p>
                     </div>
@@ -430,7 +430,7 @@ const Dashboard = () => {
                       variant="ghost"
                       size="sm"
                       className={cn(
-                        "whitespace-nowrap border transition-colors px-4 py-2 rounded-lg font-medium",
+                        "whitespace-nowrap border transition-colors px-3 py-1.5 text-xs rounded-lg font-medium",
                         financialInsight.ctaClass
                       )}
                       onClick={() => {
