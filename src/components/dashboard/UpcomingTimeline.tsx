@@ -50,7 +50,17 @@ const computeNextPaymentDate = (subscription: Subscription): Date => {
   return next < today ? today : next;
 };
 
-export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscription[] }) => {
+export const UpcomingTimeline = ({
+  subscriptions,
+  onViewAll,
+  limit = 4,
+  showHeader = true,
+}: {
+  subscriptions: Subscription[];
+  onViewAll?: () => void;
+  limit?: number;
+  showHeader?: boolean;
+}) => {
   const t = useTranslations("Dashboard");
 
   const relativeDayLabel = useMemo(() => {
@@ -75,21 +85,24 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
 
   return (
     <div className="w-full flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold mb-2">{t("upcoming_payments")}</h2>
-        <button
-          type="button"
-          className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          Tümünü Gör
-        </button>
-      </div>
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold mb-2">{t("upcoming_payments")}</h2>
+          <button
+            type="button"
+            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            onClick={onViewAll}
+          >
+            Tümünü Gör
+          </button>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="text-sm text-gray-400">{t("no_upcoming")}</div>
       ) : (
         <div className="flex flex-col">
-          {items.slice(0, 4).map(({ subscription, nextPaymentDate }) => {
+          {items.slice(0, limit).map(({ subscription, nextPaymentDate }) => {
             const preset = subscriptionPresets.find(
               (p) => p.slug === subscription.slug || p.name.toLowerCase() === subscription.name.toLowerCase()
             );

@@ -56,10 +56,16 @@ export const RecentActivity = ({
   subscriptions,
   currency,
   exchangeRates,
+  onViewAll,
+  limit = 4,
+  showHeader = true,
 }: {
   subscriptions: Subscription[];
   currency: string;
   exchangeRates: Record<string, number>;
+  onViewAll?: () => void;
+  limit?: number;
+  showHeader?: boolean;
 }) => {
   const t = useTranslations("Dashboard");
 
@@ -111,20 +117,23 @@ export const RecentActivity = ({
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("recent_activity")}</h3>
-        <button
-          type="button"
-          className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          Tümünü Gör
-        </button>
-      </div>
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("recent_activity")}</h3>
+          <button
+            type="button"
+            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            onClick={onViewAll}
+          >
+            Tümünü Gör
+          </button>
+        </div>
+      )}
       {items.length === 0 ? (
         <div className="text-sm text-gray-400">{t("activity.empty")}</div>
       ) : (
         <div className="flex flex-col">
-          {items.slice(0, 4).map((it) => (
+          {items.slice(0, limit).map((it) => (
             <div
               key={it.id}
               className="w-full flex items-center justify-between gap-3 bg-transparent hover:bg-gray-800/30 transition-colors py-2 px-2 border-b border-gray-800/40 last:border-0"

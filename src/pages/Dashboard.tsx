@@ -18,7 +18,7 @@ import { SubscriptionLimitModal } from "@/components/subscription/SubscriptionLi
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet, CreditCard, TrendingUp, BarChart3, AlertTriangle, AlertCircle, CheckCircle2, Info, PiggyBank, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Wallet, CreditCard, TrendingUp, BarChart3, AlertTriangle, AlertCircle, CheckCircle2, Info, PiggyBank, ArrowUp, ArrowDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { currencies } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates } from "@/lib/currency";
@@ -83,6 +83,8 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
+  const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("upcoming");
 
   const FREE_PLAN_LIMIT = 3;
   const isFreeLimited = !isPro && !isAdmin;
@@ -630,16 +632,96 @@ const Dashboard = () => {
             </div>
 
             <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
-              <UpcomingTimeline subscriptions={subscriptions} />
+              <UpcomingTimeline
+                subscriptions={subscriptions}
+                onViewAll={() => {
+                  setActiveTab("upcoming");
+                  setIsTransactionsOpen(true);
+                }}
+              />
               <RecentActivity
                 subscriptions={subscriptions}
                 currency={activeCurrency}
                 exchangeRates={exchangeRates}
+                onViewAll={() => {
+                  setActiveTab("recent");
+                  setIsTransactionsOpen(true);
+                }}
               />
             </div>
           </div>
         </div>
       </main>
+
+      <div
+        className={cn(
+          "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity",
+          isTransactionsOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsTransactionsOpen(false)}
+      >
+        <div
+          className={cn(
+            "fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#0c0c0e] border-l border-gray-800 shadow-2xl transform transition-transform duration-300 flex flex-col",
+            isTransactionsOpen ? "translate-x-0" : "translate-x-full"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+            <h3 className="text-lg font-semibold text-gray-100">İşlem Geçmişi</h3>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-white transition-colors"
+              onClick={() => setIsTransactionsOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="px-6 pt-3 border-b border-gray-800">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className={cn(
+                  "px-3 py-2 text-sm font-medium border-b-2 transition-colors",
+                  activeTab === "upcoming"
+                    ? "border-red-500 text-white"
+                    : "border-transparent text-gray-400 hover:text-gray-200"
+                )}
+                onClick={() => setActiveTab("upcoming")}
+              >
+                Yaklaşan Ödemeler
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "px-3 py-2 text-sm font-medium border-b-2 transition-colors",
+                  activeTab === "recent"
+                    ? "border-red-500 text-white"
+                    : "border-transparent text-gray-400 hover:text-gray-200"
+                )}
+                onClick={() => setActiveTab("recent")}
+              >
+                Geçmiş İşlemler
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {activeTab === "upcoming" ? (
+              <UpcomingTimeline subscriptions={subscriptions} limit={subscriptions.length} showHeader={false} />
+            ) : (
+              <RecentActivity
+                subscriptions={subscriptions}
+                currency={activeCurrency}
+                exchangeRates={exchangeRates}
+                limit={subscriptions.length}
+                showHeader={false}
+              />
+            )}
+          </div>
+        </div>
+      </div>
 
       <AddSubscriptionModal
         open={isModalOpen}
