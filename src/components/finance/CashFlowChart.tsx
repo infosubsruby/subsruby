@@ -10,7 +10,7 @@ interface CashFlowChartProps {
 export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
   const tFinance = useTranslations("Finance");
   return (
-    <div className="glass-card rounded-xl p-5 h-[280px] max-h-[300px] flex flex-col">
+    <div className="glass-card rounded-xl p-5 h-[280px] max-h-[300px] w-full flex flex-col">
       <h3 className="font-display font-semibold text-lg mb-3">
         {tFinance("monthly_cash_flow")}
       </h3>
@@ -45,8 +45,8 @@ export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
               }}
               formatter={(value: number) => [formatCurrency(value, currency), ""]}
             />
-            <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={12} />
-            <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={12} />
+            <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={8} />
+            <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={8} />
           </BarChart>
         </ResponsiveContainer>
       </div>

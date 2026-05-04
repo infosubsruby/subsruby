@@ -432,13 +432,13 @@ const Finance = () => {
           <AIFinancialInsights />
 
           {/* Stats Cards */}
-          <div className="bg-[#0c0c0e] border border-gray-800/60 rounded-2xl p-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x-0 lg:divide-x divide-gray-800/50 mb-8">
+          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x-0 lg:divide-x divide-gray-800/40 mb-8">
             <div className="flex flex-row items-center gap-4">
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                 <ArrowDownLeft className="w-4 h-4 text-green-500" />
               </div>
               <div className="flex flex-col">
-                <p className="text-sm text-gray-400 capitalize">{t.finance.income}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.income}</p>
                 <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(totalIncome, activeCurrency)}
                 </p>
@@ -450,7 +450,7 @@ const Finance = () => {
                 <ArrowUpRight className="w-4 h-4 text-red-500" />
               </div>
               <div className="flex flex-col">
-                <p className="text-sm text-gray-400 capitalize">{t.finance.expenses}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.expenses}</p>
                 <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(totalExpenses, activeCurrency)}
                 </p>
@@ -462,7 +462,7 @@ const Finance = () => {
                 <TrendingDown className="w-4 h-4 text-primary" />
               </div>
               <div className="flex flex-col">
-                <p className="text-sm text-gray-400 capitalize">{t.finance.subscriptions}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.subscriptions}</p>
                 <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(totalMonthlyCost, activeCurrency)}
                   <span className="text-xs text-gray-500 font-normal ml-1">{tDashboard("per_month")}</span>
@@ -475,7 +475,7 @@ const Finance = () => {
                 <TrendingUp className="w-4 h-4 text-yellow-500" />
               </div>
               <div className="flex flex-col">
-                <p className="text-sm text-gray-400 capitalize">{t.finance.balance}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.balance}</p>
                 <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(netWorth, activeCurrency)}
                 </p>
@@ -483,73 +483,79 @@ const Finance = () => {
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-6 h-[260px] max-h-[280px] mb-8 w-full flex flex-col">
+          <div className="w-full mb-8">
+            <CashFlowChart data={cashFlowData} currency={activeCurrency} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="glass-card rounded-2xl p-6 h-[280px] max-h-[300px] w-full flex flex-col">
               <p className="text-xs md:text-sm text-muted-foreground font-medium mb-2 text-left">
                 {tFinance("health_score")}
               </p>
 
               {financialHealth.score !== null ? (
-                <div className="flex-1 min-h-0 flex flex-col items-center gap-2">
-                  <div className="relative w-full max-w-[300px] h-[140px] mx-auto">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { value: 40, fill: "#ef4444" },
-                            { value: 30, fill: "#f59e0b" },
-                            { value: 30, fill: "#22c55e" },
-                          ]}
-                          dataKey="value"
-                          startAngle={180}
-                          endAngle={0}
-                          innerRadius="70%"
-                          outerRadius="100%"
-                          cx="50%"
-                          cy="100%"
-                          stroke="none"
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                <div className="flex-1 min-h-0 flex items-center justify-center">
+                  <div className="w-full flex flex-col items-center justify-center gap-2">
+                    <div className="relative w-full max-w-[300px] h-[140px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { value: 40, fill: "#ef4444" },
+                              { value: 30, fill: "#f59e0b" },
+                              { value: 30, fill: "#22c55e" },
+                            ]}
+                            dataKey="value"
+                            startAngle={180}
+                            endAngle={0}
+                            innerRadius="70%"
+                            outerRadius="100%"
+                            cx="50%"
+                            cy="100%"
+                            stroke="none"
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
 
-                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
-                      <span
-                        className={cn(
-                          "text-3xl md:text-4xl font-bold tracking-tight",
-                          financialHealth.score >= 70
-                            ? "text-green-500"
-                            : financialHealth.score >= 40
-                              ? "text-amber-500"
-                              : "text-destructive"
-                        )}
-                      >
-                        {financialHealth.score}
-                      </span>
-                      <span className="text-sm text-muted-foreground">/100</span>
+                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
+                        <span
+                          className={cn(
+                            "text-3xl md:text-4xl font-bold tracking-tight",
+                            financialHealth.score >= 70
+                              ? "text-green-500"
+                              : financialHealth.score >= 40
+                                ? "text-amber-500"
+                                : "text-destructive"
+                          )}
+                        >
+                          {financialHealth.score}
+                        </span>
+                        <span className="text-sm text-muted-foreground">/100</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className={cn("px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5", financialHealth.color)}>
-                    <span>{financialHealth.emoji}</span>
-                    <span>{displayedHealthLabel}</span>
-                  </div>
+                    <div className={cn("px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5", financialHealth.color)}>
+                      <span>{financialHealth.emoji}</span>
+                      <span>{displayedHealthLabel}</span>
+                    </div>
 
-                  <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-[11px] text-muted-foreground">
-                    {financialHealth.description}
+                    <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-[11px] text-muted-foreground">
+                      {financialHealth.description}
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                    <Sparkles className="w-5 h-5 text-primary" />
+                <div className="flex-1 min-h-0 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-tight text-center">{financialHealth.description}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-tight text-center">{financialHealth.description}</p>
                 </div>
               )}
-          </div>
+            </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
-            <CashFlowChart data={cashFlowData} currency={activeCurrency} />
             <SpendingPieChart data={spendingData} currency={activeCurrency} />
           </div>
 
