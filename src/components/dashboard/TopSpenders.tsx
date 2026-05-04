@@ -67,16 +67,16 @@ export const TopSpenders = ({
   }, [subscriptions, currency, exchangeRates]);
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-border/50 w-full">
+    <div className="glass-card rounded-2xl p-5 border border-border/50 w-full h-[260px] overflow-hidden">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("top_spenders")}</h3>
         <div className="text-sm font-semibold text-muted-foreground">{formatCurrency(total, currency)}</div>
       </div>
 
       {top.length === 0 ? (
-        <div className="text-sm text-muted-foreground mt-4">—</div>
+        <div className="text-sm text-muted-foreground mt-3">—</div>
       ) : (
-        <div className="mt-4 space-y-4">
+        <div className="mt-3 space-y-3 h-[calc(100%-28px)] overflow-y-auto pr-1">
           {top.map((item) => {
             const percent = total > 0 ? (item.monthlyValue / total) * 100 : 0;
             const preset = subscriptionPresets.find(
@@ -102,12 +102,12 @@ export const TopSpenders = ({
                       <div className="text-xs text-muted-foreground">{Math.round(percent)}%</div>
                     </div>
                   </div>
-                  <div className="font-semibold shrink-0">{formatCurrency(item.monthlyValue, currency)}</div>
+                  <div className="text-sm font-medium shrink-0">{formatCurrency(item.monthlyValue, currency)}</div>
                 </div>
 
-                <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                <div className="mt-2 h-1 w-full rounded-full bg-secondary overflow-hidden">
                   <div
-                    className={cn("h-1.5 rounded-full")}
+                    className={cn("h-1 rounded-full")}
                     style={{ width: `${Math.min(100, Math.max(0, percent))}%`, backgroundColor: item.color }}
                   />
                 </div>

@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { Subscription } from "@/hooks/useSubscriptions";
-import { subscriptionPresets } from "@/data/subscriptionPresets";
 import { convertWithDynamicRates } from "@/lib/currency";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatCurrency } from "@/i18n/currency";
@@ -71,7 +70,7 @@ export const SubscriptionBreakdownChart = ({
   const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-border/50 w-full overflow-hidden">
+    <div className="glass-card rounded-2xl p-5 border border-border/50 w-full h-[260px] overflow-hidden">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-gray-200 tracking-wide">{t("subscription_breakdown")}</h3>
         <div className="text-sm font-semibold text-muted-foreground">
@@ -80,18 +79,18 @@ export const SubscriptionBreakdownChart = ({
       </div>
 
       {data.length === 0 ? (
-        <div className="text-sm text-muted-foreground mt-4">—</div>
+        <div className="text-sm text-muted-foreground mt-3">—</div>
       ) : (
-        <div className="mt-4 flex flex-row items-center gap-4 h-[350px]">
-          <div className="w-52 h-52 shrink-0">
+        <div className="mt-3 flex flex-row items-center gap-4 h-[calc(100%-28px)] min-h-0">
+          <div className="w-36 h-36 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   dataKey="value"
                   nameKey="name"
-                  innerRadius={56}
-                  outerRadius={86}
+                  innerRadius={38}
+                  outerRadius={62}
                   paddingAngle={2}
                   stroke="hsl(var(--background))"
                   strokeWidth={2}
@@ -119,19 +118,21 @@ export const SubscriptionBreakdownChart = ({
             </ResponsiveContainer>
           </div>
 
-          <div className="flex flex-col gap-3 w-full max-w-[140px] overflow-hidden">
+          <div className="flex-1 min-w-0 h-full overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {data.map((item) => (
               <div key={item.id} className="flex items-center gap-2 w-full">
                 <div
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="truncate text-sm text-gray-400 flex-1">{item.name}</span>
-                <span className="text-sm font-medium text-gray-200 shrink-0">
+                <span className="truncate text-xs text-gray-400 flex-1">{item.name}</span>
+                <span className="text-xs font-medium text-gray-200 shrink-0">
                   {formatCurrency(item.value, currency)}
                 </span>
               </div>
             ))}
+            </div>
           </div>
         </div>
       )}
