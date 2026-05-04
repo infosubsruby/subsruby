@@ -2,37 +2,33 @@ import { CheckCircle2, AlertTriangle, Info } from "lucide-react";
 
 export const AIFinancialInsights = () => {
   return (
-    <div className="glass-card rounded-2xl p-3 md:p-6 h-full">
-      <h3 className="font-display font-semibold text-lg">AI Financial Summary</h3>
-      <div className="mt-4 space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Gelir-gider oranınız çok sağlıklı. Geçen aya göre %15 daha fazla tasarruf ettiniz.
-          </p>
+    <div className="w-full flex flex-col gap-2">
+      <div className="w-full flex items-center gap-3 rounded-xl px-4 py-2 bg-emerald-500/10 border border-emerald-500/20">
+        <div className="w-6 h-6 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
         </div>
+        <p className="text-sm text-gray-300 leading-tight">
+          Gelir-gider oranınız çok sağlıklı. Geçen aya göre %15 daha fazla tasarruf ettiniz.
+        </p>
+      </div>
 
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Abonelik harcamalarınızın bütçenize oranı ideal seviyede (%3).
-          </p>
+      <div className="w-full flex items-center gap-3 rounded-xl px-4 py-2 bg-amber-500/10 border border-amber-500/20">
+        <div className="w-6 h-6 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+          <AlertTriangle className="w-4 h-4 text-amber-400" />
         </div>
+        <p className="text-sm text-gray-300 leading-tight">
+          Abonelik harcamalarınızın bütçenize oranı ideal seviyede (%3).
+        </p>
+      </div>
 
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-            <Info className="w-5 h-5 text-blue-500" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Acil durum fonunuz için bu ay fazladan $200 ayırabilirsiniz.
-          </p>
+      <div className="w-full flex items-center gap-3 rounded-xl px-4 py-2 bg-blue-500/10 border border-blue-500/20">
+        <div className="w-6 h-6 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
+          <Info className="w-4 h-4 text-blue-400" />
         </div>
+        <p className="text-sm text-gray-300 leading-tight">
+          Acil durum fonunuz için bu ay fazladan $200 ayırabilirsiniz.
+        </p>
       </div>
     </div>
   );
 };
-
