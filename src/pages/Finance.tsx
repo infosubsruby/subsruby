@@ -628,9 +628,19 @@ const Finance = () => {
             onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}
             className="space-y-4"
           >
-            <TabsList className="bg-secondary">
-              <TabsTrigger value="transactions">{t.finance.transactions}</TabsTrigger>
-              <TabsTrigger value="budgets">{t.finance.budgets}</TabsTrigger>
+            <TabsList className="h-auto bg-transparent p-0 rounded-none border-b border-gray-800/40 w-fit">
+              <TabsTrigger
+                value="transactions"
+                className="rounded-none bg-transparent px-3 py-2 text-sm font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent"
+              >
+                {t.finance.transactions}
+              </TabsTrigger>
+              <TabsTrigger
+                value="budgets"
+                className="rounded-none bg-transparent px-3 py-2 text-sm font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent"
+              >
+                {t.finance.budgets}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="transactions" className="space-y-4">

@@ -150,16 +150,16 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
         })}
       </div>
 
-      <div className="hidden md:block w-full overflow-x-auto rounded-lg border border-border">
+      <div className="hidden md:block w-full overflow-x-auto rounded-lg border border-gray-800/40">
         <Table className="min-w-[640px]">
           <TableHeader>
-            <TableRow className="bg-secondary/50 hover:bg-secondary/50">
-              <TableHead className="w-12"></TableHead>
-              <TableHead>{tFinance("table_desc")}</TableHead>
-              <TableHead>{tFinance("table_category")}</TableHead>
-              <TableHead>{tFinance("table_date")}</TableHead>
-              <TableHead className="text-right">{tFinance("table_amount")}</TableHead>
-              <TableHead className="w-12"></TableHead>
+            <TableRow className="bg-transparent border-b border-gray-800/40 hover:bg-transparent">
+              <TableHead className="w-12 text-xs font-medium text-gray-500 uppercase tracking-wider"></TableHead>
+              <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">{tFinance("table_desc")}</TableHead>
+              <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">{tFinance("table_category")}</TableHead>
+              <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">{tFinance("table_date")}</TableHead>
+              <TableHead className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{tFinance("table_amount")}</TableHead>
+              <TableHead className="w-12 text-xs font-medium text-gray-500 uppercase tracking-wider"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -182,7 +182,7 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                   : formatCurrency(-absAmount, currency);
 
               return (
-                <TableRow key={transaction.id} className="hover:bg-secondary/30">
+                <TableRow key={transaction.id} className="bg-transparent border-b border-gray-800/40 last:border-0 hover:bg-transparent">
                   <TableCell>
                     <div
                       className={cn(
@@ -205,7 +205,7 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                       {categoryLabel}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-sm text-gray-500">
                     {formatDate(transaction.date, { dateStyle: "medium" })}
                   </TableCell>
                   <TableCell

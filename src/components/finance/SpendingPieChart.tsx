@@ -4,7 +4,6 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatCurrency } from "@/i18n/currency";
@@ -61,11 +60,11 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
 
   if (data.length === 0) {
     return (
-      <div className="glass-card rounded-xl p-4 md:p-5">
-        <h3 className="font-display font-semibold text-lg mb-4">
+      <div className="glass-card rounded-xl p-5 h-[280px] max-h-[300px] flex flex-col">
+        <h3 className="font-display font-semibold text-lg mb-3">
           {tFinance("spending_dist")}
         </h3>
-        <div className="h-64 md:h-80 w-full flex items-center justify-center text-muted-foreground">
+        <div className="flex-1 min-h-0 w-full flex items-center justify-center text-muted-foreground">
           —
         </div>
       </div>
@@ -73,19 +72,19 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
   }
 
   return (
-    <div className="glass-card rounded-xl p-6">
-      <h3 className="font-display font-semibold text-lg mb-4">
+    <div className="glass-card rounded-xl p-5 h-[280px] max-h-[300px] flex flex-col">
+      <h3 className="font-display font-semibold text-lg mb-3">
         {tFinance("spending_dist")}
       </h3>
-      <div className="h-[350px] md:h-[380px] w-full">
+      <div className="h-[160px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={100}
+              innerRadius={42}
+              outerRadius={70}
               paddingAngle={2}
               dataKey="value"
               label={false}
@@ -117,14 +116,14 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         {data.slice(0, 6).map((item, index) => (
-          <div key={item.name} className="flex items-center gap-2 text-sm">
+          <div key={item.name} className="flex items-center gap-1.5 text-xs text-gray-400">
             <div
-              className="w-3 h-3 rounded-full"
+              className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
-            <span className="text-muted-foreground truncate">{getCategoryLabel(item.name)}</span>
+            <span className="truncate">{getCategoryLabel(item.name)}</span>
           </div>
         ))}
       </div>

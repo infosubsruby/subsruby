@@ -9,13 +9,12 @@ interface CashFlowChartProps {
 
 export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
   const tFinance = useTranslations("Finance");
-  const tModals = useTranslations("Modals");
   return (
-    <div className="glass-card rounded-xl p-6">
-      <h3 className="font-display font-semibold text-lg mb-4">
+    <div className="glass-card rounded-xl p-5 h-[280px] max-h-[300px] flex flex-col">
+      <h3 className="font-display font-semibold text-lg mb-3">
         {tFinance("monthly_cash_flow")}
       </h3>
-      <div className="h-[350px] md:h-[380px] w-full">
+      <div className="flex-1 min-h-0 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid horizontal strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" vertical={false} />
