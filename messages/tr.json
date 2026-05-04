@@ -118,6 +118,10 @@
     "top_spenders": "En Çok Harcatanlar",
     "smart_insights": "Akıllı Öneriler",
     "recent_activity": "Son İşlemler",
+    "viewAll": "Tümünü Gör",
+    "transactionHistory": "İşlem Geçmişi",
+    "upcomingPayments": "Yaklaşan Ödemeler",
+    "recentActivity": "Son İşlemler",
     "insights": {
       "annual_savings": "{planName} aboneliğini yıllığa geçirerek yılda {amount} ({percentage}%) tasarruf edebilirsin.",
       "budget_exceeded": "Abonelik giderlerin bütçenin %{percentage}'unu aştı, gözden geçirmek ister misin?",

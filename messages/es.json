@@ -118,6 +118,10 @@
     "top_spenders": "Mayores Gastos",
     "smart_insights": "Ideas Inteligentes",
     "recent_activity": "Actividad Reciente",
+    "viewAll": "Ver todo",
+    "transactionHistory": "Historial de transacciones",
+    "upcomingPayments": "Próximos pagos",
+    "recentActivity": "Actividad reciente",
     "insights": {
       "annual_savings": "Al cambiar tu suscripción de {planName} a un plan anual, puedes ahorrar {amount} ({percentage}%) al año.",
       "budget_exceeded": "Tus gastos de suscripción han superado el {percentage}% de tu presupuesto. ¿Te gustaría revisarlos?",

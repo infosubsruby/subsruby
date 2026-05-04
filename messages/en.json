@@ -118,6 +118,10 @@
     "top_spenders": "Top Spenders",
     "smart_insights": "Smart Insights",
     "recent_activity": "Recent Activity",
+    "viewAll": "View All",
+    "transactionHistory": "Transaction History",
+    "upcomingPayments": "Upcoming Payments",
+    "recentActivity": "Recent Activity",
     "insights": {
       "annual_savings": "By switching your {planName} subscription to a yearly plan, you can save {amount} ({percentage}%) a year.",
       "budget_exceeded": "Your subscription expenses have exceeded {percentage}% of your budget. Would you like to review them?",

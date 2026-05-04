@@ -118,6 +118,10 @@
     "top_spenders": "Top-Ausgaben",
     "smart_insights": "Intelligente Einblicke",
     "recent_activity": "Letzte Aktivitäten",
+    "viewAll": "Alle ansehen",
+    "transactionHistory": "Transaktionsverlauf",
+    "upcomingPayments": "Anstehende Zahlungen",
+    "recentActivity": "Letzte Aktivität",
     "insights": {
       "annual_savings": "Wenn Sie Ihr {planName}-Abonnement auf einen Jahresplan umstellen, können Sie jährlich {amount} ({percentage}%) sparen.",
       "budget_exceeded": "Deine Abokosten haben {percentage}% deines Budgets überschritten. Möchtest du sie überprüfen?",

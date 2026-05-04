@@ -93,7 +93,7 @@ export const UpcomingTimeline = ({
             className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
             onClick={onViewAll}
           >
-            Tümünü Gör
+            {t("viewAll")}
           </button>
         </div>
       )}

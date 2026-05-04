@@ -668,7 +668,7 @@ const Dashboard = () => {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-100">İşlem Geçmişi</h3>
+            <h3 className="text-lg font-semibold text-gray-100">{tt("transactionHistory")}</h3>
             <button
               type="button"
               className="text-gray-400 hover:text-white transition-colors"
@@ -690,7 +690,7 @@ const Dashboard = () => {
                 )}
                 onClick={() => setActiveTab("upcoming")}
               >
-                Yaklaşan Ödemeler
+                {tt("upcomingPayments")}
               </button>
               <button
                 type="button"
@@ -702,7 +702,7 @@ const Dashboard = () => {
                 )}
                 onClick={() => setActiveTab("recent")}
               >
-                Geçmiş İşlemler
+                {tt("recentActivity")}
               </button>
             </div>
           </div>

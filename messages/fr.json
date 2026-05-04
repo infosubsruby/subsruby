@@ -118,6 +118,10 @@
     "top_spenders": "Plus Gros Dépenseurs",
     "smart_insights": "Analyses Intelligentes",
     "recent_activity": "Activité Récente",
+    "viewAll": "Tout voir",
+    "transactionHistory": "Historique des transactions",
+    "upcomingPayments": "Paiements à venir",
+    "recentActivity": "Activité récente",
     "insights": {
       "annual_savings": "En passant votre abonnement {planName} à un forfait annuel, vous pouvez économiser {amount} ({percentage}%) par an.",
       "budget_exceeded": "Vos dépenses d'abonnement ont dépassé {percentage}% de votre budget. Souhaitez-vous les revoir ?",
