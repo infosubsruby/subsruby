@@ -432,120 +432,53 @@ const Finance = () => {
           <AIFinancialInsights />
 
           {/* Stats Cards */}
-          <div className="sm:hidden flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 scrollbar-hide mb-4">
-            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-success/20 flex items-center justify-center shadow-inner shrink-0">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 w-full mb-8">
+            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
+              <div className="flex flex-col gap-1 items-start">
+                <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center shrink-0">
                   <ArrowDownLeft className="w-4 h-4 text-success" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">{t.finance.income}</p>
-                  <p className="font-display text-xl font-bold text-success mt-0.5 truncate">
-                    {formatCurrency(totalIncome, activeCurrency)}
-                  </p>
-                </div>
+                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.income}</p>
+                <p className="font-display text-xl font-bold text-success">
+                  {formatCurrency(totalIncome, activeCurrency)}
+                </p>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner shrink-0">
+            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
+              <div className="flex flex-col gap-1 items-start">
+                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
                   <ArrowUpRight className="w-4 h-4 text-destructive" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">{t.finance.expenses}</p>
-                  <p className="font-display text-xl font-bold mt-0.5 truncate">
-                    {formatCurrency(totalExpenses, activeCurrency)}
-                  </p>
-                </div>
+                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.expenses}</p>
+                <p className="font-display text-xl font-bold text-gray-100">
+                  {formatCurrency(totalExpenses, activeCurrency)}
+                </p>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shadow-inner shrink-0">
+            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
+              <div className="flex flex-col gap-1 items-start">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <TrendingDown className="w-4 h-4 text-primary" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">{t.finance.subscriptions}</p>
-                  <p className="font-display text-xl font-bold mt-0.5 truncate">
-                    {formatCurrency(totalMonthlyCost, activeCurrency)}
-                    <span className="text-xs font-normal text-muted-foreground ml-1">{tDashboard("per_month")}</span>
-                  </p>
-                </div>
+                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.subscriptions}</p>
+                <p className="font-display text-xl font-bold text-gray-100">
+                  {formatCurrency(totalMonthlyCost, activeCurrency)}
+                </p>
+                <span className="text-xs text-gray-500">{tDashboard("per_month")}</span>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-3 flex flex-col justify-center min-h-[120px] shadow-sm min-w-[85%] snap-center">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-warning/20 flex items-center justify-center shadow-inner shrink-0">
+            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
+              <div className="flex flex-col gap-1 items-start">
+                <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4 text-warning" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">{t.finance.balance}</p>
-                  <p className={cn("font-display text-xl font-bold mt-0.5 truncate", netWorth >= 0 ? "text-success" : "text-destructive")}>
-                    {formatCurrency(netWorth, activeCurrency)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-success/20 flex items-center justify-center shadow-inner shrink-0">
-                  <ArrowDownLeft className="w-5 h-5 md:w-6 md:h-6 text-success" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.income}</p>
-                  <p className="font-display text-2xl md:text-3xl font-bold text-success mt-1 truncate">
-                    {formatCurrency(totalIncome, activeCurrency)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-destructive/20 flex items-center justify-center shadow-inner shrink-0">
-                  <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6 text-destructive" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.expenses}</p>
-                  <p className="font-display text-2xl md:text-3xl font-bold mt-1 truncate">
-                    {formatCurrency(totalExpenses, activeCurrency)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-inner shrink-0">
-                  <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.subscriptions}</p>
-                  <p className="font-display text-2xl md:text-3xl font-bold mt-1 truncate">
-                    {formatCurrency(totalMonthlyCost, activeCurrency)}
-                    <span className="text-sm font-normal text-muted-foreground ml-1">{tDashboard("per_month")}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-2xl p-4 md:p-6 flex flex-col justify-center h-full min-h-[160px] md:min-h-[180px] shadow-sm">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-warning/20 flex items-center justify-center shadow-inner shrink-0">
-                  <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-warning" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground font-medium">{t.finance.balance}</p>
-                  <p className={cn("font-display text-2xl md:text-3xl font-bold mt-1 truncate", netWorth >= 0 ? "text-success" : "text-destructive")}>
-                    {formatCurrency(netWorth, activeCurrency)}
-                  </p>
-                </div>
+                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.balance}</p>
+                <p className={cn("font-display text-xl font-bold", netWorth >= 0 ? "text-success" : "text-destructive")}>
+                  {formatCurrency(netWorth, activeCurrency)}
+                </p>
               </div>
             </div>
           </div>
