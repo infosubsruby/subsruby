@@ -12,6 +12,18 @@ type UpcomingItem = {
   nextPaymentDate: Date;
 };
 
+const toHexAlpha = (value: string, alphaHex: string) => {
+  const hex = String(value || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) return `${hex}${alphaHex}`;
+  if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+    const r = hex[1];
+    const g = hex[2];
+    const b = hex[3];
+    return `#${r}${r}${g}${g}${b}${b}${alphaHex}`;
+  }
+  return "rgba(255,255,255,0.06)";
+};
+
 const computeNextPaymentDate = (subscription: Subscription): Date => {
   const rawBase =
     subscription.next_payment_date ??
@@ -63,13 +75,21 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
 
   return (
     <div className="w-full flex flex-col gap-6">
-      <h2 className="text-xl font-semibold mb-2">{t("upcoming_payments")}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold mb-2">{t("upcoming_payments")}</h2>
+        <button
+          type="button"
+          className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          Tümünü Gör
+        </button>
+      </div>
 
       {items.length === 0 ? (
         <div className="text-sm text-gray-400">{t("no_upcoming")}</div>
       ) : (
         <div className="flex flex-col">
-          {items.map(({ subscription, nextPaymentDate }) => {
+          {items.slice(0, 4).map(({ subscription, nextPaymentDate }) => {
             const preset = subscriptionPresets.find(
               (p) => p.slug === subscription.slug || p.name.toLowerCase() === subscription.name.toLowerCase()
             );
@@ -82,13 +102,13 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
             return (
               <div
                 key={subscription.id}
-                className="w-full flex flex-row items-center gap-4 bg-transparent hover:bg-gray-800/30 py-3 px-2 border-b border-gray-800/50 last:border-0 transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-600/60"
+                className="w-full flex flex-row items-center gap-4 bg-transparent hover:bg-gray-800/30 py-2 px-2 border-b border-gray-800/40 last:border-0 transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-600/60"
               >
                 <div
-                  className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: subscription.card_color }}
+                  className="w-8 h-8 shrink-0 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: toHexAlpha(subscription.card_color, "1A") }}
                 >
-                  <Icon className="w-5 h-5 text-white" />
+                  <Icon className="w-4 h-4" style={{ color: subscription.card_color }} />
                 </div>
 
                 <div className="flex flex-col flex-1 min-w-0">
@@ -102,7 +122,7 @@ export const UpcomingTimeline = ({ subscriptions }: { subscriptions: Subscriptio
                   <p className="text-lg font-bold text-gray-100">
                     {formatCurrency(subscription.price, subscription.currency)}
                   </p>
-                  <p className="text-sm text-green-400">{remainingLabel}</p>
+                  <p className="text-xs text-gray-400 font-medium">{remainingLabel}</p>
                 </div>
               </div>
             );

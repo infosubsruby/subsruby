@@ -629,7 +629,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="w-full xl:w-[350px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
+            <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
               <UpcomingTimeline subscriptions={subscriptions} />
               <RecentActivity
                 subscriptions={subscriptions}
