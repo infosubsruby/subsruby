@@ -45,8 +45,8 @@ export const CashFlowChart = ({ data, currency }: CashFlowChartProps) => {
               }}
               formatter={(value: number) => [formatCurrency(value, currency), ""]}
             />
-            <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={12} />
+            <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={12} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -432,65 +432,65 @@ const Finance = () => {
           <AIFinancialInsights />
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 w-full mb-8">
-            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
-              <div className="flex flex-col gap-1 items-start">
-                <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center shrink-0">
-                  <ArrowDownLeft className="w-4 h-4 text-success" />
-                </div>
-                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.income}</p>
-                <p className="font-display text-xl font-bold text-success">
+          <div className="bg-[#0c0c0e] border border-gray-800/60 rounded-2xl p-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x-0 lg:divide-x divide-gray-800/50 mb-8">
+            <div className="flex flex-row items-center gap-4">
+              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                <ArrowDownLeft className="w-4 h-4 text-green-500" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm text-gray-400 capitalize">{t.finance.income}</p>
+                <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(totalIncome, activeCurrency)}
                 </p>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
-              <div className="flex flex-col gap-1 items-start">
-                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-                  <ArrowUpRight className="w-4 h-4 text-destructive" />
-                </div>
-                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.expenses}</p>
-                <p className="font-display text-xl font-bold text-gray-100">
+            <div className="flex flex-row items-center gap-4 lg:pl-6">
+              <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                <ArrowUpRight className="w-4 h-4 text-red-500" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm text-gray-400 capitalize">{t.finance.expenses}</p>
+                <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(totalExpenses, activeCurrency)}
                 </p>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
-              <div className="flex flex-col gap-1 items-start">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <TrendingDown className="w-4 h-4 text-primary" />
-                </div>
-                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.subscriptions}</p>
-                <p className="font-display text-xl font-bold text-gray-100">
+            <div className="flex flex-row items-center gap-4 lg:pl-6">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <TrendingDown className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm text-gray-400 capitalize">{t.finance.subscriptions}</p>
+                <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(totalMonthlyCost, activeCurrency)}
+                  <span className="text-xs text-gray-500 font-normal ml-1">{tDashboard("per_month")}</span>
                 </p>
-                <span className="text-xs text-gray-500">{tDashboard("per_month")}</span>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 md:p-5 flex flex-col justify-center h-full min-h-[160px] shadow-sm">
-              <div className="flex flex-col gap-1 items-start">
-                <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
-                  <TrendingUp className="w-4 h-4 text-warning" />
-                </div>
-                <p className="text-xs uppercase tracking-wider text-gray-500">{t.finance.balance}</p>
-                <p className={cn("font-display text-xl font-bold", netWorth >= 0 ? "text-success" : "text-destructive")}>
+            <div className="flex flex-row items-center gap-4 lg:pl-6">
+              <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-4 h-4 text-yellow-500" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm text-gray-400 capitalize">{t.finance.balance}</p>
+                <p className="font-display text-white font-semibold text-2xl">
                   {formatCurrency(netWorth, activeCurrency)}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-3 md:p-6 mb-8 w-full">
-              <p className="text-xs md:text-sm text-muted-foreground font-medium mb-3 text-center">
+          <div className="glass-card rounded-2xl p-6 h-[260px] max-h-[280px] mb-8 w-full flex flex-col">
+              <p className="text-xs md:text-sm text-muted-foreground font-medium mb-2 text-left">
                 {tFinance("health_score")}
               </p>
 
               {financialHealth.score !== null ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative w-full max-w-[360px] h-[200px] mx-auto">
+                <div className="flex-1 min-h-0 flex flex-col items-center gap-2">
+                  <div className="relative w-full max-w-[300px] h-[140px] mx-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -511,10 +511,10 @@ const Finance = () => {
                       </PieChart>
                     </ResponsiveContainer>
 
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
+                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
                       <span
                         className={cn(
-                          "text-4xl md:text-5xl font-bold tracking-tight",
+                          "text-3xl md:text-4xl font-bold tracking-tight",
                           financialHealth.score >= 70
                             ? "text-green-500"
                             : financialHealth.score >= 40
@@ -528,12 +528,12 @@ const Finance = () => {
                     </div>
                   </div>
 
-                  <div className={cn("px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1.5", financialHealth.color)}>
+                  <div className={cn("px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5", financialHealth.color)}>
                     <span>{financialHealth.emoji}</span>
                     <span>{displayedHealthLabel}</span>
                   </div>
 
-                  <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-xs text-muted-foreground">
+                  <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-[11px] text-muted-foreground">
                     {financialHealth.description}
                   </div>
                 </div>
