@@ -1,4 +1,4 @@
-import { Trash2, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { Trash2, ArrowUpRight, ArrowDownLeft, RefreshCw } from "lucide-react";
 import { Transaction } from "@/hooks/useFinance";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +19,10 @@ import { useSettings } from "@/hooks/useSettings";
 interface TransactionListProps {
   transactions: Transaction[];
   onDelete: (id: string) => Promise<{ success: boolean }>;
+  onToggleRecurring: (id: string) => Promise<{ success: boolean }>;
 }
 
-export const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
+export const TransactionList = ({ transactions, onDelete, onToggleRecurring }: TransactionListProps) => {
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
   const { defaultCurrency } = useSettings();
@@ -63,6 +64,10 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
 
   const handleDelete = async (id: string) => {
     await onDelete(id);
+  };
+
+  const handleToggleRecurring = async (id: string) => {
+    await onToggleRecurring(id);
   };
 
   if (transactions.length === 0) {
@@ -139,6 +144,19 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                 <Button
                   variant="ghost"
                   size="icon"
+                  className={cn(
+                    "h-8 w-8",
+                    transaction.is_recurring
+                      ? "text-sky-400 hover:text-sky-300"
+                      : "text-muted-foreground hover:text-gray-300"
+                  )}
+                  onClick={() => handleToggleRecurring(transaction.id)}
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => handleDelete(transaction.id)}
                 >
@@ -159,6 +177,7 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
               <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">{tFinance("table_category")}</TableHead>
               <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">{tFinance("table_date")}</TableHead>
               <TableHead className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{tFinance("table_amount")}</TableHead>
+              <TableHead className="w-12 text-xs font-medium text-gray-500 uppercase tracking-wider"></TableHead>
               <TableHead className="w-12 text-xs font-medium text-gray-500 uppercase tracking-wider"></TableHead>
             </TableRow>
           </TableHeader>
@@ -215,6 +234,21 @@ export const TransactionList = ({ transactions, onDelete }: TransactionListProps
                     )}
                   >
                     {formattedAmount}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-8 w-8",
+                        transaction.is_recurring
+                          ? "text-sky-400 hover:text-sky-300"
+                          : "text-muted-foreground hover:text-gray-300"
+                      )}
+                      onClick={() => handleToggleRecurring(transaction.id)}
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Button

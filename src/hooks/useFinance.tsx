@@ -14,6 +14,8 @@ export interface Transaction {
   category: string;
   description: string | null;
   currency?: string | null;
+  is_recurring?: boolean | null;
+  recurring_day?: string | null;
   date: string;
   created_at: string;
 }
@@ -317,6 +319,8 @@ export const useFinance = () => {
       category: safeCategory,
       description: data.description ?? null,
       currency: data.currency ?? null,
+      is_recurring: Boolean(data.isRecurring),
+      recurring_day: data.recurringDay ?? null,
       date: safeDate,
       created_at: new Date().toISOString(),
     };
@@ -332,9 +336,12 @@ export const useFinance = () => {
       description: data.description ?? null,
       date: safeDate,
     };
-    const withCurrency = data.currency
-      ? ({ ...baseInsert, currency: data.currency } as unknown as TransactionInsert)
+    const withRecurring = data.isRecurring
+      ? ({ ...baseInsert, is_recurring: true, recurring_day: data.recurringDay ?? null } as any)
       : baseInsert;
+    const withCurrency = data.currency
+      ? ({ ...withRecurring, currency: data.currency } as unknown as TransactionInsert)
+      : (withRecurring as TransactionInsert);
 
     const firstAttempt = await supabase.from("transactions").insert([withCurrency]).select("*").maybeSingle();
     let inserted = firstAttempt.data;
@@ -382,6 +389,43 @@ export const useFinance = () => {
     }
 
     toast.success("Transaction deleted!");
+    return { success: true };
+  };
+
+  const toggleTransactionRecurring = async (id: string) => {
+    const target = transactions.find((t) => t.id === id);
+    if (!target) return { success: false };
+
+    const nextValue = !Boolean((target as any).is_recurring);
+    const previous = transactions;
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              is_recurring: nextValue,
+              recurring_day: nextValue ? (t.recurring_day ?? String(new Date(`${t.date}T00:00:00`).getDate())) : null,
+            }
+          : t
+      )
+    );
+
+    const { error } = await (supabase.from("transactions") as any)
+      .update({
+        is_recurring: nextValue,
+        recurring_day: nextValue
+          ? (target as any).recurring_day ?? String(new Date(`${target.date}T00:00:00`).getDate())
+          : null,
+      })
+      .eq("id", id);
+
+    if (error) {
+      setTransactions(previous);
+      toast.error("Failed to update recurring status");
+      console.error(error);
+      return { success: false };
+    }
+
     return { success: true };
   };
 
@@ -640,6 +684,7 @@ export const useFinance = () => {
     errorMessage,
     createTransaction,
     deleteTransaction,
+    toggleTransactionRecurring,
     createBudget,
     updateBudget,
     deleteBudget,

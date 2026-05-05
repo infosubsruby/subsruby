@@ -18,7 +18,15 @@ export const getActiveLocale = () => {
 };
 
 export const formatDate = (value: Date | string | number, options?: Intl.DateTimeFormatOptions) => {
-  const date = value instanceof Date ? value : new Date(value);
+  let date: Date;
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    date = new Date(y, m - 1, d);
+  } else {
+    date = new Date(value);
+  }
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat(getActiveLocale(), options ?? { dateStyle: "medium" }).format(date);
 };
@@ -28,4 +36,3 @@ export const formatMonthShortYear = (value: Date | string | number) => {
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat(getActiveLocale(), { month: "short", year: "2-digit" }).format(date);
 };
-

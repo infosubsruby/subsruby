@@ -88,6 +88,7 @@ const Finance = () => {
     errorMessage,
     createTransaction,
     deleteTransaction,
+    toggleTransactionRecurring,
     createBudget,
     deleteBudget,
     getSpentByCategory,
@@ -729,7 +730,8 @@ const Finance = () => {
         if (lastLoginMonth === currentMonthKey) return;
       }
 
-      const recurringTransactions = (activeTransactions ?? []).filter((t: any) => t?.is_recurring === true);
+      const resettingTransactions = activeTransactions ?? [];
+      const recurringTransactions = resettingTransactions.filter((t: any) => t?.is_recurring === true);
       const recurringInsertPayloads = recurringTransactions.map((tx: any) => {
         const recurringDay = Number(tx?.recurring_day);
         const originalDay = new Date(`${tx.date}T00:00:00`).getDate();
@@ -752,11 +754,11 @@ const Finance = () => {
       });
 
       const totalIncome =
-        activeTransactions
+        resettingTransactions
           ?.filter((tx) => tx.type === "income")
           ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
       const totalExpense =
-        activeTransactions
+        resettingTransactions
           ?.filter((tx) => tx.type === "expense")
           ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
       const netSavings = totalIncome - totalExpense;
@@ -767,7 +769,7 @@ const Finance = () => {
         year: "numeric",
       });
 
-      const insight = buildAiInsight(totalIncome, totalExpense, activeTransactions ?? []);
+      const insight = buildAiInsight(totalIncome, totalExpense, resettingTransactions);
       const archive: MonthlyArchive = {
         id:
           globalThis.crypto?.randomUUID?.() ??
@@ -778,24 +780,44 @@ const Finance = () => {
         totalIncome,
         totalExpense,
         netSavings,
-        transactions: activeTransactions ?? [],
+        transactions: resettingTransactions,
         aiInsight: insight.message,
         sentiment: insight.sentiment,
       };
+      const archivePayload = {
+        user_id: user?.id ?? null,
+        month_year: archive.monthYear,
+        total_income: archive.totalIncome,
+        total_expense: archive.totalExpense,
+        net_savings: archive.netSavings,
+        ai_message: archive.aiInsight,
+        ai_sentiment: archive.sentiment,
+      };
+      const { error: archiveInsertError } = await (supabase.from("monthly_archives") as any).insert([archivePayload]);
+      if (archiveInsertError) {
+        console.error("monthly_archives insert skipped:", archiveInsertError);
+        return;
+      }
 
-      try {
-        const archivePayload = {
-          user_id: user?.id ?? null,
-          month_year: archive.monthYear,
-          total_income: archive.totalIncome,
-          total_expense: archive.totalExpense,
-          net_savings: archive.netSavings,
-          ai_message: archive.aiInsight,
-          ai_sentiment: archive.sentiment,
-        };
-        await (supabase.from("monthly_archives") as any).insert([archivePayload]);
-      } catch (error) {
-        console.error("monthly_archives insert skipped:", error);
+      const idsToDelete = resettingTransactions.map((tx) => tx.id).filter(Boolean);
+      if (idsToDelete.length > 0) {
+        const { error: deleteError } = await (supabase.from("transactions") as any).delete().in("id", idsToDelete);
+        if (deleteError) {
+          console.error("transactions delete skipped:", deleteError);
+          return;
+        }
+      }
+
+      let insertedRecurringRows: Transaction[] = [];
+      if (recurringInsertPayloads.length > 0) {
+        const { data: insertedRecurring, error: recurringInsertError } = await (supabase.from("transactions") as any)
+          .insert(recurringInsertPayloads)
+          .select("*");
+        if (recurringInsertError) {
+          console.error("recurring transactions insert skipped:", recurringInsertError);
+          return;
+        }
+        insertedRecurringRows = (Array.isArray(insertedRecurring) ? insertedRecurring : []) as Transaction[];
       }
 
       setMonthlyArchives((prev) => [archive, ...(prev?.filter((item) => item.monthKey !== archive.monthKey) ?? [])]);
@@ -808,19 +830,8 @@ const Finance = () => {
         },
         ...prev.filter((item) => item?.month_key !== archive.monthKey),
       ]);
-      setClearedTransactionIds(activeTransactions?.map((tx) => tx.id) ?? []);
-      setResetRecurringTransactions([]);
-
-      if (recurringInsertPayloads.length > 0) {
-        const { data: insertedRecurring, error: recurringInsertError } = await (supabase.from("transactions") as any)
-          .insert(recurringInsertPayloads)
-          .select("*");
-        if (recurringInsertError) {
-          console.error("recurring transactions insert skipped:", recurringInsertError);
-        } else {
-          setResetRecurringTransactions((Array.isArray(insertedRecurring) ? insertedRecurring : []) as Transaction[]);
-        }
-      }
+      setClearedTransactionIds([]);
+      setResetRecurringTransactions(insertedRecurringRows);
 
       setMonthReviewArchive(archive);
       setIsMonthReviewOpen(true);
@@ -1128,6 +1139,7 @@ const Finance = () => {
               <TransactionList
                 transactions={displayedTransactions}
                 onDelete={deleteTransaction}
+                onToggleRecurring={toggleTransactionRecurring}
               />
             </TabsContent>
 
