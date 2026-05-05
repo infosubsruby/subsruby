@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatMonthShortYear } from "@/i18n/date";
 import { formatCurrency } from "@/i18n/currency";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Plus,
   Wallet,
@@ -566,61 +568,90 @@ const Finance = () => {
     []
   );
 
-  useEffect(() => {
-    if (isLoading) return;
+  const runMonthlyReset = useCallback(
+    async (forced = false) => {
+      if (isLoading) return;
 
-    const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const lastLoginMonth = localStorage.getItem(LAST_LOGIN_MONTH_STORAGE_KEY);
+      const now = new Date();
+      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const lastLoginMonth = localStorage.getItem(LAST_LOGIN_MONTH_STORAGE_KEY);
 
-    if (!lastLoginMonth) {
+      if (!forced) {
+        if (!lastLoginMonth) {
+          localStorage.setItem(LAST_LOGIN_MONTH_STORAGE_KEY, currentMonthKey);
+          return;
+        }
+        if (lastLoginMonth === currentMonthKey) return;
+      }
+
+      const totalIncome =
+        transactions
+          ?.filter((tx) => tx.type === "income")
+          ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
+      const totalExpense =
+        transactions
+          ?.filter((tx) => tx.type === "expense")
+          ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
+      const netSavings = totalIncome - totalExpense;
+
+      const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const monthLabel = prevMonthDate.toLocaleDateString("tr-TR", {
+        month: "long",
+        year: "numeric",
+      });
+
+      const insight = buildAiInsight(totalIncome, totalExpense, transactions ?? []);
+      const archive: MonthlyArchive = {
+        id:
+          globalThis.crypto?.randomUUID?.() ??
+          `archive-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        monthKey: `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`,
+        title: `${monthLabel} Özeti`,
+        totalIncome,
+        totalExpense,
+        netSavings,
+        transactions: transactions ?? [],
+        aiInsight: insight.message,
+        sentiment: insight.sentiment,
+      };
+
+      try {
+        const archivePayload = {
+          user_id: user?.id ?? null,
+          month_key: archive.monthKey,
+          title: archive.title,
+          total_income: archive.totalIncome,
+          total_expense: archive.totalExpense,
+          net_savings: archive.netSavings,
+          transactions: archive.transactions,
+          ai_insight: archive.aiInsight,
+          sentiment: archive.sentiment,
+        };
+        await supabase.from("monthly_archives").insert([archivePayload]);
+      } catch (error) {
+        console.error("monthly_archives insert skipped:", error);
+      }
+
+      setMonthlyArchives((prev) => [archive, ...(prev?.filter((item) => item.monthKey !== archive.monthKey) ?? [])]);
+      setClearedTransactionIds(
+        transactions
+          ?.filter((tx) => !isRecurringTransaction(tx))
+          ?.map((tx) => tx.id) ?? []
+      );
+      setMonthReviewArchive(archive);
+      setIsMonthReviewOpen(true);
       localStorage.setItem(LAST_LOGIN_MONTH_STORAGE_KEY, currentMonthKey);
-      return;
-    }
 
-    if (lastLoginMonth === currentMonthKey) return;
+      if (forced) {
+        toast.success("DEV TEST: Yeni ay tetiklendi.");
+      }
+    },
+    [isLoading, transactions, isRecurringTransaction, buildAiInsight, user?.id]
+  );
 
-    const totalIncome =
-      transactions
-        ?.filter((tx) => tx.type === "income")
-        ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
-    const totalExpense =
-      transactions
-        ?.filter((tx) => tx.type === "expense")
-        ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
-    const netSavings = totalIncome - totalExpense;
-
-    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const monthLabel = prevMonthDate.toLocaleDateString("tr-TR", {
-      month: "long",
-      year: "numeric",
-    });
-
-    const insight = buildAiInsight(totalIncome, totalExpense, transactions ?? []);
-    const archive: MonthlyArchive = {
-      id:
-        globalThis.crypto?.randomUUID?.() ??
-        `archive-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      monthKey: `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`,
-      title: `${monthLabel} Özeti`,
-      totalIncome,
-      totalExpense,
-      netSavings,
-      transactions: transactions ?? [],
-      aiInsight: insight.message,
-      sentiment: insight.sentiment,
-    };
-
-    setMonthlyArchives((prev) => [archive, ...(prev?.filter((item) => item.monthKey !== archive.monthKey) ?? [])]);
-    setClearedTransactionIds(
-      transactions
-        ?.filter((tx) => !isRecurringTransaction(tx))
-        ?.map((tx) => tx.id) ?? []
-    );
-    setMonthReviewArchive(archive);
-    setIsMonthReviewOpen(true);
-    localStorage.setItem(LAST_LOGIN_MONTH_STORAGE_KEY, currentMonthKey);
-  }, [isLoading, transactions, isRecurringTransaction, buildAiInsight]);
+  useEffect(() => {
+    runMonthlyReset(false);
+  }, [runMonthlyReset]);
 
   const handleSaveQuickAdd = useCallback(
     (item: { label: string; type: "income" | "expense"; category: string; amount: number; currency: string }) => {
@@ -701,6 +732,15 @@ const Finance = () => {
               </p>
             </div>
             <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  void runMonthlyReset(true);
+                }}
+                variant="outline"
+                className="gap-2 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              >
+                DEV TEST: Trigger New Month
+              </Button>
               {/* Currency Selector */}
               <Select 
                 value={displayCurrency || "auto"} 
