@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -13,7 +13,7 @@ import { BudgetCard } from "@/components/finance/BudgetCard";
 import { CashFlowChart } from "@/components/finance/CashFlowChart";
 import { SpendingPieChart } from "@/components/finance/SpendingPieChart";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
-import { QuickAddTransactions } from "@/components/finance/QuickAddTransactions.tsx";
+import { QuickAddTransactions, type QuickAddItem } from "@/components/finance/QuickAddTransactions.tsx";
 import { BudgetGoalsTracker } from "@/components/finance/BudgetGoalsTracker.tsx";
 import { AIFinancialInsights } from "@/components/finance/AIFinancialInsights.tsx";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 
 const Finance = () => {
+  const QUICK_ADD_STORAGE_KEY = "finance.quickAddItems";
   const { user, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
   const tFinance = useTranslations("Finance");
@@ -61,7 +62,25 @@ const Finance = () => {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
+  const [quickAddItems, setQuickAddItems] = useState<QuickAddItem[]>([]);
   const { data: exchangeRatesList } = useExchangeRates();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QUICK_ADD_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setQuickAddItems(parsed as QuickAddItem[]);
+      }
+    } catch {
+      setQuickAddItems([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(QUICK_ADD_STORAGE_KEY, JSON.stringify(quickAddItems));
+  }, [quickAddItems]);
 
   const exchangeRates = useMemo(() => {
     if (!exchangeRatesList) return {};
@@ -352,6 +371,33 @@ const Finance = () => {
     return result;
   }, [budgets, safeTransactions, activeCurrency, defaultCurrency]);
 
+  const handleSaveQuickAdd = useCallback(
+    (item: { label: string; category: string; amount: number; currency: string }) => {
+      setQuickAddItems((prev) => {
+        const id =
+          globalThis.crypto?.randomUUID?.() ??
+          `quick-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        return [...prev, { id, ...item }];
+      });
+    },
+    []
+  );
+
+  const handleQuickAddClick = useCallback(
+    (item: QuickAddItem) => {
+      const today = new Date().toISOString().slice(0, 10);
+      void createTransaction({
+        amount: item.amount,
+        type: "expense",
+        category: item.category,
+        description: item.label,
+        currency: item.currency,
+        date: today,
+      });
+    },
+    [createTransaction]
+  );
+
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
@@ -624,7 +670,10 @@ const Finance = () => {
           </div>
 
           <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
-            <QuickAddTransactions />
+            <QuickAddTransactions
+              items={quickAddItems}
+              onQuickAddClick={handleQuickAddClick}
+            />
             <BudgetGoalsTracker />
           </div>
         </div>
@@ -635,6 +684,7 @@ const Finance = () => {
         open={isTransactionModalOpen}
         onOpenChange={setIsTransactionModalOpen}
         onCreateTransaction={createTransaction}
+        onSaveQuickAdd={handleSaveQuickAdd}
       />
       <AddBudgetModal
         open={isBudgetModalOpen}

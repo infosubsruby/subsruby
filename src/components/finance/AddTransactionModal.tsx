@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,12 @@ interface AddTransactionModalProps {
   onCreateTransaction: (
     data: CreateTransactionData
   ) => Promise<{ success: boolean }>;
+  onSaveQuickAdd?: (item: {
+    label: string;
+    category: string;
+    amount: number;
+    currency: string;
+  }) => void;
   forcedType?: "income" | "expense";
 }
 
@@ -44,6 +51,7 @@ export const AddTransactionModal = ({
   open,
   onOpenChange,
   onCreateTransaction,
+  onSaveQuickAdd,
   forcedType,
 }: AddTransactionModalProps) => {
   const tModals = useTranslations("Modals");
@@ -68,6 +76,7 @@ export const AddTransactionModal = ({
   const [formData, setFormData] = useState<CreateTransactionData>(initialFormData);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currency, setCurrency] = useState<string>(defaultCurrency || "USD");
+  const [saveAsQuickAdd, setSaveAsQuickAdd] = useState(false);
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
@@ -111,25 +120,47 @@ export const AddTransactionModal = ({
     setFormData(initialFormData);
     setSelectedDate(new Date());
     setCurrency(defaultCurrency || "USD");
+    setSaveAsQuickAdd(false);
   }, [open, initialFormData, defaultCurrency]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.amount <= 0) return;
+    const effectiveType = forcedType ?? formData.type;
+    const trimmedDescription = (formData.description || "").trim();
 
     // Reset + close instantly for optimistic UX
     setFormData(initialFormData);
     setSelectedDate(new Date());
+    setSaveAsQuickAdd(false);
     onOpenChange(false);
+
+    if (
+      saveAsQuickAdd &&
+      effectiveType === "expense" &&
+      trimmedDescription.length > 0 &&
+      onSaveQuickAdd
+    ) {
+      onSaveQuickAdd({
+        label: trimmedDescription,
+        category: formData.category,
+        amount: formData.amount,
+        currency,
+      });
+    }
 
     // Persist in background (optimistic updates + rollback handled in hook)
     void onCreateTransaction({
       ...formData,
       currency,
-      type: forcedType ?? formData.type,
+      type: effectiveType,
       date: format(selectedDate, "yyyy-MM-dd"),
     });
   };
+
+  const showQuickAddOption =
+    (forcedType ?? formData.type) === "expense" &&
+    (formData.description || "").trim().length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -285,6 +316,19 @@ export const AddTransactionModal = ({
               rows={2}
             />
           </div>
+
+          {showQuickAddOption && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="saveAsQuickAdd"
+                checked={saveAsQuickAdd}
+                onCheckedChange={(checked) => setSaveAsQuickAdd(Boolean(checked))}
+              />
+              <Label htmlFor="saveAsQuickAdd" className="text-sm text-gray-400 font-normal">
+                Save as Quick Add shortcut
+              </Label>
+            </div>
+          )}
 
           {/* Submit Button */}
           <Button
