@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,8 @@ export const AddTransactionModal = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currency, setCurrency] = useState<string>(defaultCurrency || "USD");
   const [saveAsQuickAdd, setSaveAsQuickAdd] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringDay, setRecurringDay] = useState("1");
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
@@ -121,6 +124,8 @@ export const AddTransactionModal = ({
     setSelectedDate(new Date());
     setCurrency(defaultCurrency || "USD");
     setSaveAsQuickAdd(false);
+    setIsRecurring(false);
+    setRecurringDay("1");
   }, [open, initialFormData, defaultCurrency]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -133,6 +138,8 @@ export const AddTransactionModal = ({
     setFormData(initialFormData);
     setSelectedDate(new Date());
     setSaveAsQuickAdd(false);
+    setIsRecurring(false);
+    setRecurringDay("1");
     onOpenChange(false);
 
     if (
@@ -155,6 +162,7 @@ export const AddTransactionModal = ({
       currency,
       type: effectiveType,
       date: format(selectedDate, "yyyy-MM-dd"),
+      ...(isRecurring ? { isRecurring: true, recurringDay } : {}),
     });
   };
 
@@ -329,6 +337,42 @@ export const AddTransactionModal = ({
               </Label>
             </div>
           )}
+
+          <div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="isRecurring" className="text-sm text-gray-400 font-normal">
+                Repeat this transaction monthly
+              </Label>
+              <Switch
+                id="isRecurring"
+                checked={isRecurring}
+                onCheckedChange={() => setIsRecurring(!isRecurring)}
+              />
+            </div>
+
+            {isRecurring && (
+              <div className="bg-gray-800/30 rounded-lg p-4 mt-3">
+                <div className="space-y-2">
+                  <Label className="text-sm text-gray-300">Day of the month</Label>
+                  <Select value={recurringDay} onValueChange={setRecurringDay}>
+                    <SelectTrigger className="input-ruby h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border max-h-60">
+                      {Array.from({ length: 31 }, (_, idx) => {
+                        const day = String(idx + 1);
+                        return (
+                          <SelectItem key={day} value={day}>
+                            {day}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Submit Button */}
           <Button

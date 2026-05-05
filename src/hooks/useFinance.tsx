@@ -34,6 +34,8 @@ export interface CreateTransactionData {
   description?: string;
   currency?: string;
   date: string;
+  isRecurring?: boolean;
+  recurringDay?: string;
 }
 
 export interface CreateBudgetData {
