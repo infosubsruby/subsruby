@@ -91,7 +91,6 @@ export const AddTransactionModal = ({
   const [currency, setCurrency] = useState<string>(defaultCurrency || "USD");
   const [saveAsQuickAdd, setSaveAsQuickAdd] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringDay, setRecurringDay] = useState("1");
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
@@ -148,7 +147,6 @@ export const AddTransactionModal = ({
     setCurrency(initialTransactionData?.currency || defaultCurrency || "USD");
     setSaveAsQuickAdd(false);
     setIsRecurring(false);
-    setRecurringDay("1");
   }, [open, initialFormData, defaultCurrency, initialTransactionData]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -162,7 +160,6 @@ export const AddTransactionModal = ({
     setSelectedDate(new Date());
     setSaveAsQuickAdd(false);
     setIsRecurring(false);
-    setRecurringDay("1");
     onOpenChange(false);
 
     if (
@@ -179,6 +176,8 @@ export const AddTransactionModal = ({
       });
     }
 
+    const dayToRepeat = selectedDate.getDate();
+
     if (isRecurring && trimmedDescription.length > 0 && onSaveRecurringRule) {
       onSaveRecurringRule({
         type: effectiveType,
@@ -186,7 +185,7 @@ export const AddTransactionModal = ({
         description: trimmedDescription,
         amount: formData.amount,
         currency,
-        recurringDay,
+        recurringDay: String(dayToRepeat),
       });
     }
 
@@ -196,7 +195,7 @@ export const AddTransactionModal = ({
       currency,
       type: effectiveType,
       date: format(selectedDate, "yyyy-MM-dd"),
-      ...(isRecurring ? { isRecurring: true, recurringDay } : {}),
+      ...(isRecurring ? { isRecurring: true, recurringDay: String(dayToRepeat) } : {}),
     });
   };
 
@@ -381,29 +380,6 @@ export const AddTransactionModal = ({
                 onCheckedChange={() => setIsRecurring(!isRecurring)}
               />
             </div>
-
-            {isRecurring && (
-              <div className="bg-gray-800/30 rounded-lg p-4 mt-3">
-                <div className="space-y-2">
-                  <Label className="text-sm text-gray-300">Day of the month</Label>
-                  <Select value={recurringDay} onValueChange={setRecurringDay}>
-                    <SelectTrigger className="input-ruby h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border max-h-60">
-                      {Array.from({ length: 31 }, (_, idx) => {
-                        const day = String(idx + 1);
-                        return (
-                          <SelectItem key={day} value={day}>
-                            {day}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Submit Button */}
