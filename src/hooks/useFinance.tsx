@@ -696,6 +696,7 @@ export const useFinance = () => {
     netWorth,
     getMonthlyCashFlow,
     getSpendingDistribution,
+    refreshTransactions: fetchTransactions,
   };
 };
 

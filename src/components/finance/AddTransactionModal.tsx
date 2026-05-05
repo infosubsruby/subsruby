@@ -80,7 +80,7 @@ export const AddTransactionModal = ({
     () => ({
       amount: 0,
       type: initialType,
-      category: initialType === "income" ? INCOME_CATEGORIES[0] : CATEGORIES[0],
+      category: "",
       description: "",
       date: format(new Date(), "yyyy-MM-dd"),
     }),
@@ -132,14 +132,11 @@ export const AddTransactionModal = ({
   useEffect(() => {
     if (!open) return;
     const presetType = initialTransactionData?.type ?? initialFormData.type;
-    const presetCategory =
-      initialTransactionData?.category ??
-      (presetType === "income" ? INCOME_CATEGORIES[0] : CATEGORIES[0]);
     setFormData({
       ...initialFormData,
       ...initialTransactionData,
       type: presetType,
-      category: presetCategory,
+      category: "",
       description: initialTransactionData?.description ?? "",
       amount: initialTransactionData?.amount ?? 0,
     });
@@ -228,7 +225,7 @@ export const AddTransactionModal = ({
                   setFormData((prev) => ({
                     ...prev,
                     type: "income",
-                    category: INCOME_CATEGORIES[0],
+                    category: "",
                   }))
                 }
               >
@@ -245,7 +242,7 @@ export const AddTransactionModal = ({
                   setFormData((prev) => ({
                     ...prev,
                     type: "expense",
-                    category: CATEGORIES[0],
+                    category: "",
                   }))
                 }
               >
@@ -295,7 +292,7 @@ export const AddTransactionModal = ({
           <div className="space-y-2">
             <Label>{tFinance("table_category")}</Label>
             <Select
-              value={formData.category}
+              value={formData.category || undefined}
               onValueChange={(value) =>
                 setFormData((prev) => ({ ...prev, category: value }))
               }
@@ -304,6 +301,9 @@ export const AddTransactionModal = ({
                 <SelectValue placeholder={tModals("select_category")} />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
+                <SelectItem value="__placeholder__" disabled>
+                  {tModals("select_category")}
+                </SelectItem>
                 {getCategoriesForType(forcedType ?? formData.type).map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {getCategoryLabel(cat)}
@@ -386,7 +386,7 @@ export const AddTransactionModal = ({
           <Button
             type="submit"
             className="w-full ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong"
-            disabled={formData.amount <= 0}
+            disabled={formData.amount <= 0 || !formData.category}
           >
             {tModals("add_transaction")}
           </Button>
