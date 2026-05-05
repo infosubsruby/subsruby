@@ -42,6 +42,46 @@ const parseAmount = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const SubsVsIncomeValue = ({
+  totalIncome,
+  totalSubscriptions,
+  currency,
+  tt,
+}: {
+  totalIncome: number;
+  totalSubscriptions: number;
+  currency: string;
+  tt: (key: string, params?: Record<string, unknown>) => string;
+}) => {
+  const safeIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
+  const safeSubscriptions = Number.isFinite(totalSubscriptions) ? totalSubscriptions : 0;
+
+  const percentage = useMemo(() => {
+    if (safeIncome <= 0) return "0.0";
+    const value = ((safeSubscriptions / safeIncome) * 100).toFixed(1);
+    return Number.isFinite(Number(value)) ? value : "0.0";
+  }, [safeSubscriptions, safeIncome]);
+
+  const toneClass = useMemo(() => {
+    const value = Number(percentage);
+    if (value < 15) return "text-green-500";
+    if (value <= 30) return "text-amber-500";
+    return "text-red-500";
+  }, [percentage]);
+
+  return (
+    <>
+      <h3 className="text-2xl font-bold text-gray-100 mt-0.5">
+        {formatCurrency(safeSubscriptions, currency, { maximumFractionDigits: 0 })} /{" "}
+        {formatCurrency(safeIncome, currency, { maximumFractionDigits: 0 })}
+      </h3>
+      <p className={cn("text-[10px] font-medium mt-0.5", toneClass)}>
+        {tt("income_percent", { percent: percentage })}
+      </p>
+    </>
+  );
+};
+
 const Dashboard = () => {
   const location = useLocation();
   const { user, isLoading: authLoading, isAdmin } = useAuth();
@@ -210,47 +250,6 @@ const Dashboard = () => {
         return sum + (isFinite(converted) ? converted : 0);
       }, 0);
   }, [safeTransactions, activeCurrency, exchangeRates, defaultCurrency]);
-
-  const recurringMonthlySpend = useMemo(() => {
-    const now = new Date();
-    const fallback = defaultCurrency || "USD";
-    return safeTransactions
-      .filter((t) => {
-        if (!t?.date) return false;
-        const d = new Date(t.date);
-        return (
-          t.type === "expense" &&
-          (t as any).isRecurring === true &&
-          d.getMonth() === now.getMonth() &&
-          d.getFullYear() === now.getFullYear()
-        );
-      })
-      .reduce((sum, t) => {
-        const raw = Number(t.amount || 0);
-        const from = t.currency || fallback;
-        const converted = convertWithDynamicRates(raw, from, activeCurrency, exchangeRates);
-        return sum + (isFinite(converted) ? converted : 0);
-      }, 0);
-  }, [safeTransactions, activeCurrency, exchangeRates, defaultCurrency]);
-
-  // Calculate subscription vs income percentage
-  const subscriptionPercentage = useMemo(() => {
-    const income = Number(convertedCurrentMonthlyIncome) || 0;
-    const subs = Number(recurringMonthlySpend) || 0;
-    if (!isFinite(income) || income <= 0 || !isFinite(subs) || subs <= 0) return 0;
-    const percentage = Number(((subs / income) * 100).toFixed(1));
-    return isFinite(percentage) ? percentage : 0;
-  }, [recurringMonthlySpend, convertedCurrentMonthlyIncome]);
-
-  const getStatusLabel = (percentage: number | null) => {
-    if (percentage === null) return { label: "N/A", color: "text-muted-foreground" };
-    const safePercentage = Number(percentage) || 0;
-    if (safePercentage < 15) return { label: "Healthy", color: "text-green-500" };
-    if (safePercentage <= 30) return { label: "Moderate", color: "text-amber-500" };
-    return { label: "Risky", color: "text-red-500" };
-  };
-
-  const status = getStatusLabel(subscriptionPercentage);
 
   // Smart Financial Insight Logic (Updated with safe calculations)
   const financialInsight = useMemo(() => {
@@ -462,15 +461,12 @@ const Dashboard = () => {
                   {financeLoading ? (
                     <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{tt("spending_change_desc")}</p>
                   ) : (
-                    <>
-                      <h3 className="text-2xl font-bold text-gray-100 mt-0.5">
-                        {formatCurrency(Number(recurringMonthlySpend) || 0, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
-                        {formatCurrency(Number(convertedCurrentMonthlyIncome) || 0, activeCurrency, { maximumFractionDigits: 0 })}
-                      </h3>
-                      <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
-                        {tt("income_percent", { percent: (Number(subscriptionPercentage) || 0).toFixed(1) })}
-                      </p>
-                    </>
+                    <SubsVsIncomeValue
+                      totalIncome={Number(convertedCurrentMonthlyIncome) || 0}
+                      totalSubscriptions={Number(monthlySpend) || 0}
+                      currency={activeCurrency}
+                      tt={tt}
+                    />
                   )}
                 </div>
               </div>
