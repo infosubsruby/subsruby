@@ -920,6 +920,13 @@ const Finance = () => {
           ? tFinance("warning")
           : financialHealth.label;
 
+  const balance = totalIncome - totalExpenses;
+  const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const remainingDays = Math.max(1, daysInMonth - now.getDate() + 1);
+  const dailySafeSpend = balance / remainingDays;
+
   return (
     <div className="relative min-h-screen pb-28 md:pb-20">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 pointer-events-none w-[800px] h-[400px] bg-red-900/20 blur-[120px] rounded-full" />
@@ -979,7 +986,7 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x-0 lg:divide-x divide-gray-800/40">
+          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 divide-x-0 lg:divide-x divide-gray-800/40">
             <div className="flex flex-row items-center gap-4">
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                 <ArrowDownLeft className="w-4 h-4 text-green-500" />
@@ -1024,7 +1031,36 @@ const Finance = () => {
               <div className="flex flex-col">
                 <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.balance}</p>
                 <p className="font-display text-white font-semibold text-2xl">
-                  {formatCurrency(totalIncome - totalExpenses, activeCurrency)}
+                  {formatCurrency(balance, activeCurrency)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-row items-center gap-4 lg:pl-6">
+              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-4 h-4 text-green-500" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs text-gray-400 uppercase tracking-wider">Savings Rate</p>
+                <p
+                  className={cn(
+                    "font-display font-semibold text-2xl",
+                    savingsRate > 0 ? "text-green-500" : savingsRate < 0 ? "text-red-500" : "text-white"
+                  )}
+                >
+                  {`${savingsRate.toFixed(1)}%`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-row items-center gap-4 lg:pl-6">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Wallet className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs text-gray-400 uppercase tracking-wider">Daily Safe Spend</p>
+                <p className="font-display text-white font-semibold text-2xl">
+                  {formatCurrency(dailySafeSpend, activeCurrency)}
                 </p>
               </div>
             </div>
