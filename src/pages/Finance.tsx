@@ -57,6 +57,7 @@ interface RecurringRule {
 interface MonthlyArchive {
   id: string;
   monthKey: string;
+  monthYear?: string;
   title: string;
   totalIncome: number;
   totalExpense: number;
@@ -132,6 +133,7 @@ const Finance = () => {
         if (Array.isArray(archiveParsed)) {
           const normalizedArchives = (archiveParsed?.map((item) => ({
             ...item,
+            monthYear: item?.monthYear || item?.month_year || "",
             sentiment:
               item?.sentiment === "success" || item?.sentiment === "warning" || item?.sentiment === "neutral"
                 ? item.sentiment
@@ -162,6 +164,46 @@ const Finance = () => {
     localStorage.setItem(MONTHLY_ARCHIVES_STORAGE_KEY, JSON.stringify(monthlyArchives));
     localStorage.setItem(CLEARED_TX_IDS_STORAGE_KEY, JSON.stringify(clearedTransactionIds));
   }, [quickAddItems, recurringRules, monthlyArchives, clearedTransactionIds]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchMonthlyArchives = async () => {
+      if (!user?.id) return;
+      try {
+        const { data, error } = await supabase.from("monthly_archives").select("*").eq("user_id", user.id);
+        if (error) throw error;
+
+        const normalized =
+          (data?.map((item: any) => ({
+            id: String(item?.id || globalThis.crypto?.randomUUID?.() || `archive-${Date.now()}`),
+            monthKey: String(item?.month_key || item?.monthKey || ""),
+            monthYear: String(item?.month_year || item?.monthYear || ""),
+            title: String(item?.title || item?.month_year || "Ay Özeti"),
+            totalIncome: Number(item?.total_income || item?.totalIncome || 0),
+            totalExpense: Number(item?.total_expense || item?.totalExpense || 0),
+            netSavings: Number(item?.net_savings || item?.netSavings || 0),
+            transactions: (Array.isArray(item?.transactions) ? item.transactions : []) as Transaction[],
+            aiInsight: String(item?.ai_insight || item?.aiInsight || ""),
+            sentiment:
+              item?.sentiment === "success" || item?.sentiment === "warning" || item?.sentiment === "neutral"
+                ? item.sentiment
+                : "neutral",
+          })) as MonthlyArchive[]) ?? [];
+
+        if (isMounted && Array.isArray(normalized) && normalized.length > 0) {
+          setMonthlyArchives(normalized);
+        }
+      } catch (error) {
+        console.error("monthly_archives fetch skipped:", error);
+      }
+    };
+
+    fetchMonthlyArchives();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
 
   const exchangeRates = useMemo(() => {
     if (!exchangeRatesList) return {};
@@ -431,22 +473,17 @@ const Finance = () => {
     try {
       const now = new Date();
       const monthsBack = 5;
-      const monthKeys: { key: string; monthKey: string; date: Date }[] = [];
+      const monthKeys: { key: string; shortMonth: string; monthKey: string; year: number; date: Date }[] = [];
       for (let i = monthsBack; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        monthKeys.push({ key: formatMonthShortYear(d), monthKey, date: d });
+        const shortMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(d);
+        monthKeys.push({ key: formatMonthShortYear(d), shortMonth, monthKey, year: d.getFullYear(), date: d });
       }
 
       const fallbackTxCurrency = defaultCurrency || "USD";
       const parseLocalDate = (value: string) => new Date(`${value}T00:00:00`);
       const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-
-      const archiveMap = (monthlyArchives ?? []).reduce((acc, archive) => {
-        if (!archive?.monthKey) return acc;
-        acc[archive.monthKey] = archive;
-        return acc;
-      }, {} as Record<string, MonthlyArchive>);
 
       const currentMonthLive = (activeTransactions ?? []).reduce(
         (acc, tx) => {
@@ -466,7 +503,7 @@ const Finance = () => {
       );
 
       const result =
-        monthKeys?.map(({ key, monthKey }) => {
+        monthKeys?.map(({ key, shortMonth, monthKey, year }) => {
           if (monthKey === currentMonthKey) {
             return {
               month: key,
@@ -475,7 +512,15 @@ const Finance = () => {
             };
           }
 
-          const archive = archiveMap[monthKey];
+          const archive = (monthlyArchives ?? []).find((item) => {
+            const archiveLabel = String(item?.monthYear || (item as any)?.month_year || item?.title || item?.monthKey || "")
+              .toLowerCase();
+            const monthMatch =
+              archiveLabel.includes(shortMonth.toLowerCase()) ||
+              archiveLabel.startsWith(shortMonth.toLowerCase());
+            const yearMatch = archiveLabel.includes(String(year));
+            return monthMatch && yearMatch;
+          });
           return {
             month: key,
             income: Math.max(0, Number(archive?.totalIncome || 0)),
