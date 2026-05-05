@@ -291,18 +291,33 @@ export const useFinance = () => {
       toast.error("Please sign in to add transactions");
       return { success: false };
     }
+    const safeAmount = Number(data.amount);
+    if (!Number.isFinite(safeAmount)) {
+      toast.error("Invalid transaction amount");
+      return { success: false };
+    }
+    const safeDate = typeof data.date === "string" ? data.date : "";
+    if (!safeDate) {
+      toast.error("Invalid transaction date");
+      return { success: false };
+    }
+    const safeCategory = typeof data.category === "string" ? data.category : "";
+    if (!safeCategory) {
+      toast.error("Invalid transaction category");
+      return { success: false };
+    }
 
     // Optimistically add to UI immediately.
     const optimisticId = createOptimisticId("transaction");
     const optimistic: Transaction = {
       id: optimisticId,
       user_id: user.id,
-      amount: Number(data.amount),
+      amount: safeAmount,
       type: data.type,
-      category: data.category,
+      category: safeCategory,
       description: data.description ?? null,
       currency: data.currency ?? null,
-      date: data.date,
+      date: safeDate,
       created_at: new Date().toISOString(),
     };
 
@@ -311,11 +326,11 @@ export const useFinance = () => {
     type TransactionInsert = Database["public"]["Tables"]["transactions"]["Insert"];
     const baseInsert: TransactionInsert = {
       user_id: user.id,
-      amount: Number(data.amount),
+      amount: safeAmount,
       type: data.type,
-      category: data.category,
+      category: safeCategory,
       description: data.description ?? null,
-      date: data.date,
+      date: safeDate,
     };
     const withCurrency = data.currency
       ? ({ ...baseInsert, currency: data.currency } as unknown as TransactionInsert)
@@ -375,14 +390,24 @@ export const useFinance = () => {
       toast.error("Please sign in to add budgets");
       return { success: false };
     }
+    const safeLimitAmount = Number(data.limit_amount);
+    if (!Number.isFinite(safeLimitAmount)) {
+      toast.error("Invalid budget amount");
+      return { success: false };
+    }
+    const safeCategory = typeof data.category === "string" ? data.category : "";
+    if (!safeCategory) {
+      toast.error("Invalid budget category");
+      return { success: false };
+    }
 
     // Optimistically add to UI immediately.
     const optimisticId = createOptimisticId("budget");
     const optimistic: Budget = {
       id: optimisticId,
       user_id: user.id,
-      category: data.category,
-      limit_amount: Number(data.limit_amount),
+      category: safeCategory,
+      limit_amount: safeLimitAmount,
       currency: data.currency ?? null,
       created_at: new Date().toISOString(),
     };
@@ -392,8 +417,8 @@ export const useFinance = () => {
     type BudgetInsert = Database["public"]["Tables"]["budgets"]["Insert"];
     const baseInsert: BudgetInsert = {
       user_id: user.id,
-      category: data.category,
-      limit_amount: Number(data.limit_amount),
+      category: safeCategory,
+      limit_amount: safeLimitAmount,
     };
     const withCurrency = data.currency
       ? ({ ...baseInsert, currency: data.currency } as unknown as BudgetInsert)

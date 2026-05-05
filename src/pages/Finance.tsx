@@ -202,6 +202,27 @@ const Finance = () => {
     [transactions, clearedTransactionIds]
   );
 
+  // Determine the most used currency from subscriptions (auto-detect)
+  const autoDetectedCurrency = useMemo(() => {
+    try {
+      const counts: Record<string, number> = {};
+      safeSubscriptions.forEach((sub) => {
+        if (sub?.currency) {
+          counts[sub.currency] = (counts[sub.currency] || 0) + 1;
+        }
+      });
+      const entries = Object.entries(counts);
+      if (entries.length === 0) return "USD";
+      return entries.sort((a, b) => b[1] - a[1])[0][0];
+    } catch (e) {
+      return "USD";
+    }
+  }, [safeSubscriptions]);
+
+  // Use user-selected currency or auto-detected
+  const autoCurrency = defaultCurrency || autoDetectedCurrency;
+  const activeCurrency = displayCurrency || autoCurrency;
+
   const buildAiInsight = useCallback(
     (income: number, expense: number, txs: Transaction[]) => {
       if (txs.length === 0) {
@@ -258,27 +279,6 @@ const Finance = () => {
     },
     [activeCurrency]
   );
-
-  // Determine the most used currency from subscriptions (auto-detect)
-  const autoDetectedCurrency = useMemo(() => {
-    try {
-      const counts: Record<string, number> = {};
-      safeSubscriptions.forEach((sub) => {
-        if (sub?.currency) {
-          counts[sub.currency] = (counts[sub.currency] || 0) + 1;
-        }
-      });
-      const entries = Object.entries(counts);
-      if (entries.length === 0) return "USD";
-      return entries.sort((a, b) => b[1] - a[1])[0][0];
-    } catch (e) {
-      return "USD";
-    }
-  }, [safeSubscriptions]);
-
-  // Use user-selected currency or auto-detected
-  const autoCurrency = defaultCurrency || autoDetectedCurrency;
-  const activeCurrency = displayCurrency || autoCurrency;
 
   const toActiveCurrency = useCallback(
     (amount: number, fromCurrency: string) => {
