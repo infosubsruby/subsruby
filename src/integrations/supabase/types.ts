@@ -98,6 +98,48 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_archives: {
+        Row: {
+          ai_insight: string
+          created_at: string
+          id: string
+          month_key: string
+          net_savings: number
+          sentiment: string
+          title: string
+          total_expense: number
+          total_income: number
+          transactions: Json
+          user_id: string
+        }
+        Insert: {
+          ai_insight: string
+          created_at?: string
+          id?: string
+          month_key: string
+          net_savings: number
+          sentiment: string
+          title: string
+          total_expense: number
+          total_income: number
+          transactions: Json
+          user_id: string
+        }
+        Update: {
+          ai_insight?: string
+          created_at?: string
+          id?: string
+          month_key?: string
+          net_savings?: number
+          sentiment?: string
+          title?: string
+          total_expense?: number
+          total_income?: number
+          transactions?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -209,6 +251,39 @@ export type Database = {
           logo_url?: string | null
           color?: string | null
           category?: string | null
+        }
+        Relationships: []
+      }
+      quick_add_shortcuts: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          currency: string
+          id: string
+          label: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          currency: string
+          id?: string
+          label: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          label?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }

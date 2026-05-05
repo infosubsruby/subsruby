@@ -41,6 +41,7 @@ import {
   Trophy,
   Compass,
   Bot,
+  Calendar,
 } from "lucide-react";
 
 interface RecurringRule {
@@ -623,7 +624,7 @@ const Finance = () => {
           total_income: archive.totalIncome,
           total_expense: archive.totalExpense,
           net_savings: archive.netSavings,
-          transactions: archive.transactions,
+          transactions: archive.transactions as any,
           ai_insight: archive.aiInsight,
           sentiment: archive.sentiment,
         };
@@ -1014,16 +1015,16 @@ const Finance = () => {
                           </div>
                         </div>
                         <div className="mt-4 space-y-2">
-                          <div className="h-2 rounded-full bg-gray-800/70 overflow-hidden">
+                          <div className="h-1.5 rounded-full bg-gray-800/70 overflow-hidden">
                             <div className="h-full bg-emerald-500/80" style={{ width: `${incomeRatio}%` }} />
                           </div>
-                          <div className="h-2 rounded-full bg-gray-800/70 overflow-hidden">
+                          <div className="h-1.5 rounded-full bg-gray-800/70 overflow-hidden">
                             <div className="h-full bg-red-500/80" style={{ width: `${expenseRatio}%` }} />
                           </div>
                         </div>
                         <div
                           className={cn(
-                            "mt-4 rounded-lg px-3 py-2 border relative overflow-hidden flex items-start gap-2 transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4",
+                            "mt-4 rounded-xl px-4 py-3 border relative overflow-hidden flex items-center gap-3 transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4",
                             archive.sentiment === "success" &&
                               "border-green-500/20 bg-green-500/5 shadow-[0_0_15px_rgba(34,197,94,0.08)]",
                             archive.sentiment === "warning" &&
@@ -1043,10 +1044,10 @@ const Finance = () => {
                                 "border-sky-500/20 shadow-[0_0_15px_rgba(56,189,248,0.08)]"
                             )}
                           />
-                          {archive.sentiment === "success" && <Trophy className="w-4 h-4 text-green-400 mt-0.5 shrink-0 relative z-10" />}
-                          {archive.sentiment === "warning" && <Compass className="w-4 h-4 text-orange-400 mt-0.5 shrink-0 relative z-10" />}
-                          {archive.sentiment === "neutral" && <Bot className="w-4 h-4 text-sky-400 mt-0.5 shrink-0 relative z-10" />}
-                          <p className="text-xs text-gray-300 relative z-10">{archive.aiInsight}</p>
+                          {archive.sentiment === "success" && <Trophy className="w-4 h-4 text-green-400 shrink-0 relative z-10" />}
+                          {archive.sentiment === "warning" && <Compass className="w-4 h-4 text-orange-400 shrink-0 relative z-10" />}
+                          {archive.sentiment === "neutral" && <Bot className="w-4 h-4 text-sky-400 shrink-0 relative z-10" />}
+                          <p className="text-sm text-gray-300 leading-relaxed relative z-10">{archive.aiInsight}</p>
                         </div>
                       </div>
                     );
@@ -1069,28 +1070,31 @@ const Finance = () => {
 
       {isMonthReviewOpen && monthReviewArchive && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-800/70 bg-[#0c0c0e] p-6 shadow-2xl transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-800/60 bg-[#0c0c0e]/90 backdrop-blur-xl p-6 shadow-2xl transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
+            <div className="mx-auto mb-3 w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 shadow-[0_0_15px_rgba(220,38,38,0.2)] flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-red-400" />
+            </div>
             <h3 className="font-display text-xl font-semibold text-gray-100">
               Geçen Ayın Özeti ({monthReviewArchive.title.replace(" Özeti", "")})
             </h3>
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Toplam Gelir</span>
-                <span className="text-gray-100 font-semibold">{formatCurrency(monthReviewArchive.totalIncome, activeCurrency)}</span>
+                <span className="text-xl font-semibold text-gray-100">{formatCurrency(monthReviewArchive.totalIncome, activeCurrency)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Toplam Gider</span>
-                <span className="text-gray-100 font-semibold">{formatCurrency(monthReviewArchive.totalExpense, activeCurrency)}</span>
+                <span className="text-xl font-semibold text-gray-100">{formatCurrency(monthReviewArchive.totalExpense, activeCurrency)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Net Tasarruf</span>
-                <span className={cn("font-semibold", monthReviewArchive.netSavings >= 0 ? "text-green-400" : "text-red-400")}>
+                <span className={cn("text-xl font-semibold", monthReviewArchive.netSavings >= 0 ? "text-green-400" : "text-red-400")}>
                   {formatCurrency(monthReviewArchive.netSavings, activeCurrency)}
                 </span>
               </div>
             </div>
             <Button
-              className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white border border-red-500/40"
+              className="mt-6 w-full bg-red-600/90 text-white rounded-lg px-6 py-3 font-medium shadow-[0_0_15px_rgba(220,38,38,0.2)] hover:bg-red-500 transition-all"
               onClick={() => setIsMonthReviewOpen(false)}
             >
               Yeni Aya Başla
