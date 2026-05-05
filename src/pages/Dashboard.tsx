@@ -114,6 +114,21 @@ const Dashboard = () => {
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [clearedTransactionIds, setClearedTransactionIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("finance.clearedTransactionIds");
+      if (!raw) {
+        setClearedTransactionIds([]);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      setClearedTransactionIds(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setClearedTransactionIds([]);
+    }
+  }, [transactions]);
 
   const FREE_PLAN_LIMIT = 3;
   const isFreeLimited = !isPro && !isAdmin;
@@ -223,11 +238,15 @@ const Dashboard = () => {
     () => (Array.isArray(transactions) ? transactions : []),
     [transactions]
   );
+  const activeTransactions = useMemo(
+    () => safeTransactions.filter((tx) => !clearedTransactionIds.includes(tx.id)),
+    [safeTransactions, clearedTransactionIds]
+  );
 
   const totalIncome = useMemo(() => {
     const now = new Date();
     const fallback = defaultCurrency || "USD";
-    return safeTransactions
+    return activeTransactions
       .filter((t) => {
         if (!t?.date) return false;
         const d = new Date(t.date);
@@ -239,7 +258,7 @@ const Dashboard = () => {
         const converted = convertWithDynamicRates(raw, from, activeCurrency, exchangeRates);
         return sum + (isFinite(converted) ? converted : 0);
       }, 0);
-  }, [safeTransactions, activeCurrency, exchangeRates, defaultCurrency]);
+  }, [activeTransactions, activeCurrency, exchangeRates, defaultCurrency]);
 
   // Smart Financial Insight Logic (Updated with safe calculations)
   const financialInsight = useMemo(() => {

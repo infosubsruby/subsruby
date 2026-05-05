@@ -100,6 +100,7 @@ const Finance = () => {
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddItem | null>(null);
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [monthlyArchives, setMonthlyArchives] = useState<MonthlyArchive[]>([]);
+  const [monthlyArchivesTableData, setMonthlyArchivesTableData] = useState<any[]>([]);
   const [clearedTransactionIds, setClearedTransactionIds] = useState<string[]>([]);
   const [monthReviewArchive, setMonthReviewArchive] = useState<MonthlyArchive | null>(null);
   const [isMonthReviewOpen, setIsMonthReviewOpen] = useState(false);
@@ -177,16 +178,18 @@ const Finance = () => {
         const normalized =
           (data?.map((item: any) => ({
             id: String(item?.id || globalThis.crypto?.randomUUID?.() || `archive-${Date.now()}`),
-            monthKey: String(item?.month_key || item?.monthKey || ""),
+            monthKey: String(item?.month_key || item?.monthKey || item?.month_year || ""),
             monthYear: String(item?.month_year || item?.monthYear || ""),
             title: String(item?.title || item?.month_year || "Ay Özeti"),
             totalIncome: Number(item?.total_income || item?.totalIncome || 0),
             totalExpense: Number(item?.total_expense || item?.totalExpense || 0),
             netSavings: Number(item?.net_savings || item?.netSavings || 0),
             transactions: (Array.isArray(item?.transactions) ? item.transactions : []) as Transaction[],
-            aiInsight: String(item?.ai_insight || item?.aiInsight || ""),
+            aiInsight: String(item?.ai_message || item?.ai_insight || item?.aiInsight || ""),
             sentiment:
-              item?.sentiment === "success" || item?.sentiment === "warning" || item?.sentiment === "neutral"
+              item?.ai_sentiment === "success" || item?.ai_sentiment === "warning" || item?.ai_sentiment === "neutral"
+                ? item.ai_sentiment
+                : item?.sentiment === "success" || item?.sentiment === "warning" || item?.sentiment === "neutral"
                 ? item.sentiment
                 : "neutral",
           })) as MonthlyArchive[]) ?? [];
@@ -204,6 +207,22 @@ const Finance = () => {
       isMounted = false;
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchArchivesForChart = async () => {
+      const { data: archives } = await supabase.from("monthly_archives").select("*");
+      if (isMounted) {
+        setMonthlyArchivesTableData(Array.isArray(archives) ? archives : []);
+      }
+    };
+
+    void fetchArchivesForChart();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const exchangeRates = useMemo(() => {
     if (!exchangeRatesList) return {};
@@ -473,26 +492,18 @@ const Finance = () => {
     try {
       const now = new Date();
       const monthsBack = 5;
-      const monthKeys: { key: string; name: string; monthKey: string; year: number; date: Date }[] = [];
-      const monthMap = {
-        Jan: "Ocak",
-        Feb: "Şubat",
-        Mar: "Mart",
-        Apr: "Nisan",
-        May: "Mayıs",
-        Jun: "Haziran",
-        Jul: "Temmuz",
-        Aug: "Ağustos",
-        Sep: "Eylül",
-        Oct: "Ekim",
-        Nov: "Kasım",
-        Dec: "Aralık",
-      };
+      const initialChartData: { month: string; name: string; monthKey: string; income: number; expenses: number }[] = [];
       for (let i = monthsBack; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         const shortMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(d);
-        monthKeys.push({ key: formatMonthShortYear(d), name: shortMonth, monthKey, year: d.getFullYear(), date: d });
+        initialChartData.push({
+          month: formatMonthShortYear(d),
+          name: shortMonth,
+          monthKey,
+          income: 0,
+          expenses: 0,
+        });
       }
 
       const fallbackTxCurrency = defaultCurrency || "USD";
@@ -516,34 +527,52 @@ const Finance = () => {
         { income: 0, expenses: 0 }
       );
 
-      const chartData =
-        monthKeys?.map((chartItem) => {
-          if (chartItem.monthKey === currentMonthKey) {
-            return {
-              month: chartItem.key,
-              income: Math.max(0, currentMonthLive.income),
-              expenses: Math.max(0, currentMonthLive.expenses),
-            };
-          }
+      const monthMap = {
+        Jan: "Ocak",
+        Feb: "Şubat",
+        Mar: "Mart",
+        Apr: "Nisan",
+        May: "Mayıs",
+        Jun: "Haziran",
+        Jul: "Temmuz",
+        Aug: "Ağustos",
+        Sep: "Eylül",
+        Oct: "Ekim",
+        Nov: "Kasım",
+        Dec: "Aralık",
+      };
 
-          const archiveData = (monthlyArchives ?? []).find((a) =>
-            String((a as any)?.month_year || a?.monthYear || "")
-              .toLowerCase()
-              .includes(String(monthMap[chartItem.name as keyof typeof monthMap] || "").toLowerCase())
-          );
-
+      const finalChartData = initialChartData.map((item) => {
+        if (item.monthKey === currentMonthKey) {
           return {
-            month: chartItem.key,
-            income: Math.max(0, Number((archiveData as any)?.total_income || archiveData?.totalIncome || 0)),
-            expenses: Math.max(0, Number((archiveData as any)?.total_expense || archiveData?.totalExpense || 0)),
+            ...item,
+            income: Math.max(0, currentMonthLive.income),
+            expenses: Math.max(0, currentMonthLive.expenses),
           };
-        }) ?? [];
+        }
 
-      return chartData;
+        const matchedArchive = monthlyArchivesTableData.find((a) =>
+          String(a?.month_year || "").includes(String(monthMap[item.name as keyof typeof monthMap] || ""))
+        );
+        if (matchedArchive) {
+          return {
+            ...item,
+            income: Number(matchedArchive.total_income || 0),
+            expenses: Number(matchedArchive.total_expense || 0),
+          };
+        }
+        return item;
+      });
+
+      return finalChartData.map((item) => ({
+        month: item.month,
+        income: Math.max(0, Number(item.income || 0)),
+        expenses: Math.max(0, Number(item.expenses || 0)),
+      }));
     } catch {
       return [];
     }
-  }, [monthlyArchives, activeTransactions, defaultCurrency, toActiveCurrency]);
+  }, [monthlyArchivesTableData, activeTransactions, defaultCurrency, toActiveCurrency]);
 
   const spendingData = useMemo(() => {
     try {
@@ -713,6 +742,7 @@ const Finance = () => {
           globalThis.crypto?.randomUUID?.() ??
           `archive-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         monthKey: `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`,
+        monthYear: monthLabel,
         title: `${monthLabel} Özeti`,
         totalIncome,
         totalExpense,
@@ -725,21 +755,28 @@ const Finance = () => {
       try {
         const archivePayload = {
           user_id: user?.id ?? null,
-          month_key: archive.monthKey,
-          title: archive.title,
+          month_year: archive.monthYear,
           total_income: archive.totalIncome,
           total_expense: archive.totalExpense,
           net_savings: archive.netSavings,
-          transactions: archive.transactions as any,
-          ai_insight: archive.aiInsight,
-          sentiment: archive.sentiment,
+          ai_message: archive.aiInsight,
+          ai_sentiment: archive.sentiment,
         };
-        await supabase.from("monthly_archives").insert([archivePayload]);
+        await (supabase.from("monthly_archives") as any).insert([archivePayload]);
       } catch (error) {
         console.error("monthly_archives insert skipped:", error);
       }
 
       setMonthlyArchives((prev) => [archive, ...(prev?.filter((item) => item.monthKey !== archive.monthKey) ?? [])]);
+      setMonthlyArchivesTableData((prev) => [
+        {
+          month_year: archive.monthYear,
+          total_income: archive.totalIncome,
+          total_expense: archive.totalExpense,
+          month_key: archive.monthKey,
+        },
+        ...prev.filter((item) => item?.month_key !== archive.monthKey),
+      ]);
       setClearedTransactionIds(transactions?.map((tx) => tx.id) ?? []);
       setMonthReviewArchive(archive);
       setIsMonthReviewOpen(true);
