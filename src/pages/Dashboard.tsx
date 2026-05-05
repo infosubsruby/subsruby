@@ -55,19 +55,8 @@ const SubsVsIncomeValue = ({
 }) => {
   const safeIncome = Number.isFinite(income) ? income : 0;
   const safeSubscriptions = Number.isFinite(totalSubscriptions) ? totalSubscriptions : 0;
-
-  const percentage = useMemo(() => {
-    if (safeIncome <= 0) return "0.0";
-    const value = ((safeSubscriptions / safeIncome) * 100).toFixed(1);
-    return Number.isFinite(Number(value)) ? value : "0.0";
-  }, [safeSubscriptions, safeIncome]);
-
-  const toneClass = useMemo(() => {
-    const value = Number(percentage);
-    if (value < 15) return "text-green-500";
-    if (value <= 30) return "text-amber-500";
-    return "text-red-500";
-  }, [percentage]);
+  const percentage = safeIncome > 0 ? ((safeSubscriptions / safeIncome) * 100).toFixed(1) : "0.0";
+  const toneClass = Number(percentage) < 15 ? "text-green-500" : Number(percentage) <= 30 ? "text-amber-500" : "text-red-500";
 
   return (
     <>
@@ -195,6 +184,7 @@ const Dashboard = () => {
   }, [subscriptions, activeCurrency, exchangeRates]);
 
   const yearlySpend = isFinite(monthlySpend * 12) ? monthlySpend * 12 : 0;
+  const totalSubscriptions = Number(monthlySpend) || 0;
 
   const insightSubscriptions = useMemo<SubscriptionInput[]>(() => {
     const safeSubscriptions = subscriptions ?? [];
@@ -463,7 +453,7 @@ const Dashboard = () => {
                   ) : (
                     <SubsVsIncomeValue
                       income={Number(totalIncome) || 0}
-                      totalSubscriptions={Number(monthlySpend) || 0}
+                      totalSubscriptions={totalSubscriptions}
                       currency={activeCurrency}
                       tt={tt}
                     />

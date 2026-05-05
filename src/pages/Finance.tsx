@@ -473,12 +473,26 @@ const Finance = () => {
     try {
       const now = new Date();
       const monthsBack = 5;
-      const monthKeys: { key: string; shortMonth: string; monthKey: string; year: number; date: Date }[] = [];
+      const monthKeys: { key: string; name: string; monthKey: string; year: number; date: Date }[] = [];
+      const monthMap = {
+        Jan: "Ocak",
+        Feb: "Şubat",
+        Mar: "Mart",
+        Apr: "Nisan",
+        May: "Mayıs",
+        Jun: "Haziran",
+        Jul: "Temmuz",
+        Aug: "Ağustos",
+        Sep: "Eylül",
+        Oct: "Ekim",
+        Nov: "Kasım",
+        Dec: "Aralık",
+      };
       for (let i = monthsBack; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         const shortMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(d);
-        monthKeys.push({ key: formatMonthShortYear(d), shortMonth, monthKey, year: d.getFullYear(), date: d });
+        monthKeys.push({ key: formatMonthShortYear(d), name: shortMonth, monthKey, year: d.getFullYear(), date: d });
       }
 
       const fallbackTxCurrency = defaultCurrency || "USD";
@@ -502,33 +516,30 @@ const Finance = () => {
         { income: 0, expenses: 0 }
       );
 
-      const result =
-        monthKeys?.map(({ key, shortMonth, monthKey, year }) => {
-          if (monthKey === currentMonthKey) {
+      const chartData =
+        monthKeys?.map((chartItem) => {
+          if (chartItem.monthKey === currentMonthKey) {
             return {
-              month: key,
+              month: chartItem.key,
               income: Math.max(0, currentMonthLive.income),
               expenses: Math.max(0, currentMonthLive.expenses),
             };
           }
 
-          const archive = (monthlyArchives ?? []).find((item) => {
-            const archiveLabel = String(item?.monthYear || (item as any)?.month_year || item?.title || item?.monthKey || "")
-              .toLowerCase();
-            const monthMatch =
-              archiveLabel.includes(shortMonth.toLowerCase()) ||
-              archiveLabel.startsWith(shortMonth.toLowerCase());
-            const yearMatch = archiveLabel.includes(String(year));
-            return monthMatch && yearMatch;
-          });
+          const archiveData = (monthlyArchives ?? []).find((a) =>
+            String((a as any)?.month_year || a?.monthYear || "")
+              .toLowerCase()
+              .includes(String(monthMap[chartItem.name as keyof typeof monthMap] || "").toLowerCase())
+          );
+
           return {
-            month: key,
-            income: Math.max(0, Number(archive?.totalIncome || 0)),
-            expenses: Math.max(0, Number(archive?.totalExpense || 0)),
+            month: chartItem.key,
+            income: Math.max(0, Number((archiveData as any)?.total_income || archiveData?.totalIncome || 0)),
+            expenses: Math.max(0, Number((archiveData as any)?.total_expense || archiveData?.totalExpense || 0)),
           };
         }) ?? [];
 
-      return result;
+      return chartData;
     } catch {
       return [];
     }
