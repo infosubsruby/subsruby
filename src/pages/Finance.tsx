@@ -177,6 +177,10 @@ const Finance = () => {
   const safeSubscriptions = useMemo(() => Array.isArray(subscriptions) ? subscriptions : [], [subscriptions]);
   const safeTransactions = useMemo(() => Array.isArray(transactions) ? transactions : [], [transactions]);
   const safeBudgets = useMemo(() => Array.isArray(budgets) ? budgets : [], [budgets]);
+  const activeTransactions = useMemo(
+    () => safeTransactions.filter((tx) => !clearedTransactionIds.includes(tx.id)),
+    [safeTransactions, clearedTransactionIds]
+  );
 
   const normalizedRules = useMemo(
     () =>
@@ -201,8 +205,8 @@ const Finance = () => {
   );
 
   const displayedTransactions = useMemo(
-    () => transactions?.filter((tx) => !clearedTransactionIds.includes(tx.id)) ?? [],
-    [transactions, clearedTransactionIds]
+    () => activeTransactions,
+    [activeTransactions]
   );
 
   // Determine the most used currency from subscriptions (auto-detect)
@@ -295,7 +299,27 @@ const Finance = () => {
     try {
       const fallbackTxCurrency = defaultCurrency || "USD";
 
-      const income =
+      const monthlyIncome =
+        activeTransactions
+          ?.filter((t) => t?.type === "income")
+          ?.reduce((total, t) => {
+            const raw = Number(t?.amount || 0);
+            const from = t?.currency || fallbackTxCurrency;
+            const converted = toActiveCurrency(raw, from);
+            return total + (isFinite(converted) ? converted : 0);
+          }, 0) ?? 0;
+
+      const monthlyExpenses =
+        activeTransactions
+          ?.filter((t) => t?.type === "expense")
+          ?.reduce((total, t) => {
+            const raw = Number(t?.amount || 0);
+            const from = t?.currency || fallbackTxCurrency;
+            const converted = toActiveCurrency(raw, from);
+            return total + (isFinite(converted) ? converted : 0);
+          }, 0) ?? 0;
+
+      const cumulativeIncome =
         safeTransactions
           ?.filter((t) => t?.type === "income")
           ?.reduce((total, t) => {
@@ -305,7 +329,7 @@ const Finance = () => {
             return total + (isFinite(converted) ? converted : 0);
           }, 0) ?? 0;
 
-      const expenses =
+      const cumulativeExpenses =
         safeTransactions
           ?.filter((t) => t?.type === "expense")
           ?.reduce((total, t) => {
@@ -324,13 +348,19 @@ const Finance = () => {
           return total + (isFinite(converted) ? converted : 0);
         }, 0) ?? 0;
 
-      const net = income - (expenses + monthlySubCost);
+      const net = cumulativeIncome - cumulativeExpenses;
 
       // Health Score Calculation
-      let health = { score: null as number | null, label: "", emoji: "", color: "", description: tFinance("health_desc", { percent: 0 }) };
+      let health = {
+        score: 0 as number | null,
+        label: "Risky",
+        emoji: "🔴",
+        color: "text-destructive bg-destructive/10",
+        description: tFinance("health_desc", { percent: 0 }),
+      };
       
-      if (income > 0) {
-        const ratio = monthlySubCost / income;
+      if (monthlyIncome > 0) {
+        const ratio = monthlySubCost / monthlyIncome;
         let score = 0;
         let label = "";
         let emoji = "";
@@ -371,8 +401,8 @@ const Finance = () => {
       }
 
       return {
-        totalIncome: isFinite(income) ? income : 0,
-        totalExpenses: isFinite(expenses) ? expenses : 0,
+        totalIncome: isFinite(monthlyIncome) ? monthlyIncome : 0,
+        totalExpenses: isFinite(monthlyExpenses) ? monthlyExpenses : 0,
         totalMonthlyCost: isFinite(monthlySubCost) ? monthlySubCost : 0,
         netWorth: isFinite(net) ? net : 0,
         financialHealth: health
@@ -384,10 +414,16 @@ const Finance = () => {
         totalExpenses: 0,
         totalMonthlyCost: 0,
         netWorth: 0,
-        financialHealth: { score: null as number | null, label: "", emoji: "", color: "", description: tFinance("health_desc", { percent: 0 }) }
+        financialHealth: {
+          score: 0 as number | null,
+          label: "Risky",
+          emoji: "🔴",
+          color: "text-destructive bg-destructive/10",
+          description: tFinance("health_desc", { percent: 0 }),
+        }
       };
     }
-  }, [safeSubscriptions, safeTransactions, activeCurrency, defaultCurrency, tFinance, toActiveCurrency]);
+  }, [safeSubscriptions, safeTransactions, activeTransactions, activeCurrency, defaultCurrency, tFinance, toActiveCurrency]);
 
   const { totalIncome, totalExpenses, totalMonthlyCost, netWorth, financialHealth } = financialData;
 
@@ -445,7 +481,7 @@ const Finance = () => {
 
       const categoryTotals: Record<string, number> = {};
 
-      safeTransactions
+      activeTransactions
         ?.filter((t) => t?.type === "expense" && t?.date && parseLocalDate(t.date) >= startOfMonth)
         .forEach((t) => {
           if (!t?.category) return;
@@ -454,10 +490,6 @@ const Finance = () => {
           const converted = toActiveCurrency(raw, from);
           categoryTotals[t.category] = (categoryTotals[t.category] || 0) + (isFinite(converted) ? converted : 0);
         });
-
-      if (totalMonthlyCost > 0) {
-        categoryTotals["Subscriptions"] = (categoryTotals["Subscriptions"] || 0) + totalMonthlyCost;
-      }
 
       Object.entries(categoryTotals)?.forEach(([name, value]) => {
         if (value > 0) {
@@ -469,7 +501,7 @@ const Finance = () => {
     } catch {
       return [];
     }
-  }, [safeTransactions, totalMonthlyCost, defaultCurrency, toActiveCurrency]);
+  }, [activeTransactions, defaultCurrency, toActiveCurrency]);
 
   const budgetSpentMap = useMemo(() => {
     const now = new Date();
@@ -481,7 +513,7 @@ const Finance = () => {
     safeBudgets.forEach((budget) => {
       const budgetCurrency = budget.currency || activeCurrency || defaultCurrency || "USD";
       const total =
-        safeTransactions
+        activeTransactions
         ?.filter((t) => {
           if (!t?.date) return false;
           const tDate = parseLocalDate(t.date);
@@ -498,7 +530,7 @@ const Finance = () => {
     });
 
     return result;
-  }, [safeBudgets, safeTransactions, activeCurrency, defaultCurrency, exchangeRates]);
+  }, [safeBudgets, activeTransactions, activeCurrency, defaultCurrency, exchangeRates]);
 
   const budgetConvertedFromMap = useMemo(() => {
     const now = new Date();
@@ -512,7 +544,7 @@ const Finance = () => {
       const budgetCurrency = budget.currency || activeCurrency || defaultCurrency || "USD";
       const byCurrency: Record<string, number> = {};
 
-      safeTransactions
+      activeTransactions
         ?.filter((t) => {
           if (!t?.date) return false;
           const tDate = parseLocalDate(t.date);
@@ -541,7 +573,7 @@ const Finance = () => {
     });
 
     return result;
-  }, [safeBudgets, safeTransactions, activeCurrency, defaultCurrency]);
+  }, [safeBudgets, activeTransactions, activeCurrency, defaultCurrency]);
 
   const handleSaveRecurringRule = useCallback(
     (item: {
@@ -634,11 +666,7 @@ const Finance = () => {
       }
 
       setMonthlyArchives((prev) => [archive, ...(prev?.filter((item) => item.monthKey !== archive.monthKey) ?? [])]);
-      setClearedTransactionIds(
-        transactions
-          ?.filter((tx) => !isRecurringTransaction(tx))
-          ?.map((tx) => tx.id) ?? []
-      );
+      setClearedTransactionIds(transactions?.map((tx) => tx.id) ?? []);
       setMonthReviewArchive(archive);
       setIsMonthReviewOpen(true);
       localStorage.setItem(LAST_LOGIN_MONTH_STORAGE_KEY, currentMonthKey);
