@@ -43,17 +43,17 @@ const parseAmount = (value: unknown): number => {
 };
 
 const SubsVsIncomeValue = ({
-  totalIncome,
+  income,
   totalSubscriptions,
   currency,
   tt,
 }: {
-  totalIncome: number;
+  income: number;
   totalSubscriptions: number;
   currency: string;
   tt: (key: string, params?: Record<string, unknown>) => string;
 }) => {
-  const safeIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
+  const safeIncome = Number.isFinite(income) ? income : 0;
   const safeSubscriptions = Number.isFinite(totalSubscriptions) ? totalSubscriptions : 0;
 
   const percentage = useMemo(() => {
@@ -234,7 +234,7 @@ const Dashboard = () => {
     [transactions]
   );
 
-  const convertedCurrentMonthlyIncome = useMemo(() => {
+  const totalIncome = useMemo(() => {
     const now = new Date();
     const fallback = defaultCurrency || "USD";
     return safeTransactions
@@ -462,7 +462,7 @@ const Dashboard = () => {
                     <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{tt("spending_change_desc")}</p>
                   ) : (
                     <SubsVsIncomeValue
-                      totalIncome={Number(convertedCurrentMonthlyIncome) || 0}
+                      income={Number(totalIncome) || 0}
                       totalSubscriptions={Number(monthlySpend) || 0}
                       currency={activeCurrency}
                       tt={tt}
@@ -529,7 +529,7 @@ const Dashboard = () => {
                   subscriptions={subscriptions}
                   currency={activeCurrency}
                   exchangeRates={exchangeRates}
-                  monthlyIncome={convertedCurrentMonthlyIncome}
+                  monthlyIncome={totalIncome}
                 />
 
                 <div
