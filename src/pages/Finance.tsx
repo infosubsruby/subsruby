@@ -102,6 +102,7 @@ const Finance = () => {
   const [monthlyArchives, setMonthlyArchives] = useState<MonthlyArchive[]>([]);
   const [monthlyArchivesTableData, setMonthlyArchivesTableData] = useState<any[]>([]);
   const [clearedTransactionIds, setClearedTransactionIds] = useState<string[]>([]);
+  const [resetRecurringTransactions, setResetRecurringTransactions] = useState<Transaction[]>([]);
   const [monthReviewArchive, setMonthReviewArchive] = useState<MonthlyArchive | null>(null);
   const [isMonthReviewOpen, setIsMonthReviewOpen] = useState(false);
   const { data: exchangeRatesList } = useExchangeRates();
@@ -266,8 +267,16 @@ const Finance = () => {
   );
 
   const displayedTransactions = useMemo(
-    () => activeTransactions,
-    [activeTransactions]
+    () => {
+      const merged = [...resetRecurringTransactions, ...activeTransactions];
+      const seen = new Set<string>();
+      return merged.filter((tx) => {
+        if (seen.has(tx.id)) return false;
+        seen.add(tx.id);
+        return true;
+      });
+    },
+    [activeTransactions, resetRecurringTransactions]
   );
 
   // Determine the most used currency from subscriptions (auto-detect)
@@ -720,12 +729,34 @@ const Finance = () => {
         if (lastLoginMonth === currentMonthKey) return;
       }
 
+      const recurringTransactions = (activeTransactions ?? []).filter((t: any) => t?.is_recurring === true);
+      const recurringInsertPayloads = recurringTransactions.map((tx: any) => {
+        const recurringDay = Number(tx?.recurring_day);
+        const originalDay = new Date(`${tx.date}T00:00:00`).getDate();
+        const sourceDay = Number.isFinite(recurringDay) && recurringDay > 0 ? recurringDay : originalDay;
+        const maxDayInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const targetDay = Math.max(1, Math.min(sourceDay, maxDayInMonth));
+        const targetDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+
+        return {
+          user_id: user?.id ?? tx.user_id,
+          amount: Number(tx.amount || 0),
+          type: tx.type,
+          category: tx.category,
+          description: tx.description ?? null,
+          date: targetDate,
+          currency: tx.currency ?? null,
+          is_recurring: true,
+          recurring_day: String(targetDay),
+        };
+      });
+
       const totalIncome =
-        transactions
+        activeTransactions
           ?.filter((tx) => tx.type === "income")
           ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
       const totalExpense =
-        transactions
+        activeTransactions
           ?.filter((tx) => tx.type === "expense")
           ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
       const netSavings = totalIncome - totalExpense;
@@ -736,7 +767,7 @@ const Finance = () => {
         year: "numeric",
       });
 
-      const insight = buildAiInsight(totalIncome, totalExpense, transactions ?? []);
+      const insight = buildAiInsight(totalIncome, totalExpense, activeTransactions ?? []);
       const archive: MonthlyArchive = {
         id:
           globalThis.crypto?.randomUUID?.() ??
@@ -747,7 +778,7 @@ const Finance = () => {
         totalIncome,
         totalExpense,
         netSavings,
-        transactions: transactions ?? [],
+        transactions: activeTransactions ?? [],
         aiInsight: insight.message,
         sentiment: insight.sentiment,
       };
@@ -777,7 +808,20 @@ const Finance = () => {
         },
         ...prev.filter((item) => item?.month_key !== archive.monthKey),
       ]);
-      setClearedTransactionIds(transactions?.map((tx) => tx.id) ?? []);
+      setClearedTransactionIds(activeTransactions?.map((tx) => tx.id) ?? []);
+      setResetRecurringTransactions([]);
+
+      if (recurringInsertPayloads.length > 0) {
+        const { data: insertedRecurring, error: recurringInsertError } = await (supabase.from("transactions") as any)
+          .insert(recurringInsertPayloads)
+          .select("*");
+        if (recurringInsertError) {
+          console.error("recurring transactions insert skipped:", recurringInsertError);
+        } else {
+          setResetRecurringTransactions((Array.isArray(insertedRecurring) ? insertedRecurring : []) as Transaction[]);
+        }
+      }
+
       setMonthReviewArchive(archive);
       setIsMonthReviewOpen(true);
       localStorage.setItem(LAST_LOGIN_MONTH_STORAGE_KEY, currentMonthKey);
@@ -786,7 +830,7 @@ const Finance = () => {
         toast.success("DEV TEST: Yeni ay tetiklendi.");
       }
     },
-    [isLoading, transactions, isRecurringTransaction, buildAiInsight, user?.id]
+    [isLoading, transactions, activeTransactions, isRecurringTransaction, buildAiInsight, user?.id]
   );
 
   useEffect(() => {
@@ -965,7 +1009,7 @@ const Finance = () => {
               <div className="flex flex-col">
                 <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.balance}</p>
                 <p className="font-display text-white font-semibold text-2xl">
-                  {formatCurrency(netWorth, activeCurrency)}
+                  {formatCurrency(totalIncome - totalExpenses, activeCurrency)}
                 </p>
               </div>
             </div>
