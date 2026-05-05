@@ -86,51 +86,92 @@ export const useFinance = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchTransactions = useCallback(async () => {
     if (!user) {
       setTransactions([]);
-      return;
+      return true;
     }
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("date", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
 
-    if (error) {
+      if (error || !data) {
+        setTransactions([]);
+        toast.error("Failed to fetch transactions");
+        console.error(error);
+        return false;
+      }
+
+      setTransactions(Array.isArray(data) ? (data as Transaction[]) : []);
+      return true;
+    } catch (error) {
+      setTransactions([]);
       toast.error("Failed to fetch transactions");
       console.error(error);
-    } else {
-      setTransactions(data as Transaction[]);
+      return false;
     }
   }, [user]);
 
   const fetchBudgets = useCallback(async () => {
     if (!user) {
       setBudgets([]);
-      return;
+      return true;
     }
 
-    const { data, error } = await supabase
-      .from("budgets")
-      .select("*")
-      .eq("user_id", user.id);
+    try {
+      const { data, error } = await supabase
+        .from("budgets")
+        .select("*")
+        .eq("user_id", user.id);
 
-    if (error) {
+      if (error || !data) {
+        setBudgets([]);
+        toast.error("Failed to fetch budgets");
+        console.error(error);
+        return false;
+      }
+
+      setBudgets(Array.isArray(data) ? (data as Budget[]) : []);
+      return true;
+    } catch (error) {
+      setBudgets([]);
       toast.error("Failed to fetch budgets");
       console.error(error);
-    } else {
-      setBudgets(data as Budget[]);
+      return false;
     }
   }, [user]);
 
   useEffect(() => {
     const fetchAll = async () => {
-      setIsLoading(true);
-      await Promise.all([fetchTransactions(), fetchBudgets()]);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setErrorMessage(null);
+        const [transactionsOk, budgetsOk] = await Promise.all([
+          fetchTransactions(),
+          fetchBudgets(),
+        ]);
+
+        if (!transactionsOk || !budgetsOk) {
+          setErrorMessage(
+            "Veriler yüklenirken bir sorun oluştu, lütfen sayfayı yenileyin"
+          );
+        }
+      } catch (error) {
+        setTransactions([]);
+        setBudgets([]);
+        setErrorMessage(
+          "Veriler yüklenirken bir sorun oluştu, lütfen sayfayı yenileyin"
+        );
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchAll();
   }, [fetchTransactions, fetchBudgets]);
@@ -571,6 +612,7 @@ export const useFinance = () => {
     budgets,
     subscriptions,
     isLoading,
+    errorMessage,
     createTransaction,
     deleteTransaction,
     createBudget,

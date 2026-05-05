@@ -81,6 +81,7 @@ const Finance = () => {
     budgets,
     subscriptions,
     isLoading,
+    errorMessage,
     createTransaction,
     deleteTransaction,
     createBudget,
@@ -106,10 +107,10 @@ const Finance = () => {
       if (quickAddRaw) {
         const parsed = JSON.parse(quickAddRaw);
         if (Array.isArray(parsed)) {
-          const normalized = parsed.map((item) => ({
+          const normalized = (parsed?.map((item) => ({
             ...item,
             type: item?.type === "income" ? "income" : "expense",
-          })) as QuickAddItem[];
+          })) ?? []) as QuickAddItem[];
           setQuickAddItems(normalized);
         }
       }
@@ -126,13 +127,13 @@ const Finance = () => {
       if (archivesRaw) {
         const archiveParsed = JSON.parse(archivesRaw);
         if (Array.isArray(archiveParsed)) {
-          const normalizedArchives = archiveParsed.map((item) => ({
+          const normalizedArchives = (archiveParsed?.map((item) => ({
             ...item,
             sentiment:
               item?.sentiment === "success" || item?.sentiment === "warning" || item?.sentiment === "neutral"
                 ? item.sentiment
                 : "neutral",
-          })) as MonthlyArchive[];
+          })) ?? []) as MonthlyArchive[];
           setMonthlyArchives(normalizedArchives);
         }
       }
@@ -161,22 +162,25 @@ const Finance = () => {
 
   const exchangeRates = useMemo(() => {
     if (!exchangeRatesList) return {};
-    return exchangeRatesList.reduce((acc, curr) => {
-      acc[curr.currency_code] = Number(curr.rate);
-      return acc;
-    }, {} as Record<string, number>);
+    return (
+      exchangeRatesList?.reduce((acc, curr) => {
+        acc[curr.currency_code] = Number(curr.rate);
+        return acc;
+      }, {} as Record<string, number>) ?? {}
+    );
   }, [exchangeRatesList]);
 
   // Defensive arrays
   const safeSubscriptions = useMemo(() => Array.isArray(subscriptions) ? subscriptions : [], [subscriptions]);
   const safeTransactions = useMemo(() => Array.isArray(transactions) ? transactions : [], [transactions]);
+  const safeBudgets = useMemo(() => Array.isArray(budgets) ? budgets : [], [budgets]);
 
   const normalizedRules = useMemo(
     () =>
-      recurringRules.map((rule) => ({
+      recurringRules?.map((rule) => ({
         ...rule,
         description: rule.description.trim().toLowerCase(),
-      })),
+      })) ?? [],
     [recurringRules]
   );
 
@@ -194,7 +198,7 @@ const Finance = () => {
   );
 
   const displayedTransactions = useMemo(
-    () => transactions.filter((tx) => !clearedTransactionIds.includes(tx.id)),
+    () => transactions?.filter((tx) => !clearedTransactionIds.includes(tx.id)) ?? [],
     [transactions, clearedTransactionIds]
   );
 
@@ -209,13 +213,14 @@ const Finance = () => {
       }
 
       const net = income - expense;
-      const topCategory = txs
-        .filter((tx) => tx.type === "expense")
-        .reduce((acc, tx) => {
-          const current = acc[tx.category] || 0;
-          acc[tx.category] = current + Number(tx.amount || 0);
-          return acc;
-        }, {} as Record<string, number>);
+      const topCategory =
+        txs
+          ?.filter((tx) => tx.type === "expense")
+          ?.reduce((acc, tx) => {
+            const current = acc[tx.category] || 0;
+            acc[tx.category] = current + Number(tx.amount || 0);
+            return acc;
+          }, {} as Record<string, number>) ?? {};
 
       const topEntry = Object.entries(topCategory).sort((a, b) => b[1] - a[1])[0];
       if (!topEntry) {
@@ -287,31 +292,34 @@ const Finance = () => {
     try {
       const fallbackTxCurrency = defaultCurrency || "USD";
 
-      const income = safeTransactions
-        .filter((t) => t?.type === "income")
-        .reduce((total, t) => {
-          const raw = Number(t?.amount || 0);
-          const from = t?.currency || fallbackTxCurrency;
-          const converted = toActiveCurrency(raw, from);
-          return total + (isFinite(converted) ? converted : 0);
-        }, 0);
+      const income =
+        safeTransactions
+          ?.filter((t) => t?.type === "income")
+          ?.reduce((total, t) => {
+            const raw = Number(t?.amount || 0);
+            const from = t?.currency || fallbackTxCurrency;
+            const converted = toActiveCurrency(raw, from);
+            return total + (isFinite(converted) ? converted : 0);
+          }, 0) ?? 0;
 
-      const expenses = safeTransactions
-        .filter((t) => t?.type === "expense")
-        .reduce((total, t) => {
-          const raw = Number(t?.amount || 0);
-          const from = t?.currency || fallbackTxCurrency;
-          const converted = toActiveCurrency(raw, from);
-          return total + (isFinite(converted) ? converted : 0);
-        }, 0);
+      const expenses =
+        safeTransactions
+          ?.filter((t) => t?.type === "expense")
+          ?.reduce((total, t) => {
+            const raw = Number(t?.amount || 0);
+            const from = t?.currency || fallbackTxCurrency;
+            const converted = toActiveCurrency(raw, from);
+            return total + (isFinite(converted) ? converted : 0);
+          }, 0) ?? 0;
 
-      const monthlySubCost = safeSubscriptions.reduce((total, sub) => {
-        const rawPrice = Number(sub?.price ?? 0);
-        const monthlyPrice = sub?.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
-        const from = sub?.currency || activeCurrency;
-        const converted = toActiveCurrency(monthlyPrice, from);
-        return total + (isFinite(converted) ? converted : 0);
-      }, 0);
+      const monthlySubCost =
+        safeSubscriptions?.reduce((total, sub) => {
+          const rawPrice = Number(sub?.price ?? 0);
+          const monthlyPrice = sub?.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
+          const from = sub?.currency || activeCurrency;
+          const converted = toActiveCurrency(monthlyPrice, from);
+          return total + (isFinite(converted) ? converted : 0);
+        }, 0) ?? 0;
 
       const net = income - (expenses + monthlySubCost);
 
@@ -412,11 +420,11 @@ const Finance = () => {
         }
       });
 
-      const result = monthKeys.map(({ key }) => ({
+      const result = monthKeys?.map(({ key }) => ({
         month: key,
         income: Math.max(0, buckets[key]?.income || 0),
         expenses: Math.max(0, (buckets[key]?.expenses || 0) + totalMonthlyCost),
-      }));
+      })) ?? [];
 
       return result;
     } catch {
@@ -435,7 +443,7 @@ const Finance = () => {
       const categoryTotals: Record<string, number> = {};
 
       safeTransactions
-        .filter((t) => t?.type === "expense" && t?.date && parseLocalDate(t.date) >= startOfMonth)
+        ?.filter((t) => t?.type === "expense" && t?.date && parseLocalDate(t.date) >= startOfMonth)
         .forEach((t) => {
           if (!t?.category) return;
           const raw = Number(t?.amount || 0);
@@ -448,7 +456,7 @@ const Finance = () => {
         categoryTotals["Subscriptions"] = (categoryTotals["Subscriptions"] || 0) + totalMonthlyCost;
       }
 
-      Object.entries(categoryTotals).forEach(([name, value]) => {
+      Object.entries(categoryTotals)?.forEach(([name, value]) => {
         if (value > 0) {
           distribution.push({ name, value: isFinite(value) ? value : 0 });
         }
@@ -467,26 +475,27 @@ const Finance = () => {
     const result: Record<string, number> = {};
     const parseLocalDate = (value: string) => new Date(`${value}T00:00:00`);
 
-    budgets.forEach((budget) => {
+    safeBudgets.forEach((budget) => {
       const budgetCurrency = budget.currency || activeCurrency || defaultCurrency || "USD";
-      const total = safeTransactions
-        .filter((t) => {
+      const total =
+        safeTransactions
+        ?.filter((t) => {
           if (!t?.date) return false;
           const tDate = parseLocalDate(t.date);
           return t.type === "expense" && t.category === budget.category && tDate >= startOfMonth;
         })
-        .reduce((sum, t) => {
+        ?.reduce((sum, t) => {
           const raw = Number(t?.amount || 0);
           const from = t?.currency || fallbackTxCurrency;
           const converted = convertWithDynamicRates(raw, from, budgetCurrency, exchangeRates);
           return sum + (isFinite(converted) ? converted : 0);
-        }, 0);
+        }, 0) ?? 0;
 
       result[budget.id] = isFinite(total) ? total : 0;
     });
 
     return result;
-  }, [budgets, safeTransactions, activeCurrency, defaultCurrency, exchangeRates]);
+  }, [safeBudgets, safeTransactions, activeCurrency, defaultCurrency, exchangeRates]);
 
   const budgetConvertedFromMap = useMemo(() => {
     const now = new Date();
@@ -496,12 +505,12 @@ const Finance = () => {
 
     const result: Record<string, { amount: number; currency: string } | "multiple" | null> = {};
 
-    budgets.forEach((budget) => {
+    safeBudgets.forEach((budget) => {
       const budgetCurrency = budget.currency || activeCurrency || defaultCurrency || "USD";
       const byCurrency: Record<string, number> = {};
 
       safeTransactions
-        .filter((t) => {
+        ?.filter((t) => {
           if (!t?.date) return false;
           const tDate = parseLocalDate(t.date);
           return t.type === "expense" && t.category === budget.category && tDate >= startOfMonth;
@@ -529,7 +538,7 @@ const Finance = () => {
     });
 
     return result;
-  }, [budgets, safeTransactions, activeCurrency, defaultCurrency]);
+  }, [safeBudgets, safeTransactions, activeCurrency, defaultCurrency]);
 
   const handleSaveRecurringRule = useCallback(
     (item: {
@@ -571,12 +580,14 @@ const Finance = () => {
 
     if (lastLoginMonth === currentMonthKey) return;
 
-    const totalIncome = transactions
-      .filter((tx) => tx.type === "income")
-      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-    const totalExpense = transactions
-      .filter((tx) => tx.type === "expense")
-      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    const totalIncome =
+      transactions
+        ?.filter((tx) => tx.type === "income")
+        ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
+    const totalExpense =
+      transactions
+        ?.filter((tx) => tx.type === "expense")
+        ?.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) ?? 0;
     const netSavings = totalIncome - totalExpense;
 
     const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -585,7 +596,7 @@ const Finance = () => {
       year: "numeric",
     });
 
-    const insight = buildAiInsight(totalIncome, totalExpense, transactions);
+    const insight = buildAiInsight(totalIncome, totalExpense, transactions ?? []);
     const archive: MonthlyArchive = {
       id:
         globalThis.crypto?.randomUUID?.() ??
@@ -595,16 +606,16 @@ const Finance = () => {
       totalIncome,
       totalExpense,
       netSavings,
-      transactions,
+      transactions: transactions ?? [],
       aiInsight: insight.message,
       sentiment: insight.sentiment,
     };
 
-    setMonthlyArchives((prev) => [archive, ...prev.filter((item) => item.monthKey !== archive.monthKey)]);
+    setMonthlyArchives((prev) => [archive, ...(prev?.filter((item) => item.monthKey !== archive.monthKey) ?? [])]);
     setClearedTransactionIds(
       transactions
-        .filter((tx) => !isRecurringTransaction(tx))
-        .map((tx) => tx.id)
+        ?.filter((tx) => !isRecurringTransaction(tx))
+        ?.map((tx) => tx.id) ?? []
     );
     setMonthReviewArchive(archive);
     setIsMonthReviewOpen(true);
@@ -640,6 +651,23 @@ const Finance = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="relative min-h-screen pb-28 md:pb-20">
+        <Navbar />
+        <main className="pt-8 sm:pt-10">
+          <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[60vh] flex items-center justify-center">
+            <div className="glass-card rounded-xl border border-gray-800/60 px-6 py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                Veriler yüklenirken bir sorun oluştu, lütfen sayfayı yenileyin
+              </p>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -683,11 +711,11 @@ const Finance = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
                   <SelectItem value="auto">{t.dashboard.auto} ({autoCurrency})</SelectItem>
-                  {currencies.map((c) => (
+                  {currencies?.map((c) => (
                     <SelectItem key={c.value} value={c.value}>
                       {c.label}
                     </SelectItem>
-                  ))}
+                  )) ?? null}
                 </SelectContent>
               </Select>
               <Button
@@ -880,7 +908,7 @@ const Finance = () => {
             </TabsContent>
 
             <TabsContent value="budgets" className="space-y-4">
-              {budgets.length === 0 ? (
+              {(safeBudgets?.length ?? 0) === 0 ? (
                 <div className="glass-card rounded-xl p-12 text-center">
                   <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
                     <PiggyBank className="w-8 h-8 text-muted-foreground" />
@@ -901,7 +929,7 @@ const Finance = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {budgets.map((budget) => (
+                  {safeBudgets?.map((budget) => (
                     <BudgetCard
                       key={budget.id}
                       budget={budget}
@@ -910,19 +938,19 @@ const Finance = () => {
                       convertedFrom={budgetConvertedFromMap[budget.id] ?? null}
                       onDelete={deleteBudget}
                     />
-                  ))}
+                  )) ?? null}
                 </div>
               )}
             </TabsContent>
 
             <TabsContent value="monthly-summaries" className="space-y-4">
-              {monthlyArchives.length === 0 ? (
+              {(monthlyArchives?.length ?? 0) === 0 ? (
                 <div className="glass-card rounded-xl p-8 text-center text-sm text-muted-foreground">
                   Henüz aylık özet bulunmuyor.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {monthlyArchives.map((archive) => {
+                  {monthlyArchives?.map((archive) => {
                     const total = archive.totalIncome + archive.totalExpense;
                     const incomeRatio = total > 0 ? (archive.totalIncome / total) * 100 : 0;
                     const expenseRatio = total > 0 ? (archive.totalExpense / total) * 100 : 0;
@@ -982,7 +1010,7 @@ const Finance = () => {
                         </div>
                       </div>
                     );
-                  })}
+                  }) ?? null}
                 </div>
               )}
             </TabsContent>
@@ -1056,7 +1084,7 @@ const Finance = () => {
       <AddBudgetModal
         open={isBudgetModalOpen}
         onOpenChange={setIsBudgetModalOpen}
-        existingCategories={budgets.map((b) => b.category)}
+        existingCategories={safeBudgets?.map((b) => b.category) ?? []}
         onCreateBudget={createBudget}
       />
 
