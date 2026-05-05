@@ -987,8 +987,8 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 divide-x-0 lg:divide-x divide-gray-800/40">
-            <div className="flex flex-row items-center gap-4">
+          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex flex-row items-center gap-4 p-4">
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                 <ArrowDownLeft className="w-4 h-4 text-green-500" />
               </div>
@@ -1000,7 +1000,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="flex flex-row items-center gap-4 lg:pl-6">
+            <div className="flex flex-row items-center gap-4 p-4">
               <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
                 <ArrowUpRight className="w-4 h-4 text-red-500" />
               </div>
@@ -1012,7 +1012,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="flex flex-row items-center gap-4 lg:pl-6">
+            <div className="flex flex-row items-center gap-4 p-4">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Activity className="w-4 h-4 text-primary" />
               </div>
@@ -1027,7 +1027,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="flex flex-row items-center gap-4 lg:pl-6">
+            <div className="flex flex-row items-center gap-4 p-4">
               <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-4 h-4 text-yellow-500" />
               </div>
@@ -1039,7 +1039,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="flex flex-row items-center gap-4 lg:pl-6">
+            <div className="flex flex-row items-center gap-4 p-4">
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-4 h-4 text-green-500" />
               </div>
@@ -1056,7 +1056,7 @@ const Finance = () => {
               </div>
             </div>
 
-            <div className="flex flex-row items-center gap-4 lg:pl-6">
+            <div className="flex flex-row items-center gap-4 p-4">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Wallet className="w-4 h-4 text-primary" />
               </div>
