@@ -1232,7 +1232,7 @@ const Finance = () => {
               items={quickAddItems}
               onQuickAddClick={handleQuickAddClick}
             />
-            <BudgetGoalsTracker />
+            <BudgetGoalsTracker budgets={safeBudgets} transactions={activeTransactions} currency={activeCurrency} />
           </div>
         </div>
       </main>
