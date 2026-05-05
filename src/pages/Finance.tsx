@@ -488,14 +488,13 @@ const Finance = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="glass-card rounded-2xl p-6 h-[280px] max-h-[300px] w-full flex flex-col">
-              <p className="text-xs md:text-sm text-muted-foreground font-medium mb-2 text-left">
+            <div className="glass-card rounded-2xl p-6 h-[240px] w-full flex flex-col items-center justify-center gap-4">
+              <p className="text-sm font-medium text-gray-300">
                 {tFinance("health_score")}
               </p>
 
               {financialHealth.score !== null ? (
-                <div className="flex-1 min-h-0 flex items-center justify-center">
-                  <div className="w-full flex flex-col items-center justify-center gap-2">
+                <div className="w-full flex flex-col items-center justify-center gap-2">
                     <div className="relative w-full max-w-[300px] h-[140px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -542,16 +541,13 @@ const Finance = () => {
                     <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-[11px] text-muted-foreground">
                       {financialHealth.description}
                     </div>
-                  </div>
                 </div>
               ) : (
-                <div className="flex-1 min-h-0 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-tight text-center">{financialHealth.description}</p>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+                    <Sparkles className="w-5 h-5 text-primary" />
                   </div>
+                  <p className="text-sm text-muted-foreground leading-tight text-center">{financialHealth.description}</p>
                 </div>
               )}
             </div>

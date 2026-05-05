@@ -60,7 +60,7 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
 
   if (data.length === 0) {
     return (
-      <div className="glass-card rounded-xl p-5 h-[280px] max-h-[300px] flex flex-col">
+      <div className="glass-card rounded-xl p-5 h-[240px] flex flex-col">
         <h3 className="font-display font-semibold text-lg mb-3">
           {tFinance("spending_dist")}
         </h3>
@@ -72,12 +72,12 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
   }
 
   return (
-    <div className="glass-card rounded-xl p-5 h-[280px] max-h-[300px] flex flex-col">
+    <div className="glass-card rounded-xl p-5 h-[240px] flex flex-col">
       <h3 className="font-display font-semibold text-lg mb-3">
         {tFinance("spending_dist")}
       </h3>
-      <div className="flex-1 min-h-0 w-full flex items-center gap-4">
-        <div className="h-full w-[52%]">
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center gap-4">
+        <div className="h-full w-[52%] flex items-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -116,7 +116,7 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
           </ResponsiveContainer>
         </div>
 
-        <div className="w-[48%] flex flex-col gap-2">
+        <div className="w-[48%] flex flex-col justify-center gap-2">
           {data.slice(0, 6).map((item, index) => (
             <div key={item.name} className="flex items-center gap-1.5 text-xs text-gray-400">
               <div
