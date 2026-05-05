@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 export interface QuickAddItem {
   id: string;
   label: string;
+  type: "income" | "expense";
   category: string;
   amount: number;
   currency: string;

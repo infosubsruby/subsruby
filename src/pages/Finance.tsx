@@ -63,6 +63,7 @@ const Finance = () => {
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
   const [quickAddItems, setQuickAddItems] = useState<QuickAddItem[]>([]);
+  const [quickAddDraft, setQuickAddDraft] = useState<QuickAddItem | null>(null);
   const { data: exchangeRatesList } = useExchangeRates();
 
   useEffect(() => {
@@ -71,7 +72,11 @@ const Finance = () => {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        setQuickAddItems(parsed as QuickAddItem[]);
+        const normalized = parsed.map((item) => ({
+          ...item,
+          type: item?.type === "income" ? "income" : "expense",
+        })) as QuickAddItem[];
+        setQuickAddItems(normalized);
       }
     } catch {
       setQuickAddItems([]);
@@ -372,7 +377,7 @@ const Finance = () => {
   }, [budgets, safeTransactions, activeCurrency, defaultCurrency]);
 
   const handleSaveQuickAdd = useCallback(
-    (item: { label: string; category: string; amount: number; currency: string }) => {
+    (item: { label: string; type: "income" | "expense"; category: string; amount: number; currency: string }) => {
       setQuickAddItems((prev) => {
         const id =
           globalThis.crypto?.randomUUID?.() ??
@@ -385,17 +390,10 @@ const Finance = () => {
 
   const handleQuickAddClick = useCallback(
     (item: QuickAddItem) => {
-      const today = new Date().toISOString().slice(0, 10);
-      void createTransaction({
-        amount: item.amount,
-        type: "expense",
-        category: item.category,
-        description: item.label,
-        currency: item.currency,
-        date: today,
-      });
+      setQuickAddDraft(item);
+      setIsTransactionModalOpen(true);
     },
-    [createTransaction]
+    []
   );
 
   // Redirect to login if not authenticated
@@ -466,7 +464,10 @@ const Finance = () => {
                 {t.finance.addBudget}
               </Button>
               <Button
-                onClick={() => setIsTransactionModalOpen(true)}
+                onClick={() => {
+                  setQuickAddDraft(null);
+                  setIsTransactionModalOpen(true);
+                }}
                 className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong gap-2"
               >
                 <Plus className="w-5 h-5" />
@@ -682,9 +683,23 @@ const Finance = () => {
       {/* Modals */}
       <AddTransactionModal
         open={isTransactionModalOpen}
-        onOpenChange={setIsTransactionModalOpen}
+        onOpenChange={(open) => {
+          setIsTransactionModalOpen(open);
+          if (!open) setQuickAddDraft(null);
+        }}
         onCreateTransaction={createTransaction}
         onSaveQuickAdd={handleSaveQuickAdd}
+        initialTransactionData={
+          quickAddDraft
+            ? {
+                type: quickAddDraft.type,
+                category: quickAddDraft.category,
+                description: quickAddDraft.label,
+                amount: quickAddDraft.amount,
+                currency: quickAddDraft.currency,
+              }
+            : undefined
+        }
       />
       <AddBudgetModal
         open={isBudgetModalOpen}

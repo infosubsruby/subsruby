@@ -41,10 +41,12 @@ interface AddTransactionModalProps {
   ) => Promise<{ success: boolean }>;
   onSaveQuickAdd?: (item: {
     label: string;
+    type: "income" | "expense";
     category: string;
     amount: number;
     currency: string;
   }) => void;
+  initialTransactionData?: Partial<CreateTransactionData> & { currency?: string };
   forcedType?: "income" | "expense";
 }
 
@@ -53,6 +55,7 @@ export const AddTransactionModal = ({
   onOpenChange,
   onCreateTransaction,
   onSaveQuickAdd,
+  initialTransactionData,
   forcedType,
 }: AddTransactionModalProps) => {
   const tModals = useTranslations("Modals");
@@ -120,13 +123,24 @@ export const AddTransactionModal = ({
 
   useEffect(() => {
     if (!open) return;
-    setFormData(initialFormData);
+    const presetType = initialTransactionData?.type ?? initialFormData.type;
+    const presetCategory =
+      initialTransactionData?.category ??
+      (presetType === "income" ? INCOME_CATEGORIES[0] : CATEGORIES[0]);
+    setFormData({
+      ...initialFormData,
+      ...initialTransactionData,
+      type: presetType,
+      category: presetCategory,
+      description: initialTransactionData?.description ?? "",
+      amount: initialTransactionData?.amount ?? 0,
+    });
     setSelectedDate(new Date());
-    setCurrency(defaultCurrency || "USD");
+    setCurrency(initialTransactionData?.currency || defaultCurrency || "USD");
     setSaveAsQuickAdd(false);
     setIsRecurring(false);
     setRecurringDay("1");
-  }, [open, initialFormData, defaultCurrency]);
+  }, [open, initialFormData, defaultCurrency, initialTransactionData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,12 +158,12 @@ export const AddTransactionModal = ({
 
     if (
       saveAsQuickAdd &&
-      effectiveType === "expense" &&
       trimmedDescription.length > 0 &&
       onSaveQuickAdd
     ) {
       onSaveQuickAdd({
         label: trimmedDescription,
+        type: effectiveType,
         category: formData.category,
         amount: formData.amount,
         currency,
@@ -166,9 +180,7 @@ export const AddTransactionModal = ({
     });
   };
 
-  const showQuickAddOption =
-    (forcedType ?? formData.type) === "expense" &&
-    (formData.description || "").trim().length > 0;
+  const showQuickAddOption = (formData.description || "").trim().length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
