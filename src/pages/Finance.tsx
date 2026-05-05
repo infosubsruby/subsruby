@@ -429,10 +429,8 @@ const Finance = () => {
             </div>
           </div>
 
-          <AIFinancialInsights />
-
           {/* Stats Cards */}
-          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x-0 lg:divide-x divide-gray-800/40 mb-8">
+          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x-0 lg:divide-x divide-gray-800/40">
             <div className="flex flex-row items-center gap-4">
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                 <ArrowDownLeft className="w-4 h-4 text-green-500" />
@@ -481,6 +479,10 @@ const Finance = () => {
                 </p>
               </div>
             </div>
+          </div>
+
+          <div className="mt-6">
+            <AIFinancialInsights />
           </div>
 
           <div className="w-full mb-8">
