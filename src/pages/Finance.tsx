@@ -16,7 +16,6 @@ import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { QuickAddTransactions, type QuickAddItem } from "@/components/finance/QuickAddTransactions.tsx";
 import { BudgetGoalsTracker } from "@/components/finance/BudgetGoalsTracker.tsx";
 import { AIFinancialInsights } from "@/components/finance/AIFinancialInsights.tsx";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,12 +31,11 @@ import {
   Plus,
   Wallet,
   TrendingUp,
-  TrendingDown,
+  Activity,
   PiggyBank,
   Loader2,
   ArrowDownLeft,
   ArrowUpRight,
-  Sparkles,
   Trophy,
   Compass,
   Bot,
@@ -76,8 +74,6 @@ const Finance = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
   const tFinance = useTranslations("Finance");
-  const tDashboard = useTranslations("Dashboard");
-  const tCategories = useTranslations("Categories");
   const { defaultCurrency } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
@@ -91,7 +87,6 @@ const Finance = () => {
     toggleTransactionRecurring,
     createBudget,
     deleteBudget,
-    getSpentByCategory,
     refreshTransactions,
   } = useFinance();
 
@@ -498,7 +493,7 @@ const Finance = () => {
     }
   }, [safeSubscriptions, safeTransactions, activeTransactions, activeCurrency, defaultCurrency, tFinance, toActiveCurrency]);
 
-  const { totalIncome, totalExpenses, totalMonthlyCost, netWorth, financialHealth } = financialData;
+  const { totalIncome, totalExpenses, financialHealth } = financialData;
 
   const cashFlowData = useMemo(() => {
     try {
@@ -919,6 +914,12 @@ const Finance = () => {
         : financialHealth.label === "Warning"
           ? tFinance("warning")
           : financialHealth.label;
+  const healthStatusColorClass =
+    financialHealth.label === "Risky"
+      ? "text-red-500"
+      : financialHealth.label === "Warning"
+        ? "text-yellow-500"
+        : "text-green-500";
 
   const balance = totalIncome - totalExpenses;
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
@@ -1013,13 +1014,15 @@ const Finance = () => {
 
             <div className="flex flex-row items-center gap-4 lg:pl-6">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <TrendingDown className="w-4 h-4 text-primary" />
+                <Activity className="w-4 h-4 text-primary" />
               </div>
               <div className="flex flex-col">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.subscriptions}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">HEALTH SCORE</p>
                 <p className="font-display text-white font-semibold text-2xl">
-                  {formatCurrency(totalMonthlyCost, activeCurrency)}
-                  <span className="text-xs text-gray-500 font-normal ml-1">{tDashboard("per_month")}</span>
+                  {`${financialHealth.score ?? 0}/100`}
+                </p>
+                <p className={cn("text-xs font-normal", healthStatusColorClass)}>
+                  {displayedHealthLabel}
                 </p>
               </div>
             </div>
@@ -1070,75 +1073,8 @@ const Finance = () => {
             <AIFinancialInsights />
           </div>
 
-          <div className="w-full mb-8">
-            <CashFlowChart data={cashFlowData} currency={activeCurrency} />
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="glass-card rounded-2xl p-6 h-[240px] w-full flex flex-col items-center justify-center gap-4">
-              <p className="text-sm font-medium text-gray-300">
-                {tFinance("health_score")}
-              </p>
-
-              {financialHealth.score !== null ? (
-                <div className="w-full flex flex-col items-center justify-center gap-2">
-                    <div className="relative w-full max-w-[300px] h-[140px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { value: 40, fill: "#ef4444" },
-                              { value: 30, fill: "#f59e0b" },
-                              { value: 30, fill: "#22c55e" },
-                            ]}
-                            dataKey="value"
-                            startAngle={180}
-                            endAngle={0}
-                            innerRadius="70%"
-                            outerRadius="100%"
-                            cx="50%"
-                            cy="100%"
-                            stroke="none"
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-
-                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-baseline gap-1">
-                        <span
-                          className={cn(
-                            "text-3xl md:text-4xl font-bold tracking-tight",
-                            financialHealth.score >= 70
-                              ? "text-green-500"
-                              : financialHealth.score >= 40
-                                ? "text-amber-500"
-                                : "text-destructive"
-                          )}
-                        >
-                          {financialHealth.score}
-                        </span>
-                        <span className="text-sm text-muted-foreground">/100</span>
-                      </div>
-                    </div>
-
-                    <div className={cn("px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5", financialHealth.color)}>
-                      <span>{financialHealth.emoji}</span>
-                      <span>{displayedHealthLabel}</span>
-                    </div>
-
-                    <div className="inline-flex items-center px-3 py-1 rounded-lg border border-border bg-secondary/40 text-[11px] text-muted-foreground">
-                      {financialHealth.description}
-                    </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-tight text-center">{financialHealth.description}</p>
-                </div>
-              )}
-            </div>
-
+            <CashFlowChart data={cashFlowData} currency={activeCurrency} />
             <SpendingPieChart data={spendingData} currency={activeCurrency} />
           </div>
 
