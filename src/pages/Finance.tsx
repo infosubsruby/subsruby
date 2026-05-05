@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useFinance } from "@/hooks/useFinance";
+import { useFinance, type Transaction } from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Navbar } from "@/components/layout/Navbar";
@@ -36,10 +36,39 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Sparkles,
+  Trophy,
+  Compass,
+  Bot,
 } from "lucide-react";
+
+interface RecurringRule {
+  id: string;
+  type: "income" | "expense";
+  category: string;
+  description: string;
+  amount: number;
+  currency: string;
+  recurringDay: string;
+}
+
+interface MonthlyArchive {
+  id: string;
+  monthKey: string;
+  title: string;
+  totalIncome: number;
+  totalExpense: number;
+  netSavings: number;
+  transactions: Transaction[];
+  aiInsight: string;
+  sentiment: "success" | "warning" | "neutral";
+}
 
 const Finance = () => {
   const QUICK_ADD_STORAGE_KEY = "finance.quickAddItems";
+  const RECURRING_RULES_STORAGE_KEY = "finance.recurringRules";
+  const MONTHLY_ARCHIVES_STORAGE_KEY = "finance.monthlyArchives";
+  const LAST_LOGIN_MONTH_STORAGE_KEY = "finance.lastLoginMonth";
+  const CLEARED_TX_IDS_STORAGE_KEY = "finance.clearedTransactionIds";
   const { user, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
   const tFinance = useTranslations("Finance");
@@ -64,28 +93,71 @@ const Finance = () => {
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null);
   const [quickAddItems, setQuickAddItems] = useState<QuickAddItem[]>([]);
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddItem | null>(null);
+  const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
+  const [monthlyArchives, setMonthlyArchives] = useState<MonthlyArchive[]>([]);
+  const [clearedTransactionIds, setClearedTransactionIds] = useState<string[]>([]);
+  const [monthReviewArchive, setMonthReviewArchive] = useState<MonthlyArchive | null>(null);
+  const [isMonthReviewOpen, setIsMonthReviewOpen] = useState(false);
   const { data: exchangeRatesList } = useExchangeRates();
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(QUICK_ADD_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const normalized = parsed.map((item) => ({
-          ...item,
-          type: item?.type === "income" ? "income" : "expense",
-        })) as QuickAddItem[];
-        setQuickAddItems(normalized);
+      const quickAddRaw = localStorage.getItem(QUICK_ADD_STORAGE_KEY);
+      if (quickAddRaw) {
+        const parsed = JSON.parse(quickAddRaw);
+        if (Array.isArray(parsed)) {
+          const normalized = parsed.map((item) => ({
+            ...item,
+            type: item?.type === "income" ? "income" : "expense",
+          })) as QuickAddItem[];
+          setQuickAddItems(normalized);
+        }
+      }
+
+      const recurringRaw = localStorage.getItem(RECURRING_RULES_STORAGE_KEY);
+      if (recurringRaw) {
+        const recurringParsed = JSON.parse(recurringRaw);
+        if (Array.isArray(recurringParsed)) {
+          setRecurringRules(recurringParsed as RecurringRule[]);
+        }
+      }
+
+      const archivesRaw = localStorage.getItem(MONTHLY_ARCHIVES_STORAGE_KEY);
+      if (archivesRaw) {
+        const archiveParsed = JSON.parse(archivesRaw);
+        if (Array.isArray(archiveParsed)) {
+          const normalizedArchives = archiveParsed.map((item) => ({
+            ...item,
+            sentiment:
+              item?.sentiment === "success" || item?.sentiment === "warning" || item?.sentiment === "neutral"
+                ? item.sentiment
+                : "neutral",
+          })) as MonthlyArchive[];
+          setMonthlyArchives(normalizedArchives);
+        }
+      }
+
+      const clearedIdsRaw = localStorage.getItem(CLEARED_TX_IDS_STORAGE_KEY);
+      if (clearedIdsRaw) {
+        const clearedParsed = JSON.parse(clearedIdsRaw);
+        if (Array.isArray(clearedParsed)) {
+          setClearedTransactionIds(clearedParsed as string[]);
+        }
       }
     } catch {
       setQuickAddItems([]);
+      setRecurringRules([]);
+      setMonthlyArchives([]);
+      setClearedTransactionIds([]);
     }
   }, []);
 
   useEffect(() => {
     localStorage.setItem(QUICK_ADD_STORAGE_KEY, JSON.stringify(quickAddItems));
-  }, [quickAddItems]);
+    localStorage.setItem(RECURRING_RULES_STORAGE_KEY, JSON.stringify(recurringRules));
+    localStorage.setItem(MONTHLY_ARCHIVES_STORAGE_KEY, JSON.stringify(monthlyArchives));
+    localStorage.setItem(CLEARED_TX_IDS_STORAGE_KEY, JSON.stringify(clearedTransactionIds));
+  }, [quickAddItems, recurringRules, monthlyArchives, clearedTransactionIds]);
 
   const exchangeRates = useMemo(() => {
     if (!exchangeRatesList) return {};
@@ -98,6 +170,89 @@ const Finance = () => {
   // Defensive arrays
   const safeSubscriptions = useMemo(() => Array.isArray(subscriptions) ? subscriptions : [], [subscriptions]);
   const safeTransactions = useMemo(() => Array.isArray(transactions) ? transactions : [], [transactions]);
+
+  const normalizedRules = useMemo(
+    () =>
+      recurringRules.map((rule) => ({
+        ...rule,
+        description: rule.description.trim().toLowerCase(),
+      })),
+    [recurringRules]
+  );
+
+  const isRecurringTransaction = useCallback(
+    (tx: Transaction) => {
+      const description = (tx.description || "").trim().toLowerCase();
+      return normalizedRules.some(
+        (rule) =>
+          rule.type === tx.type &&
+          rule.category === tx.category &&
+          rule.description === description
+      );
+    },
+    [normalizedRules]
+  );
+
+  const displayedTransactions = useMemo(
+    () => transactions.filter((tx) => !clearedTransactionIds.includes(tx.id)),
+    [transactions, clearedTransactionIds]
+  );
+
+  const buildAiInsight = useCallback(
+    (income: number, expense: number, txs: Transaction[]) => {
+      if (txs.length === 0) {
+        return {
+          sentiment: "neutral" as const,
+          message:
+            "Yeni ay için harika bir başlangıç noktandasın! İşlem ekledikçe burada sana özel önerilerle daha net bir finans fotoğrafı sunacağım.",
+        };
+      }
+
+      const net = income - expense;
+      const topCategory = txs
+        .filter((tx) => tx.type === "expense")
+        .reduce((acc, tx) => {
+          const current = acc[tx.category] || 0;
+          acc[tx.category] = current + Number(tx.amount || 0);
+          return acc;
+        }, {} as Record<string, number>);
+
+      const topEntry = Object.entries(topCategory).sort((a, b) => b[1] - a[1])[0];
+      if (!topEntry) {
+        return net >= 0
+          ? {
+              sentiment: "success" as const,
+              message:
+                "Harika bir iş çıkardın! Bu ay bütçeni dengede tutmayı başardın. Arta kalan tutarı dilersen acil durum fonuna ayırabilir ya da kendine küçük bir ödül vererek motivasyonunu artırabilirsin. Doğru yoldasın!",
+            }
+          : {
+              sentiment: "warning" as const,
+              message:
+                "Bu ay biraz zorlayıcı geçmiş olabilir, ama merak etme hepimizin böyle dönemleri olur. Önümüzdeki ay sabit giderleri küçük adımlarla dengeleyerek finansal hedeflerine birlikte daha güçlü ilerleyebiliriz.",
+            };
+      }
+
+      const [category, amount] = topEntry;
+      if (net >= 0) {
+        return {
+          sentiment: "success" as const,
+          message: `Harika gidiyorsun! Bu ay en yüksek harcama kategorin ${category} olsa da, yine de net ${formatCurrency(
+            net,
+            activeCurrency
+          )} artıda kalmayı başardın. Bu tutarı geleceğin için küçük bir yatırıma veya acil durum fonuna ayırmayı düşünebilirsin.`,
+        };
+      }
+
+      return {
+        sentiment: "warning" as const,
+        message: `Bu ay ${category} kategorisinde ${formatCurrency(
+          amount,
+          activeCurrency
+        )} harcama öne çıkmış görünüyor; sorun değil, böyle aylar herkesin olabilir. Önümüzdeki ay bu kategoriyi biraz dengeleyerek net durumu hızla toparlayabiliriz. Birlikte başaracağız!`,
+      };
+    },
+    [activeCurrency]
+  );
 
   // Determine the most used currency from subscriptions (auto-detect)
   const autoDetectedCurrency = useMemo(() => {
@@ -376,6 +531,86 @@ const Finance = () => {
     return result;
   }, [budgets, safeTransactions, activeCurrency, defaultCurrency]);
 
+  const handleSaveRecurringRule = useCallback(
+    (item: {
+      type: "income" | "expense";
+      category: string;
+      description: string;
+      amount: number;
+      currency: string;
+      recurringDay: string;
+    }) => {
+      setRecurringRules((prev) => {
+        const exists = prev.some(
+          (rule) =>
+            rule.type === item.type &&
+            rule.category === item.category &&
+            rule.description.trim().toLowerCase() === item.description.trim().toLowerCase()
+        );
+        if (exists) return prev;
+        const id =
+          globalThis.crypto?.randomUUID?.() ??
+          `rule-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        return [...prev, { id, ...item }];
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const lastLoginMonth = localStorage.getItem(LAST_LOGIN_MONTH_STORAGE_KEY);
+
+    if (!lastLoginMonth) {
+      localStorage.setItem(LAST_LOGIN_MONTH_STORAGE_KEY, currentMonthKey);
+      return;
+    }
+
+    if (lastLoginMonth === currentMonthKey) return;
+
+    const totalIncome = transactions
+      .filter((tx) => tx.type === "income")
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    const totalExpense = transactions
+      .filter((tx) => tx.type === "expense")
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    const netSavings = totalIncome - totalExpense;
+
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const monthLabel = prevMonthDate.toLocaleDateString("tr-TR", {
+      month: "long",
+      year: "numeric",
+    });
+
+    const insight = buildAiInsight(totalIncome, totalExpense, transactions);
+    const archive: MonthlyArchive = {
+      id:
+        globalThis.crypto?.randomUUID?.() ??
+        `archive-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      monthKey: `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`,
+      title: `${monthLabel} Özeti`,
+      totalIncome,
+      totalExpense,
+      netSavings,
+      transactions,
+      aiInsight: insight.message,
+      sentiment: insight.sentiment,
+    };
+
+    setMonthlyArchives((prev) => [archive, ...prev.filter((item) => item.monthKey !== archive.monthKey)]);
+    setClearedTransactionIds(
+      transactions
+        .filter((tx) => !isRecurringTransaction(tx))
+        .map((tx) => tx.id)
+    );
+    setMonthReviewArchive(archive);
+    setIsMonthReviewOpen(true);
+    localStorage.setItem(LAST_LOGIN_MONTH_STORAGE_KEY, currentMonthKey);
+  }, [isLoading, transactions, isRecurringTransaction, buildAiInsight]);
+
   const handleSaveQuickAdd = useCallback(
     (item: { label: string; type: "income" | "expense"; category: string; amount: number; currency: string }) => {
       setQuickAddItems((prev) => {
@@ -606,7 +841,13 @@ const Finance = () => {
 
           {/* Tabs for Transactions and Budgets */}
           <Tabs
-            value={searchParams.get("tab") === "budgets" ? "budgets" : "transactions"}
+            value={
+              searchParams.get("tab") === "budgets"
+                ? "budgets"
+                : searchParams.get("tab") === "monthly-summaries"
+                  ? "monthly-summaries"
+                  : "transactions"
+            }
             onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}
             className="space-y-4"
           >
@@ -623,11 +864,17 @@ const Finance = () => {
               >
                 {t.finance.budgets}
               </TabsTrigger>
+              <TabsTrigger
+                value="monthly-summaries"
+                className="rounded-none bg-transparent px-3 py-2 text-sm font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent"
+              >
+                Monthly Summaries
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="transactions" className="space-y-4">
               <TransactionList
-                transactions={transactions}
+                transactions={displayedTransactions}
                 onDelete={deleteTransaction}
               />
             </TabsContent>
@@ -667,6 +914,78 @@ const Finance = () => {
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="monthly-summaries" className="space-y-4">
+              {monthlyArchives.length === 0 ? (
+                <div className="glass-card rounded-xl p-8 text-center text-sm text-muted-foreground">
+                  Henüz aylık özet bulunmuyor.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {monthlyArchives.map((archive) => {
+                    const total = archive.totalIncome + archive.totalExpense;
+                    const incomeRatio = total > 0 ? (archive.totalIncome / total) * 100 : 0;
+                    const expenseRatio = total > 0 ? (archive.totalExpense / total) * 100 : 0;
+                    return (
+                      <div key={archive.id} className="glass-card rounded-xl p-4 border border-gray-800/50">
+                        <h4 className="font-display text-base font-semibold text-gray-100">{archive.title}</h4>
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <p className="text-gray-500">Gelir</p>
+                            <p className="text-gray-100 font-semibold">{formatCurrency(archive.totalIncome, activeCurrency)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Gider</p>
+                            <p className="text-gray-100 font-semibold">{formatCurrency(archive.totalExpense, activeCurrency)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Net</p>
+                            <p className={cn("font-semibold", archive.netSavings >= 0 ? "text-green-400" : "text-red-400")}>
+                              {formatCurrency(archive.netSavings, activeCurrency)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                          <div className="h-2 rounded-full bg-gray-800/70 overflow-hidden">
+                            <div className="h-full bg-emerald-500/80" style={{ width: `${incomeRatio}%` }} />
+                          </div>
+                          <div className="h-2 rounded-full bg-gray-800/70 overflow-hidden">
+                            <div className="h-full bg-red-500/80" style={{ width: `${expenseRatio}%` }} />
+                          </div>
+                        </div>
+                        <div
+                          className={cn(
+                            "mt-4 rounded-lg px-3 py-2 border relative overflow-hidden flex items-start gap-2 transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4",
+                            archive.sentiment === "success" &&
+                              "border-green-500/20 bg-green-500/5 shadow-[0_0_15px_rgba(34,197,94,0.08)]",
+                            archive.sentiment === "warning" &&
+                              "border-orange-500/20 bg-orange-500/5 shadow-[0_0_15px_rgba(245,158,11,0.08)]",
+                            archive.sentiment === "neutral" &&
+                              "border-sky-500/20 bg-sky-500/5 shadow-[0_0_15px_rgba(56,189,248,0.08)]"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "pointer-events-none absolute inset-0 rounded-lg border animate-pulse [animation-duration:3s]",
+                              archive.sentiment === "success" &&
+                                "border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.08)]",
+                              archive.sentiment === "warning" &&
+                                "border-orange-500/20 shadow-[0_0_15px_rgba(245,158,11,0.08)]",
+                              archive.sentiment === "neutral" &&
+                                "border-sky-500/20 shadow-[0_0_15px_rgba(56,189,248,0.08)]"
+                            )}
+                          />
+                          {archive.sentiment === "success" && <Trophy className="w-4 h-4 text-green-400 mt-0.5 shrink-0 relative z-10" />}
+                          {archive.sentiment === "warning" && <Compass className="w-4 h-4 text-orange-400 mt-0.5 shrink-0 relative z-10" />}
+                          {archive.sentiment === "neutral" && <Bot className="w-4 h-4 text-sky-400 mt-0.5 shrink-0 relative z-10" />}
+                          <p className="text-xs text-gray-300 relative z-10">{archive.aiInsight}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
           </Tabs>
           </div>
 
@@ -680,6 +999,38 @@ const Finance = () => {
         </div>
       </main>
 
+      {isMonthReviewOpen && monthReviewArchive && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-800/70 bg-[#0c0c0e] p-6 shadow-2xl transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
+            <h3 className="font-display text-xl font-semibold text-gray-100">
+              Geçen Ayın Özeti ({monthReviewArchive.title.replace(" Özeti", "")})
+            </h3>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Toplam Gelir</span>
+                <span className="text-gray-100 font-semibold">{formatCurrency(monthReviewArchive.totalIncome, activeCurrency)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Toplam Gider</span>
+                <span className="text-gray-100 font-semibold">{formatCurrency(monthReviewArchive.totalExpense, activeCurrency)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Net Tasarruf</span>
+                <span className={cn("font-semibold", monthReviewArchive.netSavings >= 0 ? "text-green-400" : "text-red-400")}>
+                  {formatCurrency(monthReviewArchive.netSavings, activeCurrency)}
+                </span>
+              </div>
+            </div>
+            <Button
+              className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white border border-red-500/40"
+              onClick={() => setIsMonthReviewOpen(false)}
+            >
+              Yeni Aya Başla
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Modals */}
       <AddTransactionModal
         open={isTransactionModalOpen}
@@ -689,6 +1040,7 @@ const Finance = () => {
         }}
         onCreateTransaction={createTransaction}
         onSaveQuickAdd={handleSaveQuickAdd}
+        onSaveRecurringRule={handleSaveRecurringRule}
         initialTransactionData={
           quickAddDraft
             ? {

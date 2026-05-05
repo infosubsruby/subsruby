@@ -46,6 +46,14 @@ interface AddTransactionModalProps {
     amount: number;
     currency: string;
   }) => void;
+  onSaveRecurringRule?: (item: {
+    type: "income" | "expense";
+    category: string;
+    description: string;
+    amount: number;
+    currency: string;
+    recurringDay: string;
+  }) => void;
   initialTransactionData?: Partial<CreateTransactionData> & { currency?: string };
   forcedType?: "income" | "expense";
 }
@@ -55,6 +63,7 @@ export const AddTransactionModal = ({
   onOpenChange,
   onCreateTransaction,
   onSaveQuickAdd,
+  onSaveRecurringRule,
   initialTransactionData,
   forcedType,
 }: AddTransactionModalProps) => {
@@ -167,6 +176,17 @@ export const AddTransactionModal = ({
         category: formData.category,
         amount: formData.amount,
         currency,
+      });
+    }
+
+    if (isRecurring && trimmedDescription.length > 0 && onSaveRecurringRule) {
+      onSaveRecurringRule({
+        type: effectiveType,
+        category: formData.category,
+        description: trimmedDescription,
+        amount: formData.amount,
+        currency,
+        recurringDay,
       });
     }
 
