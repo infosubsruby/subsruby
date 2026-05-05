@@ -914,12 +914,12 @@ const Finance = () => {
         : financialHealth.label === "Warning"
           ? tFinance("warning")
           : financialHealth.label;
-  const healthStatusColorClass =
+  const healthStatusBadgeClass =
     financialHealth.label === "Risky"
-      ? "text-red-500"
+      ? "bg-red-500/10 text-red-400 px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 inline-block"
       : financialHealth.label === "Warning"
-        ? "text-yellow-500"
-        : "text-green-500";
+        ? "bg-yellow-500/10 text-yellow-400 px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 inline-block"
+        : "bg-green-500/10 text-green-400 px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 inline-block";
 
   const balance = totalIncome - totalExpenses;
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
@@ -987,85 +987,83 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="bg-[#0c0c0e] border border-gray-800/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] rounded-2xl p-6 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="flex flex-row items-center gap-4 p-4">
-              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                <ArrowDownLeft className="w-4 h-4 text-green-500" />
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                  <ArrowDownLeft className="w-4 h-4 text-green-500" />
+                </div>
+                <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">{t.finance.income}</p>
               </div>
-              <div className="flex flex-col">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.income}</p>
-                <p className="font-display text-white font-semibold text-2xl">
-                  {formatCurrency(totalIncome, activeCurrency)}
-                </p>
-              </div>
+              <p className="font-display text-3xl font-semibold text-white mt-4">
+                {formatCurrency(totalIncome, activeCurrency)}
+              </p>
             </div>
 
-            <div className="flex flex-row items-center gap-4 p-4">
-              <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
-                <ArrowUpRight className="w-4 h-4 text-red-500" />
+            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                  <ArrowUpRight className="w-4 h-4 text-red-500" />
+                </div>
+                <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">{t.finance.expenses}</p>
               </div>
-              <div className="flex flex-col">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.expenses}</p>
-                <p className="font-display text-white font-semibold text-2xl">
-                  {formatCurrency(totalExpenses, activeCurrency)}
-                </p>
-              </div>
+              <p className="font-display text-3xl font-semibold text-white mt-4">
+                {formatCurrency(totalExpenses, activeCurrency)}
+              </p>
             </div>
 
-            <div className="flex flex-row items-center gap-4 p-4">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Activity className="w-4 h-4 text-primary" />
+            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Activity className="w-4 h-4 text-primary" />
+                </div>
+                <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">HEALTH SCORE</p>
               </div>
-              <div className="flex flex-col">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">HEALTH SCORE</p>
-                <p className="font-display text-white font-semibold text-2xl">
-                  {`${financialHealth.score ?? 0}/100`}
-                </p>
-                <p className={cn("text-xs font-normal", healthStatusColorClass)}>
-                  {displayedHealthLabel}
-                </p>
-              </div>
+              <p className="font-display text-3xl font-semibold text-white mt-4">
+                {`${financialHealth.score ?? 0}/100`}
+              </p>
+              <span className={healthStatusBadgeClass}>{displayedHealthLabel}</span>
             </div>
 
-            <div className="flex flex-row items-center gap-4 p-4">
-              <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-4 h-4 text-yellow-500" />
+            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 text-yellow-500" />
+                </div>
+                <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">{t.finance.balance}</p>
               </div>
-              <div className="flex flex-col">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">{t.finance.balance}</p>
-                <p className="font-display text-white font-semibold text-2xl">
-                  {formatCurrency(balance, activeCurrency)}
-                </p>
-              </div>
+              <p className="font-display text-3xl font-semibold text-white mt-4">
+                {formatCurrency(balance, activeCurrency)}
+              </p>
             </div>
 
-            <div className="flex flex-row items-center gap-4 p-4">
-              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-4 h-4 text-green-500" />
+            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                </div>
+                <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">Savings Rate</p>
               </div>
-              <div className="flex flex-col">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">Savings Rate</p>
-                <p
-                  className={cn(
-                    "font-display font-semibold text-2xl",
-                    savingsRate > 0 ? "text-green-500" : savingsRate < 0 ? "text-red-500" : "text-white"
-                  )}
-                >
-                  {`${savingsRate.toFixed(1)}%`}
-                </p>
-              </div>
+              <p
+                className={cn(
+                  "font-display text-3xl font-semibold mt-4",
+                  savingsRate > 0 ? "text-green-500" : savingsRate < 0 ? "text-red-500" : "text-white"
+                )}
+              >
+                {`${savingsRate.toFixed(1)}%`}
+              </p>
             </div>
 
-            <div className="flex flex-row items-center gap-4 p-4">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Wallet className="w-4 h-4 text-primary" />
+            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Wallet className="w-4 h-4 text-primary" />
+                </div>
+                <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">Daily Safe Spend</p>
               </div>
-              <div className="flex flex-col">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">Daily Safe Spend</p>
-                <p className="font-display text-white font-semibold text-2xl">
-                  {formatCurrency(dailySafeSpend, activeCurrency)}
-                </p>
-              </div>
+              <p className="font-display text-3xl font-semibold text-white mt-4">
+                {formatCurrency(dailySafeSpend, activeCurrency)}
+              </p>
             </div>
           </div>
 
