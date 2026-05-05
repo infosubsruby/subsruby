@@ -716,6 +716,7 @@ const Finance = () => {
     []
   );
 
+  // Gelecekte otomatik tetiklenecek (cron job / tarih kontrolü).
   const runMonthlyReset = useCallback(
     async (forced = false) => {
       if (isLoading || isResetting) return;
@@ -939,16 +940,6 @@ const Finance = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  void runMonthlyReset(true);
-                }}
-                variant="outline"
-                disabled={isResetting}
-                className="gap-2 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-              >
-                DEV TEST: Trigger New Month
-              </Button>
               {/* Currency Selector */}
               <Select 
                 value={displayCurrency || "auto"} 
