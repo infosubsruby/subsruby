@@ -189,9 +189,12 @@ const Dashboard = () => {
     () => insightSubscriptions.filter((s) => s.is_marked_unused).length,
     [insightSubscriptions]
   );
+  const safeTransactions = useMemo(
+    () => (Array.isArray(transactions) ? transactions : []),
+    [transactions]
+  );
 
   const convertedCurrentMonthlyIncome = useMemo(() => {
-    const safeTransactions = Array.isArray(transactions) ? transactions : [];
     const now = new Date();
     const fallback = defaultCurrency || "USD";
     return safeTransactions
@@ -206,31 +209,38 @@ const Dashboard = () => {
         const converted = convertWithDynamicRates(raw, from, activeCurrency, exchangeRates);
         return sum + (isFinite(converted) ? converted : 0);
       }, 0);
-  }, [transactions, activeCurrency, exchangeRates, defaultCurrency]);
+  }, [safeTransactions, activeCurrency, exchangeRates, defaultCurrency]);
+
+  const recurringMonthlySpend = useMemo(() => {
+    const now = new Date();
+    const fallback = defaultCurrency || "USD";
+    return safeTransactions
+      .filter((t) => {
+        if (!t?.date) return false;
+        const d = new Date(t.date);
+        return (
+          t.type === "expense" &&
+          (t as any).isRecurring === true &&
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      })
+      .reduce((sum, t) => {
+        const raw = Number(t.amount || 0);
+        const from = t.currency || fallback;
+        const converted = convertWithDynamicRates(raw, from, activeCurrency, exchangeRates);
+        return sum + (isFinite(converted) ? converted : 0);
+      }, 0);
+  }, [safeTransactions, activeCurrency, exchangeRates, defaultCurrency]);
 
   // Calculate subscription vs income percentage
   const subscriptionPercentage = useMemo(() => {
-    try {
-      // Strictly use current monthly income as requested
-      const income = Number(convertedCurrentMonthlyIncome) || 0;
-      const safeMonthlySpend = Number(monthlySpend) || 0;
-      
-      // Sanity check: income too low
-      if (income < 100) return null;
-      
-      if (!isFinite(income) || safeMonthlySpend <= 0 || !isFinite(safeMonthlySpend)) return 0;
-      
-      const percentage = (safeMonthlySpend / income) * 100;
-      
-      if (isNaN(percentage) || !isFinite(percentage)) return 0;
-      
-      // Cap at 200 for calculation (display will show 200%+)
-      return Math.min(Math.round(percentage), 201);
-    } catch (error) {
-      console.error("Error calculating subscription percentage:", error);
-      return 0;
-    }
-  }, [monthlySpend, convertedCurrentMonthlyIncome]);
+    const income = Number(convertedCurrentMonthlyIncome) || 0;
+    const subs = Number(recurringMonthlySpend) || 0;
+    if (!isFinite(income) || income <= 0 || !isFinite(subs) || subs <= 0) return 0;
+    const percentage = Number(((subs / income) * 100).toFixed(1));
+    return isFinite(percentage) ? percentage : 0;
+  }, [recurringMonthlySpend, convertedCurrentMonthlyIncome]);
 
   const getStatusLabel = (percentage: number | null) => {
     if (percentage === null) return { label: "N/A", color: "text-muted-foreground" };
@@ -449,40 +459,19 @@ const Dashboard = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-400 font-medium">{tt("subs_vs_income")}</p>
-                  {(() => {
-                    try {
-                      if (financeLoading) {
-                        return <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{tt("spending_change_desc")}</p>;
-                      }
-
-                      const totalIncome = Number(convertedCurrentMonthlyIncome) || 0;
-                      const totalSubs = Number(monthlySpend) || 0;
-                      const safeIncome = Number.isFinite(totalIncome) ? totalIncome : 0;
-                      const safeSubs = Number.isFinite(totalSubs) ? totalSubs : 0;
-
-                      const subsVsIncomePercent =
-                        safeIncome > 0 ? ((safeSubs / safeIncome) * 100).toFixed(1) : null;
-
-                      return (
-                        <>
-                          <h3 className="text-2xl font-bold text-gray-100 mt-0.5">
-                            {formatCurrency(safeSubs, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
-                            {safeIncome > 0
-                              ? formatCurrency(safeIncome, activeCurrency, { maximumFractionDigits: 0 })
-                              : "N/A"}
-                          </h3>
-                          <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
-                            {safeIncome > 0 && subsVsIncomePercent !== null
-                              ? tt("income_percent", { percent: subsVsIncomePercent })
-                              : "No income data"}
-                          </p>
-                        </>
-                      );
-                    } catch (e) {
-                      console.error("Error rendering Subscriptions vs Income card:", e);
-                      return <h3 className="text-sm font-bold mt-1 text-muted-foreground">{tt("spending_change_desc")}</h3>;
-                    }
-                  })()}
+                  {financeLoading ? (
+                    <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{tt("spending_change_desc")}</p>
+                  ) : (
+                    <>
+                      <h3 className="text-2xl font-bold text-gray-100 mt-0.5">
+                        {formatCurrency(Number(recurringMonthlySpend) || 0, activeCurrency, { maximumFractionDigits: 0 })} /{" "}
+                        {formatCurrency(Number(convertedCurrentMonthlyIncome) || 0, activeCurrency, { maximumFractionDigits: 0 })}
+                      </h3>
+                      <p className={cn("text-[10px] font-medium mt-0.5", status?.color || "text-muted-foreground")}>
+                        {tt("income_percent", { percent: (Number(subscriptionPercentage) || 0).toFixed(1) })}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
