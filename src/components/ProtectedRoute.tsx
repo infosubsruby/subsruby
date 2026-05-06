@@ -29,7 +29,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const hasCompletedOnboarding = profile.has_completed_onboarding === true;
 
   if (hasCompletedOnboarding && location.pathname === "/onboarding") {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/overview" replace />;
   }
 
   return <>{children}</>;

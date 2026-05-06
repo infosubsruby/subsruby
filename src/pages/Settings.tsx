@@ -3,7 +3,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings } from "@/hooks/useSettings";
-import { Navbar } from "@/components/layout/Navbar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -51,10 +50,8 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen pb-28 md:pb-20">
-      <Navbar />
-      
-      <main className="pt-20 sm:pt-24 px-3 sm:px-4">
+    <div className="min-h-screen pb-8">
+      <main className="pt-4 px-3 sm:px-4">
         <div className="container mx-auto max-w-3xl">
           {/* Header */}
           <div className="mb-8">

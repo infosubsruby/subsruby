@@ -5,7 +5,6 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useFinance, type Transaction } from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { Navbar } from "@/components/layout/Navbar";
 import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
 import { AddBudgetModal } from "@/components/finance/AddBudgetModal";
 import { TransactionList } from "@/components/finance/TransactionList";
@@ -891,9 +890,8 @@ const Finance = () => {
 
   if (errorMessage) {
     return (
-      <div className="relative min-h-screen pb-28 md:pb-20">
-        <Navbar />
-        <main className="pt-8 sm:pt-10">
+      <div className="relative min-h-screen pb-8">
+        <main>
           <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[60vh] flex items-center justify-center">
             <div className="glass-card rounded-xl border border-gray-800/60 px-6 py-8 text-center">
               <p className="text-sm text-muted-foreground">
@@ -929,11 +927,10 @@ const Finance = () => {
   const dailySafeSpend = balance / remainingDays;
 
   return (
-    <div className="relative min-h-screen pb-28 md:pb-20">
+    <div className="relative min-h-screen pb-8">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 pointer-events-none w-[800px] h-[400px] bg-red-900/20 blur-[120px] rounded-full" />
-      <Navbar />
 
-      <main className="pt-8 sm:pt-10">
+      <main>
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col xl:flex-row items-start gap-6">
           <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Header */}

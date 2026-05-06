@@ -2,15 +2,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { SettingsProvider } from "@/hooks/useSettings";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppShell } from "@/components/layout/AppShell";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Overview from "./pages/Overview";
 import Onboarding from "./pages/Onboarding";
 import Admin from "./pages/Admin";
 import Finance from "./pages/Finance";
@@ -20,6 +22,11 @@ import Upgrade from "./pages/Upgrade";
 import Success from "./pages/Success";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import AIInsights from "./pages/AIInsights";
+import Goals from "./pages/Goals";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import Wallets from "./pages/Wallets";
+import RubyAI from "./pages/RubyAI";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,50 +56,32 @@ const App = () => (
                   path="/control"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <Navigate to="/dashboard" replace />
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <AppShell />
                     </ProtectedRoute>
                   }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <Admin />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/finance"
-                  element={
-                    <ProtectedRoute>
-                      <Finance />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
+                >
+                  <Route path="/overview" element={<Overview />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/transactions" element={<Navigate to="/finance?tab=transactions" replace />} />
+                  <Route path="/subscriptions" element={<Navigate to="/dashboard#subscriptions" replace />} />
+                  <Route path="/ai-insights" element={<AIInsights />} />
+                  <Route path="/goals" element={<Goals />} />
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/wallets" element={<Wallets />} />
+                  <Route path="/ruby-ai" element={<RubyAI />} />
+                  <Route path="/classic-finance" element={<Finance />} />
+                  <Route path="/finance" element={<Finance />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/admin" element={<Admin />} />
+                </Route>
                 <Route
                   path="/upgrade"
                   element={

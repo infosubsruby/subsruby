@@ -192,7 +192,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/overview`,
         scopes: 'https://www.googleapis.com/auth/gmail.readonly',
         queryParams: {
           access_type: 'offline',

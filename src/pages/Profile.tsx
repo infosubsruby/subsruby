@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Navbar } from "@/components/layout/Navbar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -510,10 +509,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen pb-28 md:pb-20">
-      <Navbar />
-
-      <main className="pt-20 sm:pt-24 px-3 sm:px-4">
+    <div className="min-h-screen pb-8">
+      <main className="pt-4 px-3 sm:px-4">
         <div className="container mx-auto max-w-3xl">
           <Tabs defaultValue="account" className="space-y-6">
             <div className="mb-8">

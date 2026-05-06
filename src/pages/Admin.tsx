@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -144,10 +143,8 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      <Navbar />
-      
-      <main className="pt-24 px-4">
+    <div className="min-h-screen pb-8">
+      <main className="pt-4 px-4">
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
