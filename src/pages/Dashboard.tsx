@@ -366,8 +366,8 @@ const Dashboard = () => {
       
       <main className="pt-8 sm:pt-10">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
-          <div className="w-full flex flex-col xl:flex-row items-start gap-6">
-            <div className="flex-1 min-w-0 flex flex-col gap-6">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 xl:col-span-9 flex-1 min-w-0 flex flex-col gap-6">
               {!isPro && <TrialBanner />}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -625,7 +625,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
+            <div className="lg:col-span-4 xl:col-span-3 w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
               <UpcomingTimeline
                 subscriptions={subscriptions}
                 onViewAll={() => {
