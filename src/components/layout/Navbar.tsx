@@ -86,14 +86,6 @@ export const Navbar = () => {
                     </Button>
                   </Link>
 
-                  {isAdmin && (
-                    <Link to="/admin">
-                      <Button variant="ghost" size="sm" className="gap-1 text-primary font-medium">
-                        <Shield className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t.nav.adminPanel}</span>
-                      </Button>
-                    </Link>
-                  )}
                 </div>
 
                 <DropdownMenu>
