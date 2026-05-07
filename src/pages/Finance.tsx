@@ -1109,6 +1109,7 @@ const Finance = () => {
             <TabsContent value="transactions" className="space-y-4">
               <TransactionList
                 transactions={displayedTransactions}
+                budgets={safeBudgets}
                 onDelete={deleteTransaction}
                 onToggleRecurring={toggleTransactionRecurring}
               />

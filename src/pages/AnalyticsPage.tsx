@@ -23,6 +23,10 @@ import {
   TrendLineChart,
 } from "@/components/analytics/AnalyticsCharts";
 import { AIAnalysisCard } from "@/components/analytics/AIAnalysisCard";
+import { RubyAIWidget } from "@/components/ruby-ai/RubyAIWidget";
+import { buildPredictiveFinanceEngine } from "@/lib/predictiveFinanceEngine";
+import { PredictiveForecastChart } from "@/components/predictive/PredictiveForecastChart";
+import { PredictiveInsightsFeed, PredictiveSummaryCards } from "@/components/predictive/PredictiveWidgets";
 
 const pct = (value: number) => `${value.toFixed(1)}%`;
 
@@ -48,6 +52,16 @@ const AnalyticsPage = () => {
     { label: "Impulse Signal", value: analytics.financialBehavior.impulseSpendingPct },
     { label: "Budget Risk", value: analytics.forecasting.budgetRiskPct },
   ];
+
+  const prediction = useMemo(
+    () =>
+      buildPredictiveFinanceEngine({
+        transactions,
+        budgets,
+        subscriptions,
+      }),
+    [transactions, budgets, subscriptions]
+  );
 
   if (isLoading || subscriptionsLoading) {
     return (
@@ -256,6 +270,38 @@ const AnalyticsPage = () => {
           {analytics.aiSummaries.map((item) => (
             <AIAnalysisCard key={item.title} title={item.title} detail={item.detail} severity={item.severity} />
           ))}
+        </div>
+      </section>
+
+      <RubyAIWidget
+        title="Ruby AI Analytics Brief"
+        summary={`Detected pattern: ${analytics.patternDetection[0]} Forecast risk is ${pct(
+          analytics.forecasting.budgetRiskPct
+        )}. Ask Ruby AI to generate a 30-day corrective action plan.`}
+        actionLabel="Open Ruby AI Strategy"
+      />
+
+      <section className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.42)] backdrop-blur-xl">
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">
+            Predictive Projection Layer
+          </h2>
+          <p className="text-xs text-zinc-500">
+            Future balance forecasting, risk indicators, and monthly projection dynamics.
+          </p>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-12">
+          <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-8">
+            <p className="mb-2 text-xs text-zinc-500">Forecasting Curves</p>
+            <PredictiveForecastChart data={prediction.futureBalanceForecast} />
+          </div>
+          <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-4">
+            <p className="mb-2 text-xs text-zinc-500">Predictive Signals</p>
+            <PredictiveInsightsFeed prediction={prediction} />
+          </div>
+        </div>
+        <div className="mt-4">
+          <PredictiveSummaryCards prediction={prediction} currency={defaultCurrency} />
         </div>
       </section>
     </div>

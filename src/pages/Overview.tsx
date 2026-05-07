@@ -10,6 +10,16 @@ import { OverviewAIInsightsEngine } from "@/components/overview/OverviewAIInsigh
 import { buildMockAIInsights } from "@/lib/aiInsights";
 import { calculateFinancialHealthScore } from "@/lib/financialHealthScore";
 import { FinancialHealthSection } from "@/components/overview/FinancialHealthSection";
+import { buildRubyAIContext } from "@/lib/rubyAI";
+import { RubyAIWidget } from "@/components/ruby-ai/RubyAIWidget";
+import { buildPredictiveFinanceEngine } from "@/lib/predictiveFinanceEngine";
+import { PredictiveForecastChart } from "@/components/predictive/PredictiveForecastChart";
+import {
+  PredictiveInsightsFeed,
+  PredictiveRiskCard,
+  PredictiveSummaryCards,
+  SafeToSpendWidget,
+} from "@/components/predictive/PredictiveWidgets";
 
 const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 const pct = (value: number) => `${safeNumber(value).toFixed(1)}%`;
@@ -200,6 +210,28 @@ const Overview = () => {
 
   const displayName = profile?.first_name || user?.email?.split("@")[0] || "User";
 
+  const rubyContext = useMemo(
+    () =>
+      buildRubyAIContext({
+        transactions,
+        budgets,
+        subscriptions,
+        currency: defaultCurrency,
+        financialHealthScore: health.score,
+      }),
+    [transactions, budgets, subscriptions, defaultCurrency, health.score]
+  );
+
+  const prediction = useMemo(
+    () =>
+      buildPredictiveFinanceEngine({
+        transactions,
+        budgets,
+        subscriptions,
+      }),
+    [transactions, budgets, subscriptions]
+  );
+
   const aiSummary = useMemo(() => {
     const direction = expenseTrend <= 0 ? "is stabilizing" : "is accelerating";
     const riskNote =
@@ -275,7 +307,55 @@ const Overview = () => {
         insights={heroInsights}
       />
 
-      <FinancialHealthSection result={health} />
+      <FinancialHealthSection
+        result={health}
+        rubyWidgetSummary={`Health score is ${health.score}/100. Ruby AI recommends prioritizing ${
+          health.factors[0]?.label ?? "spending consistency"
+        } to accelerate resilience.`}
+        predictiveWidgetSummary={`Projected month-end balance is ${formatCurrency(
+          prediction.monthlyProjection.projectedEndBalance,
+          defaultCurrency
+        )} with ${prediction.monthlyProjection.negativeRiskPct.toFixed(1)}% downside risk.`}
+      />
+
+      <RubyAIWidget
+        title="Ruby AI Weekly CFO Note"
+        summary={`For ${displayName}, spending concentration is currently in ${rubyContext.topSpendingCategory}. ${rubyContext.weeklySummary}`}
+        actionLabel="Open Advisory Session"
+      />
+
+      <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_55px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-zinc-100">Predictive Finance Engine</h2>
+            <p className="text-xs text-zinc-500">
+              Forecasting future balance, safe-to-spend, and proactive risk trajectory.
+            </p>
+          </div>
+          <div className="rounded-full border border-red-500/35 bg-red-500/10 px-3 py-1 text-xs text-red-200">
+            End-of-month projection:{" "}
+            <span className="font-semibold">
+              {formatCurrency(prediction.monthlyProjection.projectedEndBalance, defaultCurrency)}
+            </span>
+          </div>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-12">
+          <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-8">
+            <p className="mb-2 text-xs text-zinc-500">Future Balance & Spending Forecast</p>
+            <PredictiveForecastChart data={prediction.futureBalanceForecast} />
+          </div>
+          <div className="space-y-4 xl:col-span-4">
+            <SafeToSpendWidget prediction={prediction} currency={defaultCurrency} />
+            <PredictiveRiskCard prediction={prediction} currency={defaultCurrency} />
+          </div>
+        </div>
+        <div className="mt-4">
+          <PredictiveSummaryCards prediction={prediction} currency={defaultCurrency} />
+        </div>
+        <div className="mt-4">
+          <PredictiveInsightsFeed prediction={prediction} />
+        </div>
+      </section>
 
       <OverviewBentoGrid
         balanceCard={{

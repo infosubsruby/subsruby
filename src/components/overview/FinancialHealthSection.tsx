@@ -1,6 +1,7 @@
 import { ArrowDownRight, ArrowUpRight, BrainCircuit, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinancialHealthResult } from "@/lib/financialHealthScore";
+import { RubyAIWidget } from "@/components/ruby-ai/RubyAIWidget";
 
 const statusTone: Record<FinancialHealthResult["status"], string> = {
   Excellent: "text-emerald-300",
@@ -18,7 +19,15 @@ const barTone = (score: number) => {
   return "bg-red-400";
 };
 
-export const FinancialHealthSection = ({ result }: { result: FinancialHealthResult }) => {
+export const FinancialHealthSection = ({
+  result,
+  rubyWidgetSummary,
+  predictiveWidgetSummary,
+}: {
+  result: FinancialHealthResult;
+  rubyWidgetSummary?: string;
+  predictiveWidgetSummary?: string;
+}) => {
   const trendPositive = result.trendComparisonPct >= 0;
   const weeklyPositive = result.weeklyImprovementPct >= 0;
   const scoreArc = Math.max(0, Math.min(100, result.score));
@@ -128,6 +137,27 @@ export const FinancialHealthSection = ({ result }: { result: FinancialHealthResu
           ))}
         </div>
       </div>
+
+      {rubyWidgetSummary ? (
+        <div className="mt-6">
+          <RubyAIWidget
+            compact
+            title="Ruby AI Health Advisor"
+            summary={rubyWidgetSummary}
+            actionLabel="Review with Ruby AI"
+          />
+        </div>
+      ) : null}
+
+      {predictiveWidgetSummary ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
+          <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+            <Sparkles className="h-3.5 w-3.5 text-red-300" />
+            Predictive Finance Signal
+          </div>
+          <p className="text-sm leading-relaxed text-zinc-200">{predictiveWidgetSummary}</p>
+        </div>
+      ) : null}
     </section>
   );
 };

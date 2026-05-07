@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/useTranslations";
 import { formatDate } from "@/i18n/date";
 import { useSettings } from "@/hooks/useSettings";
+import { getAutoCategorySuggestion } from "@/lib/transactionIntelligence";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -197,6 +198,10 @@ export const AddTransactionModal = ({
   };
 
   const showQuickAddOption = (formData.description || "").trim().length > 0;
+  const categorySuggestion = useMemo(
+    () => getAutoCategorySuggestion(formData.description || "", forcedType ?? formData.type),
+    [formData.description, formData.type, forcedType]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -355,6 +360,34 @@ export const AddTransactionModal = ({
               rows={2}
             />
           </div>
+
+          {(formData.description || "").trim().length > 2 && categorySuggestion.category ? (
+            <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                AI Smart Categorization
+              </p>
+              <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-zinc-300">
+                  Suggested: <span className="font-medium">{getCategoryLabel(categorySuggestion.category)}</span>{" "}
+                  ({Math.round(categorySuggestion.confidence * 100)}%) via {categorySuggestion.merchant}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 rounded-full border-red-500/35 bg-red-500/10 px-3 text-[11px] text-red-100 hover:bg-red-500/20"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      category: categorySuggestion.category || prev.category,
+                    }))
+                  }
+                >
+                  Apply Suggestion
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           {showQuickAddOption && (
             <div className="flex items-center space-x-2">
