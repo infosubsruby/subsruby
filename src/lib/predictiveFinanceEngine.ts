@@ -14,43 +14,65 @@ export type PredictiveInsight = {
   tone: "info" | "warning" | "positive";
 };
 
+export type ForecastRiskLevel = "low" | "medium" | "high";
+
+export type CategoryForecast = {
+  category: string;
+  projected: number;
+  risk: ForecastRiskLevel;
+};
+
+export type SpendingProjection = {
+  weeklyPrediction: number;
+  behavioralPrediction: number;
+  categoryForecasts: CategoryForecast[];
+};
+
+export type SafeToSpendForecast = {
+  daily: number;
+  remaining: number;
+  adjustmentFactor: number;
+};
+
+export type BudgetRiskForecast = {
+  scorePct: number;
+  highRiskCategories: string[];
+};
+
+export type GoalForecast = {
+  projectedCompletionDays: number;
+  completionLabel: string;
+  accelerationPct: number;
+  delayed: boolean;
+};
+
+export type SubscriptionImpactForecast = {
+  monthlyCost: number;
+  nextQuarterCost: number;
+  burdenTrendPct: number;
+};
+
+export type SavingsTrajectoryForecast = {
+  trendPct: number;
+  projectedEomSavings: number;
+};
+
+export type MonthlyProjectionForecast = {
+  projectedIncome: number;
+  projectedExpense: number;
+  projectedEndBalance: number;
+  negativeRiskPct: number;
+};
+
 export type PredictiveFinanceResult = {
   futureBalanceForecast: PredictivePoint[];
-  spendingProjection: {
-    weeklyPrediction: number;
-    behavioralPrediction: number;
-    categoryForecasts: { category: string; projected: number; risk: "low" | "medium" | "high" }[];
-  };
-  safeToSpend: {
-    daily: number;
-    remaining: number;
-    adjustmentFactor: number;
-  };
-  budgetRisk: {
-    scorePct: number;
-    highRiskCategories: string[];
-  };
-  goalForecast: {
-    projectedCompletionDays: number;
-    completionLabel: string;
-    accelerationPct: number;
-    delayed: boolean;
-  };
-  subscriptionImpact: {
-    monthlyCost: number;
-    nextQuarterCost: number;
-    burdenTrendPct: number;
-  };
-  savingsTrajectory: {
-    trendPct: number;
-    projectedEomSavings: number;
-  };
-  monthlyProjection: {
-    projectedIncome: number;
-    projectedExpense: number;
-    projectedEndBalance: number;
-    negativeRiskPct: number;
-  };
+  spendingProjection: SpendingProjection;
+  safeToSpend: SafeToSpendForecast;
+  budgetRisk: BudgetRiskForecast;
+  goalForecast: GoalForecast;
+  subscriptionImpact: SubscriptionImpactForecast;
+  savingsTrajectory: SavingsTrajectoryForecast;
+  monthlyProjection: MonthlyProjectionForecast;
   insights: PredictiveInsight[];
 };
 
@@ -66,6 +88,12 @@ const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 
 const average = (values: number[]) =>
   values.length ? values.reduce((acc, curr) => acc + safe(curr), 0) / values.length : 0;
+
+const getCategoryRiskLevel = (growth: number, projected: number, current: number): ForecastRiskLevel => {
+  if (growth > 0.2 || projected > current * 1.22) return "high";
+  if (growth > 0.08) return "medium";
+  return "low";
+};
 
 export const buildPredictiveFinanceEngine = ({
   transactions,
@@ -162,13 +190,12 @@ export const buildPredictiveFinanceEngine = ({
     : 0;
   const behavioralPrediction = weeklyPrediction * (1 + clamp(volatility / Math.max(weeklyPrediction, 1), 0, 0.35));
 
-  const categoryForecasts = Object.entries(categoryCurrent)
+  const categoryForecasts: CategoryForecast[] = Object.entries(categoryCurrent)
     .map(([category, value]) => {
       const prev = safe(categoryPrevious[category]);
       const growth = prev > 0 ? (value - prev) / prev : value > 0 ? 0.2 : 0;
       const projected = value * (1 + clamp(growth, -0.2, 0.45));
-      const risk =
-        growth > 0.2 || projected > value * 1.22 ? "high" : growth > 0.08 ? "medium" : "low";
+      const risk = getCategoryRiskLevel(growth, projected, value);
       return { category, projected: safe(projected), risk };
     })
     .sort((a, b) => b.projected - a.projected)
@@ -187,7 +214,6 @@ export const buildPredictiveFinanceEngine = ({
   const safeDaily = remainingSafeBudget / remainingDays;
 
   const goalTarget = totalBudget > 0 ? totalBudget : Math.max(rollingIncome * 0.35, 500);
-  const currentGoalProgress = clamp((Math.max(savingsCurrent, 0) / Math.max(goalTarget, 1)) * 100, 0, 100);
   const monthlySavingsAcceleration = (futureBalanceForecast[0]?.savings ?? savingsCurrent) - savingsCurrent;
   const projectedCompletionDays =
     savingsCurrent > 0
@@ -285,4 +311,3 @@ export const buildPredictiveFinanceEngine = ({
     insights,
   };
 };
-

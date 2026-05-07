@@ -104,8 +104,8 @@ const Goals = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-7">
+    <div className="premium-page">
+      <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-14 top-[-40px] h-44 w-44 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-40px] top-10 h-36 w-36 rounded-full bg-rose-500/20 blur-3xl" />
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -152,7 +152,7 @@ const Goals = () => {
         </article>
       </div>
 
-      <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+      <section className="premium-section rounded-[24px]">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Ruby AI Goal Planning Prompts</h2>
         <RubyAISuggestedPrompts prompts={prompts} onSelect={() => undefined} />
       </section>
@@ -163,7 +163,7 @@ const Goals = () => {
         actionLabel="Plan Goals with Ruby AI"
       />
 
-      <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+      <section className="premium-section rounded-[24px]">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">
           Predictive Goal Forecasting
         </h2>

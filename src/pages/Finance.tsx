@@ -927,14 +927,14 @@ const Finance = () => {
   const dailySafeSpend = balance / remainingDays;
 
   return (
-    <div className="relative min-h-screen pb-8">
+    <div className="relative min-h-screen pb-8 premium-page">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 pointer-events-none w-[800px] h-[400px] bg-red-900/20 blur-[120px] rounded-full" />
 
       <main>
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col xl:flex-row items-start gap-6">
+        <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col xl:flex-row items-start gap-6">
           <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-3">
                 <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
@@ -944,7 +944,7 @@ const Finance = () => {
                 {t.finance.subtitle}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {/* Currency Selector */}
               <Select 
                 value={displayCurrency || "auto"} 
@@ -984,8 +984,8 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="premium-card premium-card-hover bg-[#1A1A1E] p-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                   <ArrowDownLeft className="w-4 h-4 text-green-500" />
@@ -997,7 +997,7 @@ const Finance = () => {
               </p>
             </div>
 
-            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+            <div className="premium-card premium-card-hover bg-[#1A1A1E] p-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
                   <ArrowUpRight className="w-4 h-4 text-red-500" />
@@ -1009,7 +1009,7 @@ const Finance = () => {
               </p>
             </div>
 
-            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+            <div className="premium-card premium-card-hover bg-[#1A1A1E] p-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Activity className="w-4 h-4 text-primary" />
@@ -1022,7 +1022,7 @@ const Finance = () => {
               <span className={healthStatusBadgeClass}>{displayedHealthLabel}</span>
             </div>
 
-            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+            <div className="premium-card premium-card-hover bg-[#1A1A1E] p-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4 text-yellow-500" />
@@ -1034,7 +1034,7 @@ const Finance = () => {
               </p>
             </div>
 
-            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+            <div className="premium-card premium-card-hover bg-[#1A1A1E] p-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4 text-green-500" />
@@ -1051,7 +1051,7 @@ const Finance = () => {
               </p>
             </div>
 
-            <div className="bg-[#1A1A1E] rounded-2xl border border-white/10 p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,255,255,0.03)]">
+            <div className="premium-card premium-card-hover bg-[#1A1A1E] p-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Wallet className="w-4 h-4 text-primary" />
@@ -1068,7 +1068,7 @@ const Finance = () => {
             <AIFinancialInsights />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
             <CashFlowChart data={cashFlowData} currency={activeCurrency} />
             <SpendingPieChart data={spendingData} currency={activeCurrency} />
           </div>
@@ -1085,7 +1085,7 @@ const Finance = () => {
             onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}
             className="space-y-4"
           >
-            <TabsList className="h-auto bg-transparent p-0 rounded-none border-b border-gray-800/40 w-fit">
+            <TabsList className="h-auto bg-transparent p-0 rounded-none border-b border-white/10 w-fit">
               <TabsTrigger
                 value="transactions"
                 className="rounded-none bg-transparent px-3 py-2 text-sm font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent"
@@ -1136,7 +1136,7 @@ const Finance = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {safeBudgets?.map((budget) => (
                     <BudgetCard
                       key={budget.id}

@@ -115,6 +115,50 @@
 }
 
 @layer utilities {
+  .premium-page {
+    @apply space-y-6 sm:space-y-7;
+  }
+
+  .premium-section {
+    @apply rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-5;
+  }
+
+  .premium-card {
+    @apply rounded-2xl border border-white/10 bg-black/25 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.3)] transition-all duration-300;
+  }
+
+  .premium-card-quiet {
+    @apply rounded-2xl border border-white/10 bg-black/20 p-4;
+  }
+
+  .premium-card-hover {
+    @apply hover:border-white/20 hover:bg-black/30 hover:shadow-[0_18px_40px_rgba(0,0,0,0.42)];
+  }
+
+  .premium-heading {
+    @apply text-lg font-semibold tracking-tight text-zinc-100 sm:text-xl;
+  }
+
+  .premium-subheading {
+    @apply text-xs uppercase tracking-[0.16em] text-zinc-500;
+  }
+
+  .premium-eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/25 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-red-200;
+  }
+
+  .premium-divider {
+    @apply border-b border-white/10;
+  }
+
+  .premium-chip {
+    @apply inline-flex items-center rounded-full border border-white/15 bg-black/25 px-2.5 py-1 text-[11px] text-zinc-300;
+  }
+
+  .premium-chart-panel {
+    @apply rounded-2xl border border-white/10 bg-black/25 p-3 sm:p-4;
+  }
+
   /* Glass morphism */
   .glass {
     background: hsl(var(--glass-bg));

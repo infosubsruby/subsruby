@@ -168,8 +168,8 @@ const RubyAI = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-7">
+    <div className="premium-page">
+      <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-16 top-[-50px] h-52 w-52 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-50px] top-8 h-44 w-44 rounded-full bg-rose-500/20 blur-3xl" />
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -208,7 +208,7 @@ const RubyAI = () => {
         </div>
       </div>
 
-      <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <section className="premium-section rounded-[24px]">
         <div className="mb-3 flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-red-300" />
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Smart Prompt Suggestions</h2>
@@ -221,7 +221,7 @@ const RubyAI = () => {
         ) : null}
       </section>
 
-      <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <section className="premium-section rounded-[24px]">
         <div className="mb-2 flex items-center gap-2">
           <BrainCircuit className="h-4 w-4 text-red-300" />
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Recommendation Widgets</h2>

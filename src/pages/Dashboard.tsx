@@ -359,11 +359,11 @@ const Dashboard = () => {
 
   // 2. Render Dashboard (Show content for everyone)
   return (
-    <div className="relative min-h-screen pb-8">
+    <div className="relative min-h-screen pb-8 premium-page">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 pointer-events-none w-[800px] h-[400px] bg-red-900/20 blur-[120px] rounded-full" />
       
       <main>
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6">
           <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 xl:col-span-9 flex-1 min-w-0 flex flex-col gap-6">
               {!isPro && <TrialBanner />}
@@ -394,7 +394,7 @@ const Dashboard = () => {
                     </Select>
                     <Button 
                       onClick={handleAddSubscription}
-                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50 gap-2"
+                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors border border-red-500/50 gap-2"
                     >
                       <Plus className="w-5 h-5" />
                       {t.dashboard.addSubscription}
@@ -417,7 +417,7 @@ const Dashboard = () => {
               </div>
 
           {/* Stats Panel */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-6 bg-[#0c0c0e] border border-gray-800/80 rounded-2xl p-6 sm:p-8 w-full shadow-lg">
+          <div className="grid grid-cols-1 gap-y-7 gap-x-5 sm:grid-cols-2 lg:grid-cols-3 premium-section rounded-[24px] p-5 sm:p-7 w-full">
             <div className="flex flex-col justify-center h-full w-full">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -576,7 +576,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full">
             <SubscriptionBreakdownChart
               subscriptions={subscriptions}
               currency={activeCurrency}
@@ -592,7 +592,7 @@ const Dashboard = () => {
               <div id="subscriptions" className="w-full mt-8 mb-10 overflow-visible">
                 <h2 className="text-lg font-semibold text-gray-200 mb-5">Tüm Abonelikler</h2>
                 {subscriptions.length === 0 ? (
-                  <div className="text-center py-16 bg-card rounded-3xl border border-dashed">
+                  <div className="text-center py-16 bg-card rounded-3xl border border-white/15 border-dashed">
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                       <Plus className="w-8 h-8 text-muted-foreground" />
                     </div>
@@ -602,7 +602,7 @@ const Dashboard = () => {
                     </p>
                     <Button
                       onClick={handleAddSubscription}
-                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors border border-red-500/50"
+                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors border border-red-500/50"
                     >
                       {t.dashboard.addFirstSubscription}
                     </Button>

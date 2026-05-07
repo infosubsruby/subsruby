@@ -72,8 +72,8 @@ const AnalyticsPage = () => {
   }
 
   return (
-    <div className="space-y-7">
-      <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-7">
+    <div className="premium-page">
+      <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-14 top-[-44px] h-48 w-48 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-46px] top-5 h-44 w-44 rounded-full bg-rose-500/20 blur-3xl" />
 
@@ -261,7 +261,7 @@ const AnalyticsPage = () => {
         </AnalyticsGlassCard>
       </div>
 
-      <section className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.42)] backdrop-blur-xl">
+      <section className="premium-section rounded-[26px]">
         <div className="mb-3 flex items-center gap-2">
           <BrainCircuit className="h-4 w-4 text-red-300" />
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">AI Analysis Cards</h2>
@@ -281,7 +281,7 @@ const AnalyticsPage = () => {
         actionLabel="Open Ruby AI Strategy"
       />
 
-      <section className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.42)] backdrop-blur-xl">
+      <section className="premium-section rounded-[26px]">
         <div className="mb-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">
             Predictive Projection Layer

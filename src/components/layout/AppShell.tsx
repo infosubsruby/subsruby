@@ -73,13 +73,13 @@ export const AppShell = () => {
         <div className="absolute right-[-120px] top-[180px] h-[320px] w-[320px] rounded-full bg-rose-500/10 blur-[120px]" />
       </div>
 
-      <div className="mx-auto flex w-full max-w-[1800px]">
+      <div className="mx-auto flex w-full max-w-[1820px]">
         <aside className="hidden lg:flex lg:w-[290px] lg:shrink-0">
-          <div className="sticky top-0 flex h-screen w-full flex-col border-r border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+          <div className="sticky top-0 flex h-screen w-full flex-col border-r border-white/10 bg-white/[0.045] px-5 py-6 backdrop-blur-xl">
             <button
               type="button"
               onClick={() => goTo("/overview")}
-              className="group mb-6 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-left transition hover:border-red-500/40 hover:bg-red-500/10"
+              className="group mb-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-left transition-all duration-200 hover:border-red-500/35 hover:bg-red-500/[0.12]"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/20 text-red-300 shadow-[0_0_20px_rgba(239,68,68,0.35)]">
                 <Sparkles className="h-5 w-5" />
@@ -90,7 +90,7 @@ export const AppShell = () => {
               </div>
             </button>
 
-            <nav className="flex-1 space-y-1.5 overflow-y-auto pr-1">
+            <nav className="custom-scrollbar flex-1 space-y-1.5 overflow-y-auto pr-1">
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.to;
@@ -103,8 +103,8 @@ export const AppShell = () => {
                     className={cn(
                       "group relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
                       isActive
-                        ? "border-red-500/50 bg-red-500/15 text-red-100 shadow-[0_0_24px_rgba(239,68,68,0.18)]"
-                        : "border-transparent bg-transparent text-zinc-300 hover:border-white/10 hover:bg-white/5 hover:text-zinc-100"
+                        ? "border-red-500/45 bg-red-500/[0.14] text-red-100 shadow-[0_0_22px_rgba(239,68,68,0.16)]"
+                        : "border-transparent bg-transparent text-zinc-300 hover:border-white/10 hover:bg-white/[0.06] hover:text-zinc-100"
                     )}
                   >
                     {isActive ? <span className="absolute left-0 top-2 h-6 w-1 rounded-r-full bg-red-400" /> : null}
@@ -115,7 +115,7 @@ export const AppShell = () => {
               })}
             </nav>
 
-            <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-3.5">
               <p className="text-xs text-zinc-500">Current Workspace</p>
               <p className="mt-1 text-sm font-medium text-zinc-200">{activeLabel}</p>
             </div>
@@ -154,7 +154,7 @@ export const AppShell = () => {
                       )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 border-white/10 bg-[#12141a]/95 text-zinc-100 backdrop-blur-xl">
+                  <DropdownMenuContent align="end" className="w-52 rounded-xl border-white/10 bg-[#12141a]/95 text-zinc-100 backdrop-blur-xl">
                     <DropdownMenuItem className="gap-2 focus:bg-white/10" onClick={() => goTo("/profile")}>
                       <User className="h-4 w-4" />
                       Profile
@@ -177,7 +177,7 @@ export const AppShell = () => {
             </div>
           </header>
 
-          <main className="px-4 pb-8 pt-5 sm:px-6 lg:px-8">
+          <main className="px-4 pb-10 pt-6 sm:px-6 lg:px-8">
             <Outlet />
           </main>
         </div>

@@ -298,7 +298,7 @@ const Overview = () => {
   );
 
   return (
-    <div className="space-y-7">
+    <div className="premium-page">
       <OverviewHero
         userName={displayName}
         healthScore={health.score}
@@ -324,15 +324,15 @@ const Overview = () => {
         actionLabel="Open Advisory Session"
       />
 
-      <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_55px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <section className="premium-section rounded-[28px]">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-zinc-100">Predictive Finance Engine</h2>
+          <h2 className="premium-heading">Predictive Finance Engine</h2>
             <p className="text-xs text-zinc-500">
               Forecasting future balance, safe-to-spend, and proactive risk trajectory.
             </p>
           </div>
-          <div className="rounded-full border border-red-500/35 bg-red-500/10 px-3 py-1 text-xs text-red-200">
+          <div className="premium-chip border-red-500/35 bg-red-500/10 text-red-200">
             End-of-month projection:{" "}
             <span className="font-semibold">
               {formatCurrency(prediction.monthlyProjection.projectedEndBalance, defaultCurrency)}
@@ -340,7 +340,7 @@ const Overview = () => {
           </div>
         </div>
         <div className="grid gap-4 xl:grid-cols-12">
-          <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-8">
+          <div className="premium-chart-panel xl:col-span-8">
             <p className="mb-2 text-xs text-zinc-500">Future Balance & Spending Forecast</p>
             <PredictiveForecastChart data={prediction.futureBalanceForecast} />
           </div>
