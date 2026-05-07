@@ -8,6 +8,8 @@ import { OverviewHero } from "@/components/overview/OverviewHero";
 import { OverviewBentoGrid } from "@/components/overview/OverviewBentoGrid";
 import { OverviewAIInsightsEngine } from "@/components/overview/OverviewAIInsightsEngine";
 import { buildMockAIInsights } from "@/lib/aiInsights";
+import { calculateFinancialHealthScore } from "@/lib/financialHealthScore";
+import { FinancialHealthSection } from "@/components/overview/FinancialHealthSection";
 
 const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 const pct = (value: number) => `${safeNumber(value).toFixed(1)}%`;
@@ -25,6 +27,33 @@ const Overview = () => {
   const currentKey = monthKey(now);
   const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const previousKey = monthKey(previous);
+
+  const { monthlyIncomeSeries, monthlyExpenseSeries } = useMemo(() => {
+    const monthStarts = [5, 4, 3, 2, 1, 0].map((offset) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      return monthKey(d);
+    });
+    const incomeByMonth: Record<string, number> = {};
+    const expenseByMonth: Record<string, number> = {};
+
+    for (const tx of transactions) {
+      const txDate = new Date(tx.date);
+      if (Number.isNaN(txDate.getTime())) continue;
+      const key = monthKey(txDate);
+      if (!monthStarts.includes(key)) continue;
+      const amount = safeNumber(Number(tx.amount));
+      if (tx.type === "income") {
+        incomeByMonth[key] = safeNumber(incomeByMonth[key] || 0) + amount;
+      } else {
+        expenseByMonth[key] = safeNumber(expenseByMonth[key] || 0) + amount;
+      }
+    }
+
+    return {
+      monthlyIncomeSeries: monthStarts.map((key) => safeNumber(incomeByMonth[key] || 0)),
+      monthlyExpenseSeries: monthStarts.map((key) => safeNumber(expenseByMonth[key] || 0)),
+    };
+  }, [transactions, now]);
 
   const {
     incomeCurrent,
@@ -114,14 +143,60 @@ const Overview = () => {
     : 0;
   const subscriptionLoad = incomeCurrent > 0 ? (monthlySubscriptionCost / incomeCurrent) * 100 : 0;
 
-  const healthScore = useMemo(() => {
-    const baseline = 55;
-    const savingsFactor = clamp(savingsRate, -20, 35);
-    const billFactor = upcomingBillsCount > 3 ? -8 : 6;
-    const spendFactor = expenseTrend < 0 ? 8 : expenseTrend > 15 ? -10 : -2;
-    const loadFactor = subscriptionLoad < 12 ? 6 : subscriptionLoad > 25 ? -8 : 0;
-    return clamp(Math.round(baseline + savingsFactor + billFactor + spendFactor + loadFactor), 0, 100);
-  }, [savingsRate, upcomingBillsCount, expenseTrend, subscriptionLoad]);
+  const trackedBudgetLimit = budgets.reduce((sum, budget) => sum + safeNumber(Number(budget.limit_amount)), 0);
+  const trackedBudgetSpent = transactions
+    .filter((tx) => tx.type === "expense" && monthKey(new Date(tx.date)) === currentKey)
+    .filter((tx) => budgets.some((budget) => budget.category === tx.category))
+    .reduce((sum, tx) => sum + safeNumber(Number(tx.amount)), 0);
+  const budgetDisciplineRatio =
+    trackedBudgetLimit > 0 ? clamp(Math.min(trackedBudgetLimit / Math.max(trackedBudgetSpent, 1), 1), 0, 1) : 0.65;
+
+  const expensePerDay: Record<string, number> = {};
+  for (const tx of transactions) {
+    if (tx.type !== "expense") continue;
+    const txDate = new Date(tx.date);
+    if (monthKey(txDate) !== currentKey) continue;
+    const dayKey = tx.date.slice(0, 10);
+    expensePerDay[dayKey] = safeNumber(expensePerDay[dayKey] || 0) + safeNumber(Number(tx.amount));
+  }
+  const dailySpendValues = Object.values(expensePerDay);
+  const avgDailySpend = dailySpendValues.length
+    ? dailySpendValues.reduce((acc, value) => acc + value, 0) / dailySpendValues.length
+    : 0;
+  const overspendingDays = dailySpendValues.filter((value) => value > avgDailySpend * 1.25).length;
+  const overspendingDaysRatio = dailySpendValues.length > 0 ? overspendingDays / dailySpendValues.length : 0;
+
+  const emergencyFundMonths = expenseCurrent > 0 ? Math.max(netBalance, 0) / expenseCurrent : 0;
+  const debtRatioPct = incomeCurrent > 0 ? ((monthlySubscriptionCost + upcomingBillsValue) / incomeCurrent) * 100 : 28;
+  const expenseRatio = incomeCurrent > 0 ? (expenseCurrent / incomeCurrent) * 100 : 100;
+
+  const health = useMemo(
+    () =>
+      calculateFinancialHealthScore({
+        savingsRatePct: savingsRate,
+        monthlyExpenseSeries,
+        monthlyIncomeSeries,
+        subscriptionBurdenPct: subscriptionLoad,
+        expenseRatioPct: expenseRatio,
+        goalProgressPct: goalProgress,
+        emergencyFundMonths,
+        overspendingDaysRatio,
+        debtRatioPct,
+        budgetDisciplineRatio,
+      }),
+    [
+      savingsRate,
+      monthlyExpenseSeries,
+      monthlyIncomeSeries,
+      subscriptionLoad,
+      expenseRatio,
+      goalProgress,
+      emergencyFundMonths,
+      overspendingDaysRatio,
+      debtRatioPct,
+      budgetDisciplineRatio,
+    ]
+  );
 
   const displayName = profile?.first_name || user?.email?.split("@")[0] || "User";
 
@@ -131,8 +206,8 @@ const Overview = () => {
       subscriptionLoad > 25
         ? "Subscription weight is high and should be optimized."
         : "Subscription load is currently in a manageable range.";
-    return `Your monthly cash flow ${direction}. Current savings rate is ${pct(savingsRate)}, with ${upcomingBillsCount} bills due soon. ${riskNote}`;
-  }, [expenseTrend, savingsRate, upcomingBillsCount, subscriptionLoad]);
+    return `${health.summary} Monthly cash flow ${direction}. Current savings rate is ${pct(savingsRate)}, with ${upcomingBillsCount} bills due soon. ${riskNote}`;
+  }, [health.summary, expenseTrend, savingsRate, upcomingBillsCount, subscriptionLoad]);
 
   const heroTrends = [
     { label: "Spending Trend", value: pct(Math.abs(expenseTrend)), positive: expenseTrend <= 0 },
@@ -194,11 +269,13 @@ const Overview = () => {
     <div className="space-y-7">
       <OverviewHero
         userName={displayName}
-        healthScore={healthScore}
+        healthScore={health.score}
         summary={aiSummary}
         trends={heroTrends}
         insights={heroInsights}
       />
+
+      <FinancialHealthSection result={health} />
 
       <OverviewBentoGrid
         balanceCard={{
