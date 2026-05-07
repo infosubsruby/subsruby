@@ -1,5 +1,11 @@
 import type { AIInsight, Goal, Subscription, Transaction, WalletAccount } from "@/domain/financeModels";
-import type { DbInsert, DbRow, Json } from "@/lib/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
+import type { Json } from "@/integrations/supabase/types";
+
+type TransactionRow = Database["public"]["Tables"]["transactions"]["Row"];
+type TransactionInsert = Database["public"]["Tables"]["transactions"]["Insert"];
+type SubscriptionRow = Database["public"]["Tables"]["subscriptions"]["Row"];
+type SubscriptionInsert = Database["public"]["Tables"]["subscriptions"]["Insert"];
 
 const toSafeNumber = (value: number | null | undefined): number => (Number.isFinite(value) ? Number(value) : 0);
 
@@ -13,67 +19,139 @@ const ensureTransactionType = (value: string): Transaction["type"] => {
   return "expense";
 };
 
-export const mapDbTransactionToTransaction = (row: DbRow<"transactions">): Transaction => ({
+export const mapDbTransactionToTransaction = (row: TransactionRow): Transaction => ({
   id: row.id,
   userId: row.user_id,
-  walletId: row.wallet_id,
-  merchant: row.merchant ?? "",
+  walletId: "",
+  merchant: "",
   description: row.description,
   amount: toSafeNumber(row.amount),
-  currency: row.currency,
+  currency: "USD",
   type: ensureTransactionType(row.type),
-  category: row.category_name,
+  category: row.category,
   date: row.date,
-  tags: row.tags ?? [],
-  isRecurring: row.is_recurring,
-  aiFlags: mapJsonToStringArray(row.ai_flags),
-  confidenceScore: toSafeNumber(row.confidence_score),
+  tags: [],
+  isRecurring: false,
+  aiFlags: [],
+  confidenceScore: 0,
   createdAt: row.created_at,
-  updatedAt: row.updated_at,
+  updatedAt: row.created_at,
 });
 
-export const mapTransactionToDbInsert = (transaction: Transaction): DbInsert<"transactions"> => ({
+export const mapTransactionToDbInsert = (transaction: Transaction): TransactionInsert => ({
+  id: transaction.id,
   user_id: transaction.userId,
-  wallet_id: transaction.walletId,
-  merchant: transaction.merchant || null,
-  description: transaction.description,
+  description: transaction.description || null,
   amount: transaction.amount,
-  currency: transaction.currency,
   type: transaction.type,
-  category_name: transaction.category,
+  category: transaction.category,
   date: transaction.date,
-  tags: transaction.tags,
-  is_recurring: transaction.isRecurring,
-  ai_flags: transaction.aiFlags,
-  confidence_score: transaction.confidenceScore,
   created_at: transaction.createdAt,
-  updated_at: transaction.updatedAt,
 });
 
-export const mapDbSubscriptionToSubscription = (row: DbRow<"subscriptions">): Subscription => ({
-  id: row.id,
+const toBillingCycle = (value: string | null): "weekly" | "monthly" | "yearly" => {
+  if (value === "weekly" || value === "monthly" || value === "yearly") return value;
+  return "monthly";
+};
+
+export const mapDbSubscriptionToSubscription = (row: SubscriptionRow): Subscription => ({
+  id: String(row.id),
   userId: row.user_id,
   name: row.name,
-  amount: toSafeNumber(row.amount),
-  currency: row.currency,
-  billingCycle: row.billing_cycle,
-  nextBillingDate: row.next_billing_date,
-  category: row.category_name,
-  status: row.status,
-  yearlyCost: toSafeNumber(row.yearly_cost),
-  optimizationStatus:
-    row.optimization_status === "optimized" ||
-    row.optimization_status === "monitor" ||
-    row.optimization_status === "high-cost" ||
-    row.optimization_status === "review"
-      ? row.optimization_status
-      : "monitor",
-  aiRecommendation: row.ai_recommendation ?? "",
+  amount: toSafeNumber(row.price),
+  currency: row.currency ?? "USD",
+  billingCycle: toBillingCycle(row.billing_cycle),
+  nextBillingDate: row.next_payment_date ?? row.start_date,
+  category: "Subscriptions",
+  status: "active",
+  yearlyCost: toSafeNumber(row.price) * 12,
+  optimizationStatus: "monitor",
+  aiRecommendation: "",
   createdAt: row.created_at,
-  updatedAt: row.updated_at,
+  updatedAt: row.created_at,
 });
 
-export const mapDbGoalToGoal = (row: DbRow<"goals">): Goal => ({
+const toSlug = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "subscription";
+
+export const mapSubscriptionToDbInsert = (subscription: Subscription): SubscriptionInsert => ({
+  user_id: subscription.userId,
+  name: subscription.name,
+  slug: toSlug(subscription.name),
+  price: subscription.amount,
+  currency: subscription.currency,
+  billing_cycle: subscription.billingCycle,
+  start_date: subscription.createdAt.slice(0, 10),
+  next_payment_date: subscription.nextBillingDate,
+  website_url: null,
+  card_color: "#E50914",
+  country_code: null,
+  created_at: subscription.createdAt,
+});
+
+type GoalRowLike = {
+  id: string;
+  user_id: string;
+  title: string;
+  target_amount: number | null;
+  current_amount: number | null;
+  currency: string;
+  deadline: string | null;
+  status: string;
+  monthly_target: number | null;
+  predicted_completion_date: string | null;
+  priority: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type GoalInsertLike = {
+  user_id: string;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  currency: string;
+  deadline: string | null;
+  status: string;
+  monthly_target: number;
+  predicted_completion_date: string | null;
+  priority: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type WalletRowLike = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: string;
+  balance: number | null;
+  currency: string;
+  provider: string | null;
+  is_manual: boolean;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type WalletInsertLike = {
+  user_id: string;
+  name: string;
+  type: string;
+  balance: number;
+  currency: string;
+  provider: string;
+  is_manual: boolean;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const mapDbGoalToGoal = (row: GoalRowLike): Goal => ({
   id: row.id,
   userId: row.user_id,
   title: row.title,
@@ -98,7 +176,22 @@ export const mapDbGoalToGoal = (row: DbRow<"goals">): Goal => ({
   updatedAt: row.updated_at,
 });
 
-export const mapDbWalletToWallet = (row: DbRow<"wallets">): WalletAccount => ({
+export const mapGoalToDbInsert = (goal: Goal): GoalInsertLike => ({
+  user_id: goal.userId,
+  title: goal.title,
+  target_amount: goal.targetAmount,
+  current_amount: goal.currentAmount,
+  currency: goal.currency,
+  deadline: goal.deadline,
+  status: goal.status === "on-track" ? "on_track" : goal.status,
+  monthly_target: goal.monthlyTarget,
+  predicted_completion_date: goal.predictedCompletionDate,
+  priority: goal.priority,
+  created_at: goal.createdAt,
+  updated_at: goal.updatedAt,
+});
+
+export const mapDbWalletToWallet = (row: WalletRowLike): WalletAccount => ({
   id: row.id,
   userId: row.user_id,
   name: row.name,
@@ -119,7 +212,41 @@ export const mapDbWalletToWallet = (row: DbRow<"wallets">): WalletAccount => ({
   updatedAt: row.updated_at,
 });
 
-export const mapDbAIInsightToAIInsight = (row: DbRow<"ai_insights">): AIInsight => ({
+export const mapWalletToDbInsert = (wallet: WalletAccount): WalletInsertLike => ({
+  user_id: wallet.userId,
+  name: wallet.name,
+  type:
+    wallet.type === "checking"
+      ? "bank"
+      : wallet.type === "credit"
+      ? "credit_card"
+      : wallet.type,
+  balance: wallet.balance,
+  currency: wallet.currency,
+  provider: wallet.provider,
+  is_manual: wallet.isManual,
+  last_synced_at: wallet.lastSyncedAt,
+  created_at: wallet.createdAt,
+  updated_at: wallet.updatedAt,
+});
+
+type AIInsightRowLike = {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  description: string;
+  severity: AIInsight["severity"];
+  confidence: number | null;
+  financial_impact: number | null;
+  suggested_action: string | null;
+  related_entity_type: string | null;
+  related_entity_id: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+export const mapDbAIInsightToAIInsight = (row: AIInsightRowLike): AIInsight => ({
   id: row.id,
   userId: row.user_id,
   type: row.type,

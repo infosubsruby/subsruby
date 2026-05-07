@@ -4,7 +4,7 @@ export type SeverityLevel = "info" | "success" | "warning" | "critical";
 
 export type PlanType = "free" | "pro";
 
-export type BillingCycle = "monthly" | "yearly" | "weekly" | "one-time";
+export type BillingCycle = "monthly" | "yearly" | "weekly";
 
 export type TransactionType = "income" | "expense" | "transfer";
 

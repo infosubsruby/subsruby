@@ -33,6 +33,7 @@ import { PRICING_PLANS } from "@/lib/monetization/plans";
 import { useFinance } from "@/hooks/useFinance";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { toast } from "sonner";
+import { getDataMode } from "@/lib/config/dataMode";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const Settings = () => {
   const [activeSection, setActiveSection] = useState<
     "plan" | "profile" | "financial" | "ruby" | "accounts" | "categories" | "reports" | "app" | "privacy"
   >("profile");
+  const dataMode = getDataMode();
   const fullName = `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || user?.fullName || "Ruby User";
   const [editableFullName, setEditableFullName] = useState(fullName);
 
@@ -116,6 +118,9 @@ const Settings = () => {
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-100 sm:text-3xl">Settings Foundation</h1>
         <p className="mt-2 max-w-2xl text-sm text-zinc-400">
           Configure your profile, financial defaults, Ruby AI behavior, app preferences, and reporting controls.
+        </p>
+        <p className="mt-3 inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-zinc-400">
+          Data Mode: {dataMode === "supabase" ? "Supabase Connected" : "Demo Mode"}
         </p>
       </section>
 

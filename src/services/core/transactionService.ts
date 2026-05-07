@@ -1,30 +1,62 @@
 import type { Transaction } from "@/domain/financeModels";
-import { asyncResolve, mockStore } from "@/services/core/baseMockStore";
+import { isSupabaseMode } from "@/lib/config/dataMode";
+import {
+  createTransactionMock,
+  deleteTransactionMock,
+  fetchTransactionsMock,
+  updateTransactionMock,
+  type TransactionCreateInput,
+  type TransactionUpdateInput,
+} from "@/services/core/transactionMockService";
+import {
+  createTransactionSupabase,
+  deleteTransactionSupabase,
+  fetchTransactionsSupabase,
+  updateTransactionSupabase,
+} from "@/services/core/transactionSupabaseService";
+import type { ServiceResult } from "@/services/core/serviceResult";
+
+const withFallback = async <T>(
+  supabaseCall: () => Promise<ServiceResult<T>>,
+  mockCall: () => Promise<ServiceResult<T>>
+): Promise<ServiceResult<T>> => {
+  if (!isSupabaseMode()) return mockCall();
+  const result = await supabaseCall();
+  if (result.error) {
+    return mockCall();
+  }
+  return result;
+};
+
+export const fetchTransactionsSafe = async (userId: string): Promise<ServiceResult<Transaction[]>> =>
+  withFallback(() => fetchTransactionsSupabase(userId), () => fetchTransactionsMock(userId));
 
 export const fetchTransactions = async (userId: string): Promise<Transaction[]> => {
-  const items = mockStore.transactions.get().filter((item) => item.userId === userId);
-  return asyncResolve(items);
+  const result = await fetchTransactionsSafe(userId);
+  return result.data ?? [];
 };
 
-export const createTransaction = async (payload: Transaction): Promise<Transaction> => {
-  const next = [...mockStore.transactions.get(), payload];
-  mockStore.transactions.set(next);
-  return asyncResolve(payload);
-};
+export const createTransaction = async (
+  userId: string,
+  input: TransactionCreateInput
+): Promise<ServiceResult<Transaction>> =>
+  withFallback(() => createTransactionSupabase(userId, input), () => createTransactionMock(userId, input));
 
-export const updateTransaction = async (id: string, payload: Partial<Transaction>): Promise<Transaction | null> => {
-  const items = mockStore.transactions.get();
-  const index = items.findIndex((item) => item.id === id);
-  if (index < 0) return asyncResolve(null);
-  const updated = { ...items[index], ...payload, updatedAt: new Date().toISOString() };
-  items[index] = updated;
-  mockStore.transactions.set(items);
-  return asyncResolve(updated);
-};
+export const updateTransaction = async (
+  userId: string,
+  transactionId: string,
+  input: TransactionUpdateInput
+): Promise<ServiceResult<Transaction | null>> =>
+  withFallback(
+    () => updateTransactionSupabase(userId, transactionId, input),
+    () => updateTransactionMock(userId, transactionId, input)
+  );
 
-export const deleteTransaction = async (id: string): Promise<boolean> => {
-  const current = mockStore.transactions.get();
-  const next = current.filter((item) => item.id !== id);
-  mockStore.transactions.set(next);
-  return asyncResolve(next.length !== current.length);
-};
+export const deleteTransaction = async (
+  userId: string,
+  transactionId: string
+): Promise<ServiceResult<boolean>> =>
+  withFallback(
+    () => deleteTransactionSupabase(userId, transactionId),
+    () => deleteTransactionMock(userId, transactionId)
+  );

@@ -2,6 +2,12 @@ import type { AuthProfile, AuthUser, DemoAuthSnapshot } from "@/lib/auth/authTyp
 import type { PlanType } from "@/types/common";
 import { supabase } from "@/integrations/supabase/client";
 import { hasSupabaseEnv } from "@/lib/supabase/client";
+import type {
+  AuthChangeEvent,
+  Session,
+  Subscription as SupabaseSubscription,
+  User,
+} from "@supabase/supabase-js";
 
 const DEMO_AUTH_STORAGE_KEY = "ruby.auth.demo.snapshot";
 const DEMO_AUTH_MODE_KEY = "ruby.auth.demo.enabled";
@@ -103,14 +109,66 @@ export const signOutAuth = async () => {
   return supabase.auth.signOut();
 };
 
+export const signOut = signOutAuth;
+
 export const getCurrentUser = async () => {
   if (!hasSupabaseEnv) return { data: { user: null }, error: null };
   return supabase.auth.getUser();
 };
 
+export const getSession = async () => {
+  if (!hasSupabaseEnv) {
+    return { data: { session: null as Session | null }, error: null };
+  }
+  return supabase.auth.getSession();
+};
+
+export const onAuthStateChange = (
+  callback: (event: AuthChangeEvent, session: Session | null) => void
+): { data: { subscription: SupabaseSubscription } } => {
+  if (!hasSupabaseEnv) {
+    return {
+      data: {
+        subscription: {
+          id: "mock-auth-subscription",
+          callback,
+          unsubscribe: () => undefined,
+        } as unknown as SupabaseSubscription,
+      },
+    };
+  }
+  return supabase.auth.onAuthStateChange(callback);
+};
+
 export const getCurrentProfile = async (userId: string) => {
   if (!hasSupabaseEnv) return { data: null, error: null };
   return supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+};
+
+export const createProfileForUser = async (user: User, fullName?: string | null) => {
+  if (!hasSupabaseEnv) {
+    return { data: null, error: null };
+  }
+  const normalizedName = fullName ?? user.user_metadata?.full_name ?? null;
+  const [firstName, ...lastNameParts] = (normalizedName ?? "").trim().split(" ").filter(Boolean);
+  const lastName = lastNameParts.join(" ");
+
+  return supabase
+    .from("profiles")
+    .upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        avatar_url: typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null,
+        default_currency: "USD",
+        has_completed_onboarding: false,
+      },
+      { onConflict: "id" }
+    )
+    .select("*")
+    .maybeSingle();
 };
 
 export const updateProfileRow = async (
