@@ -3,6 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -13,7 +20,9 @@ import {
   ChevronDown,
   FolderKanban,
   Gauge,
+  Menu,
   LogOut,
+  PanelLeftClose,
   Sparkles,
   User,
 } from "lucide-react";
@@ -35,6 +44,7 @@ export const AppShell = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [planningOpen, setPlanningOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const isPlanningActive = useMemo(
     () => isActivePath(location.pathname, PLANNING_GROUP.to) || PLANNING_CHILDREN.some((item) => matchesLeaf(location.pathname, item)),
@@ -63,10 +73,13 @@ export const AppShell = () => {
 
   const goTo = (path: string) => {
     navigate(path);
+    setMobileNavOpen(false);
   };
 
+  const mobilePrimaryItems = [...SIDEBAR_TOP_ITEMS, PLANNING_GROUP, ...SIDEBAR_BOTTOM_ITEMS];
+
   return (
-    <div className="min-h-screen bg-[#08090c] text-zinc-100">
+    <div className="min-h-screen overflow-x-clip bg-[#08090c] text-zinc-100">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute left-[-140px] top-[-120px] h-[360px] w-[360px] rounded-full bg-red-600/15 blur-[120px]" />
         <div className="absolute right-[-120px] top-[180px] h-[320px] w-[320px] rounded-full bg-rose-500/10 blur-[120px]" />
@@ -191,6 +204,103 @@ export const AppShell = () => {
           <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0b10]/75 backdrop-blur-xl">
             <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-3">
+                <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg border border-white/10 bg-white/5 text-zinc-100 lg:hidden"
+                    >
+                      <Menu className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent
+                    side="left"
+                    className="w-[86vw] max-w-[340px] overflow-y-auto border-r border-white/10 bg-[#0d0f14]/95 px-4 pb-20 pt-4 text-zinc-100"
+                  >
+                    <SheetHeader className="mb-3 text-left">
+                      <SheetTitle className="flex items-center gap-2 text-base text-zinc-100">
+                        <Sparkles className="h-4 w-4 text-red-300" />
+                        SubsRuby OS
+                      </SheetTitle>
+                    </SheetHeader>
+                    <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">Current Workspace</p>
+                      <p className="mt-1 text-sm text-zinc-200">{activeLabel}</p>
+                    </div>
+                    <nav className="space-y-1.5">
+                      {mobilePrimaryItems.map((item) => {
+                        const isPlanning = "children" in item;
+                        const itemActive = isPlanning
+                          ? isPlanningActive || isActivePath(location.pathname, item.to)
+                          : matchesLeaf(location.pathname, item);
+                        const Icon = item.icon;
+
+                        if (isPlanning) {
+                          return (
+                            <div key={item.to} className="space-y-1">
+                              <button
+                                type="button"
+                                onClick={() => setPlanningOpen((prev) => !prev)}
+                                className={cn(
+                                  "flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-sm",
+                                  itemActive
+                                    ? "border-red-500/40 bg-red-500/12 text-red-100"
+                                    : "border-white/10 bg-black/20 text-zinc-300"
+                                )}
+                              >
+                                <Icon className="h-4 w-4" />
+                                <span>{item.label}</span>
+                                <ChevronDown className={cn("ml-auto h-4 w-4 transition", planningOpen ? "rotate-180 text-red-300" : "text-zinc-500")} />
+                              </button>
+                              {planningOpen ? (
+                                <div className="space-y-1 pl-2">
+                                  {item.children.map((child) => {
+                                    const ChildIcon = child.icon;
+                                    const childActive = matchesLeaf(location.pathname, child);
+                                    return (
+                                      <button
+                                        key={child.to}
+                                        type="button"
+                                        onClick={() => goTo(child.to)}
+                                        className={cn(
+                                          "flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-[13px]",
+                                          childActive
+                                            ? "border-red-500/35 bg-red-500/10 text-red-100"
+                                            : "border-transparent text-zinc-400 hover:border-white/10 hover:bg-white/[0.03]"
+                                        )}
+                                      >
+                                        <ChildIcon className="h-3.5 w-3.5" />
+                                        {child.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <button
+                            key={item.to}
+                            type="button"
+                            onClick={() => goTo(item.to)}
+                            className={cn(
+                              "flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-sm",
+                              itemActive
+                                ? "border-red-500/40 bg-red-500/12 text-red-100"
+                                : "border-white/10 bg-black/20 text-zinc-300"
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </nav>
+                  </SheetContent>
+                </Sheet>
                 <div className="rounded-lg border border-red-500/40 bg-red-500/15 px-2 py-1 text-xs font-semibold tracking-wide text-red-200 lg:hidden">
                   AI OS
                 </div>
@@ -242,11 +352,40 @@ export const AppShell = () => {
             </div>
           </header>
 
-          <main className="motion-page-enter px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+          <main className="motion-page-enter px-4 pb-24 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:px-8">
             <Outlet />
           </main>
         </div>
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0a0b10]/95 px-2 py-1 backdrop-blur-xl sm:hidden">
+        <div className="grid grid-cols-5 gap-1">
+          {[
+            { label: "Home", to: "/overview", icon: SIDEBAR_TOP_ITEMS[0].icon },
+            { label: "Plan", to: "/planning", icon: PLANNING_GROUP.icon },
+            { label: "Ruby", to: "/ruby-ai", icon: SIDEBAR_BOTTOM_ITEMS.find((item) => item.to === "/ruby-ai")?.icon ?? Sparkles },
+            { label: "Insights", to: "/ai-insights", icon: SIDEBAR_BOTTOM_ITEMS.find((item) => item.to === "/ai-insights")?.icon ?? FolderKanban },
+            { label: "More", to: "/settings", icon: PanelLeftClose },
+          ].map((item) => {
+            const active = isActivePath(location.pathname, item.to) || (item.to === "/planning" && isPlanningActive);
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => goTo(item.to)}
+                className={cn(
+                  "flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 text-[10px]",
+                  active ? "bg-red-500/12 text-red-100" : "text-zinc-400"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 };

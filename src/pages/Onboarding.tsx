@@ -34,7 +34,6 @@ import {
   type MainFinancialGoal,
 } from "@/lib/onboardingSettingsFoundation";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 type OnboardingStep =
   | "welcome"
@@ -83,7 +82,7 @@ const SAFE_SPEND_OPTIONS = [
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, completeOnboarding, isMockMode } = useAuth();
   const { setDefaultCurrency } = useSettings();
   const { state, patch } = useOnboardingFoundation();
   const [stepIndex, setStepIndex] = useState(0);
@@ -116,16 +115,12 @@ const Onboarding = () => {
     setDefaultCurrency(state.preferredCurrency);
     if (user?.id) {
       localStorage.setItem(`hasCompletedOnboarding:${user.id}`, "true");
-      await supabase
-        .from("profiles")
-        .update({
-          has_completed_onboarding: true,
-          default_currency: state.preferredCurrency,
-          first_name: profile?.first_name ?? "Ruby User",
-        })
-        .eq("id", user.id);
+      await completeOnboarding({
+        preferredCurrency: state.preferredCurrency,
+        onboardingCompleted: true,
+      });
     }
-    toast.success("Onboarding completed. Ruby AI is ready.");
+    toast.success(isMockMode ? "Onboarding completed in demo mode." : "Onboarding completed. Ruby AI is ready.");
     navigate("/overview");
   };
 

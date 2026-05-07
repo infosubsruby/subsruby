@@ -40,33 +40,33 @@ const Index = () => {
     <div className="min-h-screen bg-[#07090d]">
       <Navbar />
 
-      <section className="relative overflow-hidden px-4 pb-14 pt-28 sm:pb-20 sm:pt-32">
+      <section className="relative overflow-hidden px-4 pb-10 pt-20 sm:pb-20 sm:pt-32">
         <div className="pointer-events-none absolute left-[-120px] top-20 h-80 w-80 rounded-full bg-red-600/18 blur-[120px]" />
         <div className="pointer-events-none absolute right-[-100px] top-40 h-72 w-72 rounded-full bg-rose-500/14 blur-[120px]" />
         <div className="container mx-auto max-w-6xl">
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center sm:mb-8">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-red-200">
               <Sparkles className="h-3.5 w-3.5" />
               AI-Powered Personal Finance OS
             </div>
-            <h1 className="text-4xl font-semibold tracking-tight text-zinc-100 sm:text-5xl md:text-6xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-zinc-100 sm:text-5xl md:text-6xl">
               Your AI Financial Operating System
             </h1>
-            <p className="mx-auto mt-4 max-w-3xl text-base text-zinc-300 sm:text-lg">
+            <p className="mx-auto mt-3 max-w-3xl text-sm text-zinc-300 sm:mt-4 sm:text-lg">
               Ruby AI helps you track spending, optimize subscriptions, build smarter budgets, and reach your financial goals.
             </p>
             <p className="mx-auto mt-2 max-w-3xl text-sm text-zinc-400">
               Understand, plan, and optimize your money with Ruby AI.
             </p>
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-6 grid grid-cols-1 gap-2 sm:mt-7 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
               <Link to="/signup">
-                <Button size="lg" className="gap-2">
+                <Button size="lg" className="w-full gap-2 sm:w-auto">
                   Start for free
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/login">
-                <Button size="lg" variant="outline">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
                   View demo
                 </Button>
               </Link>
@@ -168,7 +168,7 @@ const Index = () => {
       </LandingSection>
 
       <LandingSection eyebrow="Pricing Preview" title="Simple plans for growing financial intelligence">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:gap-4 md:grid-cols-2">
           <LandingCard
             title="Free"
             description="Get started with manual tracking and core planning."
@@ -205,23 +205,23 @@ const Index = () => {
         </div>
       </LandingSection>
 
-      <section className="px-4 pb-20 pt-10">
+      <section className="px-4 pb-20 pt-8 sm:pt-10">
         <div className="container mx-auto max-w-4xl">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:p-10">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-center shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:p-10">
             <div className="pointer-events-none absolute -right-20 top-[-40px] h-44 w-44 rounded-full bg-red-600/20 blur-3xl" />
-            <h2 className="text-3xl font-semibold tracking-tight text-zinc-100">Start managing your money with Ruby AI.</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-100 sm:text-3xl">Start managing your money with Ruby AI.</h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm text-zinc-400">
               Track spending, manage subscriptions, optimize budgets, and improve financial decisions with your AI finance brain.
             </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-5 grid grid-cols-1 gap-2 sm:mt-6 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
               <Link to="/signup">
-                <Button size="lg" className="gap-2">
+                <Button size="lg" className="w-full gap-2 sm:w-auto">
                   Create your free account
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/login">
-                <Button size="lg" variant="outline">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
                   Explore demo dashboard
                 </Button>
               </Link>

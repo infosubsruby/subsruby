@@ -1,11 +1,18 @@
-export const DEMO_DEFAULT_CURRENCY = "USD" as const;
-export const DEMO_USER_NAME = "Alex Carter";
+import { financeMockDataBundle } from "@/data/mock/financeMockData";
 
-export const DEMO_MONTHLY_INCOME = 6200;
-export const DEMO_MONTHLY_EXPENSES = 4380;
-export const DEMO_MONTHLY_SUBSCRIPTIONS = 86;
-export const DEMO_GOAL_PROGRESS_PCT = 47;
-export const DEMO_FINANCIAL_HEALTH_SCORE = 78;
+export const DEMO_DEFAULT_CURRENCY = financeMockDataBundle.profile.defaultCurrency;
+export const DEMO_USER_NAME = financeMockDataBundle.profile.displayName;
+
+export const DEMO_MONTHLY_INCOME = financeMockDataBundle.reports[0]?.income ?? 6200;
+export const DEMO_MONTHLY_EXPENSES = financeMockDataBundle.reports[0]?.expenses ?? 4380;
+export const DEMO_MONTHLY_SUBSCRIPTIONS = financeMockDataBundle.subscriptions.reduce(
+  (sum, item) => sum + (item.billingCycle === "yearly" ? item.amount / 12 : item.amount),
+  0
+);
+export const DEMO_GOAL_PROGRESS_PCT = Math.round(
+  ((financeMockDataBundle.goals[0]?.currentAmount ?? 0) / Math.max(1, financeMockDataBundle.goals[0]?.targetAmount ?? 1)) * 100
+);
+export const DEMO_FINANCIAL_HEALTH_SCORE = financeMockDataBundle.financialHealth.score;
 export const DEMO_HEALTH_PROFILE = {
   monthlyIncome: 2800,
   monthlyExpenses: 2050,
@@ -18,32 +25,26 @@ export const DEMO_HEALTH_PROFILE = {
 } as const;
 
 export const DEMO_CATEGORIES = [
-  "Food & Dining",
-  "Transportation",
-  "Shopping",
-  "Subscriptions",
-  "Housing",
-  "Income",
-  "Savings",
-  "Entertainment",
-  "Health",
-  "Education",
+  ...new Set([
+    ...financeMockDataBundle.budgets.map((item) => item.categoryName),
+    ...financeMockDataBundle.transactions.map((item) => item.category),
+    "Subscriptions",
+    "Savings",
+    "Health",
+    "Education",
+  ]),
 ] as const;
 
-export const DEMO_WALLETS = [
-  "Cash Wallet",
-  "Main Bank Account",
-  "Savings Account",
-  "Credit Card",
-  "Crypto Wallet",
-] as const;
+export const DEMO_WALLETS = financeMockDataBundle.wallets.map((item) => item.name) as readonly string[];
 
 export const DEMO_GOALS = [
-  "Emergency Fund",
-  "New Laptop",
-  "Travel Fund",
-  "Tuition",
-  "Investment Starter",
+  ...new Set([
+    ...financeMockDataBundle.goals.map((item) => item.title),
+    "New Laptop",
+    "Travel Fund",
+    "Tuition",
+    "Investment Starter",
+  ]),
 ] as const;
 
 export type DemoTransaction = {
@@ -55,13 +56,11 @@ export type DemoTransaction = {
 };
 
 export const DEMO_TRANSACTIONS: DemoTransaction[] = [
-  { merchant: "Salary", category: "Income", amount: 6200, type: "income", date: "2026-04-01" },
-  { merchant: "Rent", category: "Housing", amount: 1800, type: "expense", date: "2026-04-02" },
-  { merchant: "Grocery Store", category: "Food & Dining", amount: 124, type: "expense", date: "2026-04-04" },
-  { merchant: "Starbucks Coffee", category: "Food & Dining", amount: 9, type: "expense", date: "2026-04-05" },
-  { merchant: "Uber Ride", category: "Transportation", amount: 27, type: "expense", date: "2026-04-07" },
-  { merchant: "Spotify", category: "Subscriptions", amount: 11, type: "expense", date: "2026-04-10" },
-  { merchant: "Netflix", category: "Subscriptions", amount: 16, type: "expense", date: "2026-04-11" },
-  { merchant: "Amazon", category: "Shopping", amount: 82, type: "expense", date: "2026-04-14" },
-  { merchant: "Apple Music", category: "Entertainment", amount: 11, type: "expense", date: "2026-04-15" },
+  ...financeMockDataBundle.transactions.map((item): DemoTransaction => ({
+    merchant: item.merchant,
+    category: (item.category as (typeof DEMO_CATEGORIES)[number]) ?? "Other",
+    amount: item.amount,
+    type: item.type === "income" ? "income" : "expense",
+    date: item.date,
+  })),
 ];

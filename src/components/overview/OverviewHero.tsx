@@ -60,19 +60,19 @@ export const OverviewHero = ({
     healthScore >= 80 ? "text-emerald-300" : healthScore >= 60 ? "text-amber-300" : "text-red-300";
 
   return (
-    <section className="grid gap-6 xl:grid-cols-12">
+    <section className="grid gap-4 sm:gap-6 xl:grid-cols-12">
       <div className="xl:col-span-7">
-        <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-7 shadow-[0_20px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:rounded-[28px] sm:p-7">
           <div className="pointer-events-none absolute -left-12 -top-10 h-40 w-40 rounded-full bg-red-600/15 blur-3xl" />
           <div className="pointer-events-none absolute right-8 top-8 h-20 w-20 rounded-full bg-rose-500/20 blur-2xl" />
 
-          <p className="text-sm tracking-wide text-zinc-400">{greeting}</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-100 sm:text-4xl">
+          <p className="text-xs tracking-wide text-zinc-400 sm:text-sm">{greeting}</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-100 sm:text-4xl">
             AI Financial Command Center
           </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-zinc-300">{summary}</p>
+          <p className="mt-3 max-w-3xl text-xs leading-relaxed text-zinc-300 sm:mt-4 sm:text-sm">{summary}</p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-2 sm:mt-5 sm:gap-3 sm:grid-cols-3">
             {trends.map((trend) => (
               <div key={trend.label} className="rounded-xl border border-white/10 bg-black/25 px-3 py-3">
                 <p className="text-[11px] uppercase tracking-wider text-zinc-500">{trend.label}</p>
@@ -90,7 +90,7 @@ export const OverviewHero = ({
             ))}
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-2 sm:mt-4 sm:gap-3 sm:grid-cols-2">
             {insights.map((item) => (
               <div key={item.title} className="rounded-xl border border-white/10 bg-black/25 px-3 py-3">
                 <div className={cn("rounded-lg border px-3 py-2", insightToneClasses[item.kind])}>
@@ -109,14 +109,14 @@ export const OverviewHero = ({
       </div>
 
       <div className="xl:col-span-5">
-        <div className="relative h-full overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#171922]/90 to-[#0c0e15]/95 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+        <div className="relative h-full overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br from-[#171922]/90 to-[#0c0e15]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:rounded-[28px] sm:p-6">
           <div className="pointer-events-none absolute -right-10 -top-8 h-28 w-28 rounded-full bg-red-500/25 blur-2xl" />
 
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Financial Health Score</p>
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-400 shadow-[0_0_15px_rgba(248,113,113,0.9)]" />
           </div>
-          <p className={cn("text-5xl font-bold leading-none", healthTone)}>{healthScore}</p>
+          <p className={cn("text-4xl font-bold leading-none sm:text-5xl", healthTone)}>{healthScore}</p>
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-zinc-400">{healthLevel}</p>
 
           <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
@@ -132,7 +132,7 @@ export const OverviewHero = ({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-2 sm:mt-4 sm:gap-3 sm:grid-cols-2">
             <article className="rounded-xl border border-white/10 bg-black/25 p-3">
               <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500">
                 <Gauge className="h-3.5 w-3.5 text-red-300" />

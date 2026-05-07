@@ -9,6 +9,7 @@ import { subscriptionsKeys } from "./subscriptions/keys";
 import type { CreateSubscriptionData, Subscription } from "./subscriptions/types";
 import { fetchSubscriptions, insertSubscription, patchSubscription, removeSubscription } from "./subscriptions/api";
 import { errorMessageOrValue } from "@/lib/error";
+import { financeMockDataBundle } from "@/data/mock/financeMockData";
 
 export type { CreateSubscriptionData, Subscription };
 
@@ -17,7 +18,7 @@ export type CreateSubscriptionResult =
   | { success: false; reason: "limit" | "auth" | "error" };
 
 export const useSubscriptions = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isMockMode } = useAuth();
   const { isPro } = useSubscription();
   const queryClient = useQueryClient();
 
@@ -28,17 +29,35 @@ export const useSubscriptions = () => {
     queryKey: listKey,
     queryFn: async () => {
       if (!user) return [];
+      if (isMockMode) {
+        return financeMockDataBundle.subscriptions.map((item, index) => ({
+          id: index + 1,
+          user_id: user.id,
+          name: item.name,
+          slug: item.name.toLowerCase().replace(/\s+/g, "-"),
+          price: item.amount,
+          currency: item.currency,
+          billing_cycle: item.billingCycle === "yearly" ? "yearly" : "monthly",
+          start_date: item.createdAt.slice(0, 10),
+          next_payment_date: item.nextBillingDate,
+          website_url: null,
+          card_color: "#E50914",
+          country_code: null,
+          created_at: item.createdAt,
+          is_marked_unused: false,
+        } satisfies Subscription));
+      }
       return fetchSubscriptions(user.id);
     },
     enabled: !!user,
   });
 
-  const subscriptions = (query.data ?? []) as Subscription[];
+  const subscriptions = useMemo(() => (query.data ?? []) as Subscription[], [query.data]);
   const isLoading = user ? query.isLoading : false;
 
   // Keep realtime sync, but update the shared query cache instead of local component state.
   useEffect(() => {
-    if (!user) return;
+    if (!user || isMockMode) return;
 
     const channel = supabase
       .channel("subscriptions-realtime")
@@ -85,7 +104,7 @@ export const useSubscriptions = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient, listKey]);
+  }, [isMockMode, user, queryClient, listKey]);
 
   const canAddSubscription = (): boolean => {
     if (isAdmin || isPro) return true;
@@ -97,6 +116,25 @@ export const useSubscriptions = () => {
   const createMutation = useMutation({
     mutationFn: async (payload: CreateSubscriptionData) => {
       if (!user) throw new Error("Not authenticated");
+      if (isMockMode) {
+        const synthetic: Subscription = {
+          id: Date.now(),
+          user_id: user.id,
+          name: payload.name,
+          slug: payload.slug,
+          price: payload.price,
+          currency: payload.currency,
+          billing_cycle: payload.billing_cycle,
+          start_date: payload.start_date,
+          next_payment_date: payload.next_payment_date,
+          website_url: payload.website_url ?? null,
+          card_color: payload.card_color,
+          country_code: payload.country_code ?? null,
+          created_at: new Date().toISOString(),
+          is_marked_unused: Boolean(payload.is_marked_unused),
+        };
+        return synthetic;
+      }
       return insertSubscription(user.id, payload);
     },
     onMutate: async (payload) => {
@@ -150,6 +188,7 @@ export const useSubscriptions = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: number; payload: Partial<CreateSubscriptionData> }) => {
+      if (isMockMode) return;
       await patchSubscription(id, payload);
     },
     onError: (err) => {
@@ -164,6 +203,7 @@ export const useSubscriptions = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
+      if (isMockMode) return;
       await removeSubscription(id);
     },
     onError: (err) => {

@@ -1,5 +1,6 @@
 import type { Budget, Transaction } from "@/hooks/useFinance";
 import type { Subscription } from "@/hooks/subscriptions/types";
+import type { SeverityLevel } from "@/types/common";
 
 type TrendPoint = { label: string; value: number };
 
@@ -25,7 +26,7 @@ type HeatmapCell = {
 type AIInsight = {
   title: string;
   detail: string;
-  severity: "info" | "warning" | "positive";
+  severity: Extract<SeverityLevel, "info" | "success" | "warning">;
 };
 
 export type AnalyticsIntelligence = {
@@ -281,7 +282,7 @@ export const buildAnalyticsIntelligence = ({
   let weekendAmount = 0;
   let nightAmount = 0;
   let impulseAmount = 0;
-  let dailySpend: Record<string, number> = {};
+  const dailySpend: Record<string, number> = {};
   for (const tx of expenses) {
     const amount = safeAmount(tx.amount);
     const txDate = new Date(tx.date);
@@ -351,7 +352,7 @@ export const buildAnalyticsIntelligence = ({
         totalRecurringBurdenPct > 22
           ? "Subscription costs are becoming financially inefficient."
           : "Subscription load remains within a healthy efficiency band.",
-      severity: totalRecurringBurdenPct > 22 ? "warning" : "positive",
+      severity: totalRecurringBurdenPct > 22 ? "warning" : "success",
     },
     {
       title: "Savings Growth Pulse",
@@ -359,7 +360,7 @@ export const buildAnalyticsIntelligence = ({
         savingsMomentumPct >= 0
           ? "Savings growth is outperforming previous months."
           : "Savings momentum has weakened and needs proactive correction.",
-      severity: savingsMomentumPct >= 0 ? "positive" : "warning",
+      severity: savingsMomentumPct >= 0 ? "success" : "warning",
     },
     {
       title: "Behavioral Pattern",

@@ -5,12 +5,14 @@ import { useSubscriptions, Subscription } from "./useSubscriptions";
 import { toast } from "sonner";
 import { formatMonthShortYear } from "@/i18n/date";
 import type { Database } from "@/integrations/supabase/types";
+import type { TransactionType } from "@/types/common";
+import { financeMockDataBundle } from "@/data/mock/financeMockData";
 
 export interface Transaction {
   id: string;
   user_id: string;
   amount: number;
-  type: "income" | "expense";
+  type: Extract<TransactionType, "income" | "expense">;
   category: string;
   description: string | null;
   currency?: string | null;
@@ -31,7 +33,7 @@ export interface Budget {
 
 export interface CreateTransactionData {
   amount: number;
-  type: "income" | "expense";
+  type: Extract<TransactionType, "income" | "expense">;
   category: string;
   description?: string;
   currency?: string;
@@ -83,7 +85,7 @@ const isSameTransactionPayload = (a: Transaction, b: Transaction) => {
 };
 
 export const useFinance = () => {
-  const { user } = useAuth();
+  const { user, isMockMode } = useAuth();
   const { subscriptions } = useSubscriptions();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -93,6 +95,25 @@ export const useFinance = () => {
   const fetchTransactions = useCallback(async () => {
     if (!user) {
       setTransactions([]);
+      return true;
+    }
+    if (isMockMode) {
+      const demoRows: Transaction[] = financeMockDataBundle.transactions
+        .filter((item) => item.userId === user.id)
+        .map((item) => ({
+          id: item.id,
+          user_id: item.userId,
+          amount: item.amount,
+          type: item.type === "income" ? "income" : "expense",
+          category: item.category,
+          description: item.description,
+          currency: item.currency,
+          is_recurring: item.isRecurring,
+          recurring_day: null,
+          date: item.date,
+          created_at: item.createdAt,
+        }));
+      setTransactions(demoRows);
       return true;
     }
 
@@ -118,11 +139,25 @@ export const useFinance = () => {
       console.error(error);
       return false;
     }
-  }, [user]);
+  }, [isMockMode, user]);
 
   const fetchBudgets = useCallback(async () => {
     if (!user) {
       setBudgets([]);
+      return true;
+    }
+    if (isMockMode) {
+      const demoRows: Budget[] = financeMockDataBundle.budgets
+        .filter((item) => item.userId === user.id)
+        .map((item) => ({
+          id: item.id,
+          user_id: item.userId,
+          category: item.categoryName,
+          limit_amount: item.limitAmount,
+          currency: item.currency,
+          created_at: item.createdAt,
+        }));
+      setBudgets(demoRows);
       return true;
     }
 
@@ -147,7 +182,7 @@ export const useFinance = () => {
       console.error(error);
       return false;
     }
-  }, [user]);
+  }, [isMockMode, user]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -180,7 +215,7 @@ export const useFinance = () => {
 
   // Real-time for transactions
   useEffect(() => {
-    if (!user) return;
+    if (!user || isMockMode) return;
 
     const channel = supabase
       .channel("transactions-realtime")
@@ -231,11 +266,11 @@ export const useFinance = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [isMockMode, user]);
 
   // Real-time for budgets
   useEffect(() => {
-    if (!user) return;
+    if (!user || isMockMode) return;
 
     const channel = supabase
       .channel("budgets-realtime")
@@ -286,7 +321,7 @@ export const useFinance = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [isMockMode, user]);
 
   const createTransaction = async (data: CreateTransactionData) => {
     if (!user) {
@@ -307,6 +342,25 @@ export const useFinance = () => {
     if (!safeCategory) {
       toast.error("Invalid transaction category");
       return { success: false };
+    }
+    if (isMockMode) {
+      const now = new Date().toISOString();
+      const demoTx: Transaction = {
+        id: createOptimisticId("demo-transaction"),
+        user_id: user.id,
+        amount: safeAmount,
+        type: data.type,
+        category: safeCategory,
+        description: data.description ?? null,
+        currency: data.currency ?? "USD",
+        is_recurring: Boolean(data.isRecurring),
+        recurring_day: data.recurringDay ?? null,
+        date: safeDate,
+        created_at: now,
+      };
+      setTransactions((prev) => [demoTx, ...prev]);
+      toast.success("Transaction added successfully!");
+      return { success: true };
     }
 
     // Optimistically add to UI immediately.
@@ -336,8 +390,13 @@ export const useFinance = () => {
       description: data.description ?? null,
       date: safeDate,
     };
-    const withRecurring = data.isRecurring
-      ? ({ ...baseInsert, is_recurring: true, recurring_day: data.recurringDay ?? null } as any)
+    type TransactionInsertCompatibility = TransactionInsert & {
+      is_recurring?: boolean | null;
+      recurring_day?: string | null;
+      currency?: string | null;
+    };
+    const withRecurring: TransactionInsertCompatibility = data.isRecurring
+      ? { ...baseInsert, is_recurring: true, recurring_day: data.recurringDay ?? null }
       : baseInsert;
     const withCurrency = data.currency
       ? ({ ...withRecurring, currency: data.currency } as unknown as TransactionInsert)
@@ -379,6 +438,11 @@ export const useFinance = () => {
     const previous = transactions;
     setTransactions((prev) => prev.filter((t) => t.id !== id));
 
+    if (isMockMode) {
+      toast.success("Transaction deleted!");
+      return { success: true };
+    }
+
     const { error } = await supabase.from("transactions").delete().eq("id", id);
 
     if (error) {
@@ -396,7 +460,7 @@ export const useFinance = () => {
     const target = transactions.find((t) => t.id === id);
     if (!target) return { success: false };
 
-    const nextValue = !Boolean((target as any).is_recurring);
+    const nextValue = !target.is_recurring;
     const previous = transactions;
     setTransactions((prev) =>
       prev.map((t) =>
@@ -410,12 +474,24 @@ export const useFinance = () => {
       )
     );
 
-    const { error } = await (supabase.from("transactions") as any)
+    if (isMockMode) {
+      return { success: true };
+    }
+
+    const updatePayload: Database["public"]["Tables"]["transactions"]["Update"] & {
+      is_recurring?: boolean | null;
+      recurring_day?: string | null;
+    } = {
+      is_recurring: nextValue,
+      recurring_day: nextValue
+        ? target.recurring_day ?? String(new Date(`${target.date}T00:00:00`).getDate())
+        : null,
+    };
+
+    const { error } = await supabase
+      .from("transactions")
       .update({
-        is_recurring: nextValue,
-        recurring_day: nextValue
-          ? (target as any).recurring_day ?? String(new Date(`${target.date}T00:00:00`).getDate())
-          : null,
+        ...updatePayload,
       })
       .eq("id", id);
 
@@ -443,6 +519,19 @@ export const useFinance = () => {
     if (!safeCategory) {
       toast.error("Invalid budget category");
       return { success: false };
+    }
+    if (isMockMode) {
+      const demoBudget: Budget = {
+        id: createOptimisticId("demo-budget"),
+        user_id: user.id,
+        category: safeCategory,
+        limit_amount: safeLimitAmount,
+        currency: data.currency ?? "USD",
+        created_at: new Date().toISOString(),
+      };
+      setBudgets((prev) => [demoBudget, ...prev]);
+      toast.success("Budget created successfully!");
+      return { success: true };
     }
 
     // Optimistically add to UI immediately.
@@ -511,6 +600,14 @@ export const useFinance = () => {
   };
 
   const updateBudget = async (id: string, limit_amount: number) => {
+    if (isMockMode) {
+      setBudgets((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, limit_amount } : b))
+      );
+      toast.success("Budget updated!");
+      return { success: true };
+    }
+
     const { error } = await supabase
       .from("budgets")
       .update({ limit_amount })
@@ -532,6 +629,11 @@ export const useFinance = () => {
   const deleteBudget = async (id: string) => {
     const previous = budgets;
     setBudgets((prev) => prev.filter((b) => b.id !== id));
+
+    if (isMockMode) {
+      toast.success("Budget deleted!");
+      return { success: true };
+    }
 
     const { error } = await supabase.from("budgets").delete().eq("id", id);
 

@@ -1,34 +1,36 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { errorMessageOrValue } from '@/lib/error';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [customerPortalUrl, setCustomerPortalUrl] = useState<string | null>(null);
+  const { user, isMockMode, currentPlan } = useAuth();
 
   useEffect(() => {
     const checkSubscription = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        if (isMockMode) {
+          setIsPro(currentPlan === "pro");
+          setStatus(currentPlan === "pro" ? "active" : "free");
+          setCustomerPortalUrl(null);
           setLoading(false);
           return;
         }
 
-        const { data: sessionData } = await supabase.auth.getSession();
-        const sessionUserId = sessionData.session?.user?.id ?? null;
-        console.log("1. Aktif Kullanıcı ID:", user?.id || sessionUserId);
+        if (!user) {
+          setLoading(false);
+          return;
+        }
 
         const { data: subscriptionRow, error: subscriptionError } = await supabase
           .from("user_subscriptions")
           .select("status, customer_portal_url")
           .eq("user_id", user.id)
           .maybeSingle();
-
-        console.log("2. Supabase Veri:", subscriptionRow, "3. Supabase Hata:", subscriptionError);
-        if (subscriptionError) console.log("3b. Supabase Hata Obj:", subscriptionError);
 
         if (!subscriptionError) {
           const status = subscriptionRow?.status ? String(subscriptionRow.status) : null;
@@ -57,7 +59,7 @@ export const useSubscription = () => {
     };
 
     checkSubscription();
-  }, []);
+  }, [currentPlan, isMockMode, user]);
 
   return { isPro, status, customerPortalUrl, loading };
 };

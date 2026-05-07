@@ -31,11 +31,11 @@ type PricingFaqProps = {
 
 export const PricingToggle = ({ billingCycle, onCycleChange }: PricingToggleProps) => {
   return (
-    <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/25 p-1">
+    <div className="inline-flex w-full items-center justify-between gap-1 rounded-xl border border-white/10 bg-black/25 p-1 sm:w-auto sm:justify-start sm:gap-2">
       <button
         type="button"
         onClick={() => onCycleChange("monthly")}
-        className={`rounded-lg px-3 py-1.5 text-sm transition ${
+        className={`flex-1 rounded-lg px-3 py-1.5 text-sm transition sm:flex-none ${
           billingCycle === "monthly" ? "bg-red-500/20 text-red-100" : "text-zinc-400 hover:text-zinc-200"
         }`}
       >
@@ -44,13 +44,13 @@ export const PricingToggle = ({ billingCycle, onCycleChange }: PricingToggleProp
       <button
         type="button"
         onClick={() => onCycleChange("yearly")}
-        className={`rounded-lg px-3 py-1.5 text-sm transition ${
+        className={`flex-1 rounded-lg px-3 py-1.5 text-sm transition sm:flex-none ${
           billingCycle === "yearly" ? "bg-red-500/20 text-red-100" : "text-zinc-400 hover:text-zinc-200"
         }`}
       >
         Yearly
       </button>
-      <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200">
+      <span className="hidden rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200 sm:inline-flex">
         Save yearly
       </span>
     </div>

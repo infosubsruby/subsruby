@@ -23,6 +23,7 @@ import {
   Search,
   ShieldAlert,
   Filter,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Budget, Transaction } from "@/hooks/useFinance";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,7 @@ export const TransactionList = ({
   const [recurringOnly, setRecurringOnly] = useState(false);
   const [unusualOnly, setUnusualOnly] = useState(false);
   const [aiFlaggedOnly, setAiFlaggedOnly] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const CATEGORY_KEY_MAP: Record<string, string> = {
     Entertainment: "entertainment",
@@ -507,13 +509,13 @@ export const TransactionList = ({
   };
 
   return (
-    <div className="space-y-6">
-      <section className="premium-section rounded-[26px] p-6">
-        <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="space-y-4 sm:space-y-6">
+      <section className="premium-section rounded-[26px] p-4 sm:p-6">
+        <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Transaction Intelligence Hero</p>
-            <h2 className="mt-1 text-2xl font-semibold text-zinc-100">Smart Financial Activity Center</h2>
-            <p className="mt-2 text-sm text-zinc-300">
+            <h2 className="mt-1 text-xl font-semibold text-zinc-100 sm:text-2xl">Smart Financial Activity Center</h2>
+            <p className="mt-2 text-xs text-zinc-300 sm:text-sm">
               Ruby AI analyzed {monthStats.transactionCount} transactions this month. {getCategoryLabel(monthStats.topCategory)} spending is a key focus, and {monthStats.recurringCount} recurring payments were detected.
             </p>
           </div>
@@ -521,7 +523,7 @@ export const TransactionList = ({
             AI monitoring active
           </span>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 sm:gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <article className="rounded-xl border border-white/10 bg-black/25 p-3">
             <p className="text-xs text-zinc-500">Total Income This Month</p>
             <p className="mt-1 text-lg font-semibold text-emerald-300">{formatCurrency(monthStats.income, defaultCurrency || "USD")}</p>
@@ -561,12 +563,12 @@ export const TransactionList = ({
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-2 sm:space-y-3">
         <div className="flex items-center gap-2">
           <BrainCircuit className="h-4 w-4 text-red-300" />
           <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">AI Transaction Insights</h3>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 xl:grid-cols-3">
           {insightCards.map((insight) => (
             <TransactionInsightCard
               key={insight.id}
@@ -582,7 +584,7 @@ export const TransactionList = ({
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-2 sm:space-y-3">
         <div className="flex items-center gap-2">
           <CalendarClock className="h-4 w-4 text-red-300" />
           <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Smart Transaction List</h3>
@@ -622,11 +624,11 @@ export const TransactionList = ({
                   return (
                     <article
                       key={transaction.id}
-                      className="interactive-card motion-row-enter group rounded-2xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_10px_26px_rgba(0,0,0,0.25)] transition hover:border-red-500/35 hover:bg-red-500/[0.04]"
+                      className="interactive-card motion-row-enter group rounded-2xl border border-white/10 bg-white/[0.03] p-2.5 shadow-[0_10px_26px_rgba(0,0,0,0.25)] transition hover:border-red-500/35 hover:bg-red-500/[0.04] sm:p-3"
                       style={{ animationDelay: `${Math.min(index * 28, 220)}ms` }}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
+                        <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
                           <div
                             className={cn(
                               "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
@@ -639,14 +641,14 @@ export const TransactionList = ({
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-sm font-medium text-zinc-100">{displayDesc}</span>
                               <Badge variant="secondary" className="font-normal text-[10px] px-1.5 py-0.5">{categoryLabel}</Badge>
-                              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-zinc-400">
+                              <span className="hidden items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-zinc-400 sm:inline-flex">
                                 {renderMerchantIcon(analysis)}
                                 {analysis?.merchantName || "Recorded Merchant"}
                               </span>
-                              <span className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-zinc-300">
+                              <span className="hidden items-center rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-zinc-300 sm:inline-flex">
                                 {walletLabel}
                               </span>
-                              <span className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-zinc-300">
+                              <span className="hidden items-center rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-zinc-300 sm:inline-flex">
                                 {transaction.type === "income" ? "Income" : "Expense"}
                               </span>
                               <span className={cn(
@@ -664,7 +666,7 @@ export const TransactionList = ({
                             </div>
                             <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
                               <span>{formatDate(transaction.date, { dateStyle: "medium" })}</span>
-                              <span>AI confidence {(analysis?.categoryConfidence || 0) * 100 > 0 ? `${((analysis?.categoryConfidence || 0) * 100).toFixed(0)}%` : "N/A"}</span>
+                              <span className="hidden sm:inline">AI confidence {(analysis?.categoryConfidence || 0) * 100 > 0 ? `${((analysis?.categoryConfidence || 0) * 100).toFixed(0)}%` : "N/A"}</span>
                               {analysis?.categorySuggestion ? (
                                 <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-0.5 text-sky-200">
                                   <BadgeInfo className="h-3 w-3" />
@@ -847,12 +849,21 @@ export const TransactionList = ({
         </article>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-black/25 p-4">
+      <section className="rounded-2xl border border-white/10 bg-black/25 p-3 sm:p-4">
         <div className="mb-3 flex items-center gap-2">
           <Filter className="h-4 w-4 text-red-300" />
           <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Filters & Smart Search</h3>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto h-7 gap-1 border-white/15 bg-white/[0.03] text-zinc-200 sm:hidden"
+            onClick={() => setFiltersOpen((prev) => !prev)}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            {filtersOpen ? "Hide" : "Show"}
+          </Button>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className={cn("grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4", filtersOpen ? "grid" : "hidden sm:grid")}>
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
             <Input
@@ -891,7 +902,7 @@ export const TransactionList = ({
           <Input type="number" min={0} placeholder="Min amount" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} />
           <Input type="number" min={0} placeholder="Max amount" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} />
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-4">
+        <div className={cn("mt-3 flex flex-wrap items-center gap-4", filtersOpen ? "flex" : "hidden sm:flex")}>
           <label className="flex items-center gap-2 text-xs text-zinc-300">
             <Switch checked={recurringOnly} onCheckedChange={setRecurringOnly} />
             Recurring only

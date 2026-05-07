@@ -98,6 +98,10 @@
 }
 
 @layer base {
+  html, #root {
+    overflow-x: clip;
+  }
+
   * {
     @apply border-border;
   }
@@ -107,6 +111,7 @@
     font-family: 'Inter', system-ui, sans-serif;
     background: linear-gradient(180deg, hsl(220, 20%, 6%) 0%, hsl(220, 22%, 4%) 100%);
     min-height: 100vh;
+    overflow-x: clip;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -116,11 +121,11 @@
 
 @layer utilities {
   .premium-page {
-    @apply space-y-6 sm:space-y-7;
+    @apply space-y-4 sm:space-y-7;
   }
 
   .premium-section {
-    @apply rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-5;
+    @apply rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 shadow-[0_18px_45px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:rounded-3xl sm:p-5;
   }
 
   .premium-card {
@@ -398,6 +403,17 @@
     .progress-animate,
     .icon-shift {
       transition: none !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .premium-heading {
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+
+    .premium-chart-panel {
+      padding: 0.7rem;
     }
   }
 

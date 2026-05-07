@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettings } from "@/hooks/useSettings";
@@ -32,10 +32,11 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { PRICING_PLANS } from "@/lib/monetization/plans";
 import { useFinance } from "@/hooks/useFinance";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
+import { toast } from "sonner";
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, profile, isLoading: authLoading, signOut } = useAuth();
+  const { user, profile, isLoading: authLoading, signOut, updateProfile, authProfile } = useAuth();
   const { defaultCurrency, setDefaultCurrency, notifications, setNotificationSetting } = useSettings();
   const { state, patch } = useOnboardingFoundation();
   const { activePlan, getUsageStatus } = usePlanAccess();
@@ -44,6 +45,12 @@ const Settings = () => {
   const [activeSection, setActiveSection] = useState<
     "plan" | "profile" | "financial" | "ruby" | "accounts" | "categories" | "reports" | "app" | "privacy"
   >("profile");
+  const fullName = `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || user?.fullName || "Ruby User";
+  const [editableFullName, setEditableFullName] = useState(fullName);
+
+  useEffect(() => {
+    setEditableFullName(fullName);
+  }, [fullName]);
 
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
@@ -57,7 +64,6 @@ const Settings = () => {
     );
   }
 
-  const fullName = `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || "Ruby User";
   const initials = fullName
     .split(" ")
     .map((part) => part[0] ?? "")
@@ -77,14 +83,23 @@ const Settings = () => {
     { id: "privacy", label: "Privacy & Security", icon: Shield },
   ] as const;
 
-  const riskySensitivity = useMemo(
-    () => (state.riskSensitivity === "high" ? "High" : state.riskSensitivity === "low" ? "Low" : "Medium"),
-    [state.riskSensitivity]
-  );
+  const riskySensitivity =
+    state.riskSensitivity === "high" ? "High" : state.riskSensitivity === "low" ? "Low" : "Medium";
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
+  };
+
+  const handleSaveProfile = async () => {
+    await updateProfile({
+      fullName: editableFullName.trim() || "Ruby User",
+      preferredCurrency: defaultCurrency,
+      monthlyIncome: state.monthlyIncome,
+      savingsTarget: state.monthlySavingsTarget,
+      rubyAIFocus: state.rubyFocus[0] ?? null,
+    });
+    toast.success("Profile preferences saved.");
   };
 
   const planDefinition = PRICING_PLANS.find((plan) => plan.id === activePlan);
@@ -106,7 +121,7 @@ const Settings = () => {
 
       <section className="grid gap-4 lg:grid-cols-12">
         <aside className="lg:col-span-4 xl:col-span-3">
-          <div className="sticky top-20 space-y-1 rounded-2xl border border-white/10 bg-white/[0.03] p-2">
+          <div className="space-y-1 rounded-2xl border border-white/10 bg-white/[0.03] p-2 lg:sticky lg:top-20">
             {sectionItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
@@ -115,7 +130,7 @@ const Settings = () => {
                   key={item.id}
                   type="button"
                   onClick={() => setActiveSection(item.id)}
-                  className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition ${
+                  className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs transition sm:text-sm ${
                     isActive
                       ? "border-red-500/45 bg-red-500/12 text-red-100"
                       : "border-transparent text-zinc-300 hover:border-white/10 hover:bg-white/[0.04]"
@@ -189,13 +204,23 @@ const Settings = () => {
                 </Avatar>
                 <div className="min-w-[220px] flex-1">
                   <Label>Name</Label>
-                  <Input value={fullName} readOnly className="mt-1 border-white/12 bg-black/20" />
+                  <Input
+                    value={editableFullName}
+                    onChange={(event) => setEditableFullName(event.target.value)}
+                    className="mt-1 border-white/12 bg-black/20"
+                  />
                 </div>
                 <div className="min-w-[220px] flex-1">
                   <Label>Email</Label>
                   <Input value={user?.email ?? ""} readOnly className="mt-1 border-white/12 bg-black/20" />
                 </div>
               </div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-zinc-400">
+                Your financial data stays private to your account.
+              </div>
+              <Button variant="outline" onClick={() => void handleSaveProfile()}>
+                Save Profile Changes
+              </Button>
             </SettingsSectionCard>
           ) : null}
 
@@ -247,7 +272,7 @@ const Settings = () => {
                   <Input
                     type="number"
                     min={0}
-                    value={state.monthlyIncome}
+                    value={authProfile?.monthlyIncome ?? state.monthlyIncome}
                     onChange={(event) => patch({ monthlyIncome: Number(event.target.value) || 0 })}
                     className="border-white/12 bg-black/20"
                   />
@@ -257,7 +282,7 @@ const Settings = () => {
                   <Input
                     type="number"
                     min={0}
-                    value={state.monthlySavingsTarget}
+                    value={authProfile?.savingsTarget ?? state.monthlySavingsTarget}
                     onChange={(event) => patch({ monthlySavingsTarget: Number(event.target.value) || 0 })}
                     className="border-white/12 bg-black/20"
                   />

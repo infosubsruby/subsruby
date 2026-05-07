@@ -59,16 +59,16 @@ export const RubyAIConversation = ({
   };
 
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+    <section className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04] p-3.5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:rounded-[30px] sm:p-5">
       <div className="pointer-events-none absolute -left-10 top-[-26px] h-36 w-36 rounded-full bg-red-500/15 blur-3xl" />
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-zinc-100">Ruby AI Conversation</h2>
-          <p className="text-xs text-zinc-500">Personal AI CFO mode. Context-aware financial advisory responses.</p>
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-100 sm:text-xl">Ruby AI Conversation</h2>
+          <p className="text-[11px] text-zinc-500 sm:text-xs">Personal AI CFO mode. Context-aware financial advisory responses.</p>
         </div>
       </div>
 
-      <div className="mb-4 h-[430px] space-y-3 overflow-y-auto rounded-2xl border border-white/10 bg-black/25 p-3">
+      <div className="mb-3 h-[46vh] min-h-[280px] space-y-3 overflow-y-auto rounded-2xl border border-white/10 bg-black/25 p-2.5 sm:mb-4 sm:h-[430px] sm:p-3">
         {messages.map((message, index) => (
           <article
             key={message.id}
@@ -114,7 +114,7 @@ export const RubyAIConversation = ({
         ) : null}
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide sm:mb-3 sm:flex-wrap sm:overflow-visible sm:pb-0">
         {suggestedPrompts.slice(0, 4).map((item) => (
           <button
             key={item.id}
@@ -123,14 +123,14 @@ export const RubyAIConversation = ({
               onPromptSelect(item.prompt);
               sendMessage(item.prompt);
             }}
-            className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] text-zinc-300 transition duration-200 hover:-translate-y-0.5 hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-100"
+            className="whitespace-nowrap rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] text-zinc-300 transition duration-200 hover:-translate-y-0.5 hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-100"
           >
             {item.label}
           </button>
         ))}
       </div>
       {!isThinking ? (
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide sm:flex-wrap sm:overflow-visible sm:pb-0">
           {suggestedPrompts.slice(4, 7).map((item) => (
             <button
               key={`follow-${item.id}`}
@@ -139,7 +139,7 @@ export const RubyAIConversation = ({
                 onPromptSelect(item.prompt);
                 sendMessage(item.prompt);
               }}
-              className="rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-[11px] text-red-100 transition hover:bg-red-500/20"
+              className="whitespace-nowrap rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-[11px] text-red-100 transition hover:bg-red-500/20"
             >
               Follow-up: {item.label}
             </button>
@@ -152,7 +152,7 @@ export const RubyAIConversation = ({
           event.preventDefault();
           sendMessage(draft);
         }}
-        className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 p-2"
+        className="sticky bottom-0 z-10 flex items-center gap-2 rounded-xl border border-white/10 bg-black/70 p-2 backdrop-blur"
       >
         <input
           value={draft}

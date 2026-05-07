@@ -30,6 +30,7 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
   const total = data.reduce((sum, item) => sum + item.value, 0);
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
 
   const getCategoryLabel = (name: string) => {
     switch (name) {
@@ -60,8 +61,8 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
 
   if (data.length === 0) {
     return (
-      <div className="glass-card rounded-xl p-5 h-[280px] flex flex-col">
-        <h3 className="font-display font-semibold text-lg mb-3">
+      <div className="glass-card flex h-[250px] flex-col rounded-xl p-3.5 sm:h-[280px] sm:p-5">
+        <h3 className="mb-2 text-base font-semibold sm:mb-3 sm:text-lg">
           {tFinance("spending_dist")}
         </h3>
         <div className="flex-1 min-h-0 w-full flex items-center justify-center text-muted-foreground">
@@ -72,20 +73,20 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
   }
 
   return (
-    <div className="glass-card rounded-xl p-5 h-[280px] flex flex-col">
-      <h3 className="font-display font-semibold text-lg mb-3">
+    <div className="glass-card flex h-[250px] flex-col rounded-xl p-3.5 sm:h-[280px] sm:p-5">
+      <h3 className="mb-2 text-base font-semibold sm:mb-3 sm:text-lg">
         {tFinance("spending_dist")}
       </h3>
-      <div className="flex-1 min-h-0 w-full flex items-center justify-center gap-4">
-        <div className="h-full w-[52%] flex items-center">
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+        <div className="flex h-[62%] w-full items-center justify-center sm:h-full sm:w-[52%]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={34}
-                outerRadius={56}
+                innerRadius={isMobile ? 26 : 34}
+                outerRadius={isMobile ? 46 : 56}
                 paddingAngle={2}
                 dataKey="value"
                 label={false}
@@ -116,7 +117,7 @@ export const SpendingPieChart = ({ data, currency }: SpendingPieChartProps) => {
           </ResponsiveContainer>
         </div>
 
-        <div className="w-[48%] flex flex-col justify-center gap-2">
+        <div className="grid w-full grid-cols-2 gap-x-2 gap-y-1.5 sm:w-[48%] sm:flex sm:flex-col sm:justify-center sm:gap-2">
           {data.slice(0, 6).map((item, index) => (
             <div key={item.name} className="flex items-center gap-1.5 text-xs text-gray-400">
               <div

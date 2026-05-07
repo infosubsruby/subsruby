@@ -25,6 +25,7 @@ import { useTranslations } from "@/i18n/useTranslations";
 import { formatMonthShortYear } from "@/i18n/date";
 import { formatCurrency } from "@/i18n/currency";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import {
   Plus,
@@ -67,6 +68,93 @@ interface MonthlyArchive {
   sentiment: "success" | "warning" | "neutral";
 }
 
+type MonthlyArchiveRow = Database["public"]["Tables"]["monthly_archives"]["Row"];
+type MonthlyArchiveInsert = Database["public"]["Tables"]["monthly_archives"]["Insert"];
+
+type MonthlyArchiveTableRow = Pick<
+  MonthlyArchiveRow,
+  "month_key" | "total_income" | "total_expense"
+> & {
+  month_year?: string;
+};
+
+const asMonthlyArchiveTableRow = (row: MonthlyArchiveRow): MonthlyArchiveTableRow => ({
+  month_key: row.month_key,
+  total_income: row.total_income,
+  total_expense: row.total_expense,
+  month_year: row.title,
+});
+
+const isArchiveSentiment = (value: string): value is MonthlyArchive["sentiment"] => {
+  return value === "success" || value === "warning" || value === "neutral";
+};
+
+const isJsonObject = (value: Json): value is Record<string, Json> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const readString = (value: Json | undefined): string | null => {
+  return typeof value === "string" ? value : null;
+};
+
+const readNumber = (value: Json | undefined): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const normalizeTransactionType = (value: Json | undefined): Transaction["type"] => {
+  const raw = readString(value);
+  // Project transaction model is "income" | "expense"; unsupported values (e.g. transfer) safely fallback.
+  return raw === "income" ? "income" : "expense";
+};
+
+const normalizeTransaction = (raw: Json, fallbackUserId: string): Transaction => {
+  const nowIso = new Date().toISOString();
+  const fallbackDate = nowIso.slice(0, 10);
+  const fallbackId =
+    globalThis.crypto?.randomUUID?.() ??
+    `tx-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  if (!isJsonObject(raw)) {
+    return {
+      id: fallbackId,
+      user_id: fallbackUserId || "demo-user",
+      amount: 0,
+      type: "expense",
+      category: "Other",
+      description: "",
+      date: fallbackDate,
+      created_at: nowIso,
+      currency: null,
+      is_recurring: null,
+      recurring_day: null,
+    };
+  }
+
+  return {
+    id: readString(raw.id) || fallbackId,
+    user_id: readString(raw.user_id) || fallbackUserId || "demo-user",
+    amount: readNumber(raw.amount) ?? 0,
+    type: normalizeTransactionType(raw.type),
+    category: readString(raw.category) || "Other",
+    description: readString(raw.description) ?? "",
+    date: readString(raw.date) || fallbackDate,
+    created_at: readString(raw.created_at) || nowIso,
+    currency: readString(raw.currency),
+    is_recurring: typeof raw.is_recurring === "boolean" ? raw.is_recurring : null,
+    recurring_day: readString(raw.recurring_day),
+  };
+};
+
+const normalizeTransactions = (rawData: Json | undefined, fallbackUserId: string): Transaction[] => {
+  if (!Array.isArray(rawData)) return [];
+  return rawData.map((entry) => normalizeTransaction(entry, fallbackUserId));
+};
+
 const Finance = () => {
   const QUICK_ADD_STORAGE_KEY = "finance.quickAddItems";
   const RECURRING_RULES_STORAGE_KEY = "finance.recurringRules";
@@ -99,7 +187,7 @@ const Finance = () => {
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddItem | null>(null);
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [monthlyArchives, setMonthlyArchives] = useState<MonthlyArchive[]>([]);
-  const [monthlyArchivesTableData, setMonthlyArchivesTableData] = useState<any[]>([]);
+  const [monthlyArchivesTableData, setMonthlyArchivesTableData] = useState<MonthlyArchiveTableRow[]>([]);
   const [clearedTransactionIds, setClearedTransactionIds] = useState<string[]>([]);
   const [resetRecurringTransactions, setResetRecurringTransactions] = useState<Transaction[]>([]);
   const [monthReviewArchive, setMonthReviewArchive] = useState<MonthlyArchive | null>(null);
@@ -177,23 +265,24 @@ const Finance = () => {
         if (error) throw error;
 
         const normalized =
-          (data?.map((item: any) => ({
-            id: String(item?.id || globalThis.crypto?.randomUUID?.() || `archive-${Date.now()}`),
-            monthKey: String(item?.month_key || item?.monthKey || item?.month_year || ""),
-            monthYear: String(item?.month_year || item?.monthYear || ""),
-            title: String(item?.title || item?.month_year || "Ay Özeti"),
-            totalIncome: Number(item?.total_income || item?.totalIncome || 0),
-            totalExpense: Number(item?.total_expense || item?.totalExpense || 0),
-            netSavings: Number(item?.net_savings || item?.netSavings || 0),
-            transactions: (Array.isArray(item?.transactions) ? item.transactions : []) as Transaction[],
-            aiInsight: String(item?.ai_message || item?.ai_insight || item?.aiInsight || ""),
-            sentiment:
-              item?.ai_sentiment === "success" || item?.ai_sentiment === "warning" || item?.ai_sentiment === "neutral"
-                ? item.ai_sentiment
-                : item?.sentiment === "success" || item?.sentiment === "warning" || item?.sentiment === "neutral"
-                ? item.sentiment
-                : "neutral",
-          })) as MonthlyArchive[]) ?? [];
+          (data?.map((item): MonthlyArchive => {
+            const transactionList = normalizeTransactions(item.transactions, user.id);
+            const sentiment = isArchiveSentiment(item.sentiment) ? item.sentiment : "neutral";
+            const monthYear = item.title.replace(" Özeti", "");
+
+            return {
+              id: item.id,
+              monthKey: item.month_key,
+              monthYear,
+              title: item.title,
+              totalIncome: Number(item.total_income || 0),
+              totalExpense: Number(item.total_expense || 0),
+              netSavings: Number(item.net_savings || 0),
+              transactions: transactionList,
+              aiInsight: item.ai_insight || "",
+              sentiment,
+            };
+          }) as MonthlyArchive[]) ?? [];
 
         if (isMounted && Array.isArray(normalized) && normalized.length > 0) {
           setMonthlyArchives(normalized);
@@ -215,7 +304,7 @@ const Finance = () => {
     const fetchArchivesForChart = async () => {
       const { data: archives } = await supabase.from("monthly_archives").select("*");
       if (isMounted) {
-        setMonthlyArchivesTableData(Array.isArray(archives) ? archives : []);
+        setMonthlyArchivesTableData(Array.isArray(archives) ? archives.map(asMonthlyArchiveTableRow) : []);
       }
     };
 
@@ -735,9 +824,15 @@ const Finance = () => {
         const resettingTransactions = activeTransactions ?? [];
 
         // Adım A: recurring işlemleri hafızaya al
-        const recurringTransactions = resettingTransactions.filter((t: any) => t?.is_recurring === true);
-        const recurringInsertPayloads = recurringTransactions.map((tx: any) => {
-          const recurringDay = Number(tx?.recurring_day);
+        type TransactionInsertCompatibility = Database["public"]["Tables"]["transactions"]["Insert"] & {
+          currency?: string | null;
+          is_recurring?: boolean | null;
+          recurring_day?: string | null;
+        };
+
+        const recurringTransactions = resettingTransactions.filter((t) => t.is_recurring === true);
+        const recurringInsertPayloads: TransactionInsertCompatibility[] = recurringTransactions.map((tx) => {
+          const recurringDay = Number(tx.recurring_day);
           const originalDay = new Date(`${tx.date}T00:00:00`).getDate();
           const sourceDay = Number.isFinite(recurringDay) && recurringDay > 0 ? recurringDay : originalDay;
           const maxDayInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -789,27 +884,34 @@ const Finance = () => {
           sentiment: insight.sentiment,
         };
 
-        const archivePayload = {
-          user_id: user?.id ?? null,
-          month_year: archive.monthYear,
+        if (!user?.id) {
+          return;
+        }
+
+        const archivePayload: MonthlyArchiveInsert = {
+          user_id: user.id,
+          month_key: archive.monthKey,
+          title: archive.title,
           total_income: archive.totalIncome,
           total_expense: archive.totalExpense,
           net_savings: archive.netSavings,
-          ai_message: archive.aiInsight,
-          ai_sentiment: archive.sentiment,
+          ai_insight: archive.aiInsight,
+          sentiment: archive.sentiment,
+          transactions: archive.transactions as unknown as Database["public"]["Tables"]["monthly_archives"]["Insert"]["transactions"],
         };
 
         // Adım B: archive insert (await)
-        const { error: archiveInsertError } = await (supabase.from("monthly_archives") as any).insert([archivePayload]);
+        const { error: archiveInsertError } = await supabase.from("monthly_archives").insert([archivePayload]);
         if (archiveInsertError) {
           console.error("monthly_archives insert skipped:", archiveInsertError);
           return;
         }
 
         // Adım C: eski işlemlerin tamamını sil (await)
-        const { error: deleteError } = await (supabase.from("transactions") as any)
+        const { error: deleteError } = await supabase
+          .from("transactions")
           .delete()
-          .eq("user_id", user?.id ?? "");
+          .eq("user_id", user.id);
         if (deleteError) {
           console.error("transactions delete skipped:", deleteError);
           return;
@@ -817,7 +919,8 @@ const Finance = () => {
 
         // Adım D: recurring işlemleri yeni aya insert et (await)
         if (recurringInsertPayloads.length > 0) {
-          const { error: recurringInsertError } = await (supabase.from("transactions") as any)
+          const { error: recurringInsertError } = await supabase
+            .from("transactions")
             .insert(recurringInsertPayloads);
           if (recurringInsertError) {
             console.error("recurring transactions insert skipped:", recurringInsertError);
@@ -836,7 +939,7 @@ const Finance = () => {
             total_expense: archive.totalExpense,
             month_key: archive.monthKey,
           },
-          ...prev.filter((item) => item?.month_key !== archive.monthKey),
+          ...prev.filter((item) => item.month_key !== archive.monthKey),
         ]);
         setClearedTransactionIds([]);
         setResetRecurringTransactions([]);
@@ -932,11 +1035,11 @@ const Finance = () => {
     displayedTransactions.length > 0 || safeBudgets.length > 0 || safeSubscriptions.length > 0;
 
   return (
-    <div className="relative min-h-screen pb-8 premium-page">
+    <div className="relative min-h-screen overflow-x-clip pb-8 premium-page">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 pointer-events-none w-[800px] h-[400px] bg-red-900/20 blur-[120px] rounded-full" />
 
       <main>
-        <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col xl:flex-row items-start gap-6">
+        <div className="mx-auto flex w-full max-w-[1720px] flex-col items-start gap-4 px-2 py-4 sm:gap-6 sm:px-6 sm:py-8 lg:px-8 xl:flex-row">
           <div className="flex-1 min-w-0 flex flex-col gap-6">
           {!hasFinanceData ? (
             <PremiumEmptyState
@@ -955,23 +1058,23 @@ const Finance = () => {
             />
           ) : null}
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div className="mb-4 flex flex-col gap-3 sm:mb-6 md:flex-row md:items-center md:justify-between md:gap-4">
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-3">
                 <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                 {t.finance.title}
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
                 {t.finance.subtitle}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
               {/* Currency Selector */}
               <Select 
                 value={displayCurrency || "auto"} 
                 onValueChange={(v) => setDisplayCurrency(v === "auto" ? null : v)}
               >
-                <SelectTrigger className="w-auto gap-2 border-border">
+                <SelectTrigger className="w-full gap-2 border-border sm:w-auto">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
@@ -986,7 +1089,7 @@ const Finance = () => {
               <Button
                 onClick={() => setIsBudgetModalOpen(true)}
                 variant="outline"
-                className="gap-2"
+                className="w-full gap-2 sm:w-auto"
               >
                 <PiggyBank className="w-4 h-4" />
                 {t.finance.addBudget}
@@ -996,7 +1099,7 @@ const Finance = () => {
                   setQuickAddDraft(null);
                   setIsTransactionModalOpen(true);
                 }}
-                className="ruby-gradient border-0 shadow-ruby hover:shadow-ruby-strong gap-2"
+                className="ruby-gradient w-full gap-2 border-0 shadow-ruby hover:shadow-ruby-strong sm:w-auto"
               >
                 <Plus className="w-5 h-5" />
                 {t.finance.addTransaction}
@@ -1005,7 +1108,7 @@ const Finance = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid w-full grid-cols-1 gap-3 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
             <div className="premium-card premium-card-hover bg-[#1A1A1E] p-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
@@ -1013,7 +1116,7 @@ const Finance = () => {
                 </div>
                 <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">{t.finance.income}</p>
               </div>
-              <p className="font-display text-3xl font-semibold text-white mt-4">
+              <p className="mt-3 font-display text-2xl font-semibold text-white sm:mt-4 sm:text-3xl">
                 {formatCurrency(totalIncome, activeCurrency)}
               </p>
             </div>
@@ -1025,7 +1128,7 @@ const Finance = () => {
                 </div>
                 <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">{t.finance.expenses}</p>
               </div>
-              <p className="font-display text-3xl font-semibold text-white mt-4">
+              <p className="mt-3 font-display text-2xl font-semibold text-white sm:mt-4 sm:text-3xl">
                 {formatCurrency(totalExpenses, activeCurrency)}
               </p>
             </div>
@@ -1037,7 +1140,7 @@ const Finance = () => {
                 </div>
                 <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">HEALTH SCORE</p>
               </div>
-              <p className="font-display text-3xl font-semibold text-white mt-4">
+              <p className="mt-3 font-display text-2xl font-semibold text-white sm:mt-4 sm:text-3xl">
                 {`${financialHealth.score ?? 0}/100`}
               </p>
               <span className={healthStatusBadgeClass}>{displayedHealthLabel}</span>
@@ -1050,7 +1153,7 @@ const Finance = () => {
                 </div>
                 <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">{t.finance.balance}</p>
               </div>
-              <p className="font-display text-3xl font-semibold text-white mt-4">
+              <p className="mt-3 font-display text-2xl font-semibold text-white sm:mt-4 sm:text-3xl">
                 {formatCurrency(balance, activeCurrency)}
               </p>
             </div>
@@ -1064,7 +1167,7 @@ const Finance = () => {
               </div>
               <p
                 className={cn(
-                  "font-display text-3xl font-semibold mt-4",
+                  "mt-3 font-display text-2xl font-semibold sm:mt-4 sm:text-3xl",
                   savingsRate > 0 ? "text-green-500" : savingsRate < 0 ? "text-red-500" : "text-white"
                 )}
               >
@@ -1079,7 +1182,7 @@ const Finance = () => {
                 </div>
                 <p className="text-xs font-medium text-gray-400 tracking-wider uppercase">Daily Safe Spend</p>
               </div>
-              <p className="font-display text-3xl font-semibold text-white mt-4">
+              <p className="mt-3 font-display text-2xl font-semibold text-white sm:mt-4 sm:text-3xl">
                 {formatCurrency(dailySafeSpend, activeCurrency)}
               </p>
             </div>
@@ -1089,7 +1192,7 @@ const Finance = () => {
             <AIFinancialInsights />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+          <div className="mb-8 grid grid-cols-1 gap-3 sm:gap-5 lg:grid-cols-2">
             <CashFlowChart data={cashFlowData} currency={activeCurrency} />
             <SpendingPieChart data={spendingData} currency={activeCurrency} />
           </div>
@@ -1106,22 +1209,22 @@ const Finance = () => {
             onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}
             className="space-y-4"
           >
-            <TabsList className="h-auto bg-transparent p-0 rounded-none border-b border-white/10 w-fit">
+            <TabsList className="h-auto w-full overflow-x-auto bg-transparent p-0 rounded-none border-b border-white/10 sm:w-fit">
               <TabsTrigger
                 value="transactions"
-                className="rounded-none bg-transparent px-3 py-2 text-sm font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent"
+                className="rounded-none bg-transparent px-3 py-2 text-xs font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent sm:text-sm"
               >
                 {t.finance.transactions}
               </TabsTrigger>
               <TabsTrigger
                 value="budgets"
-                className="rounded-none bg-transparent px-3 py-2 text-sm font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent"
+                className="rounded-none bg-transparent px-3 py-2 text-xs font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent sm:text-sm"
               >
                 {t.finance.budgets}
               </TabsTrigger>
               <TabsTrigger
                 value="monthly-summaries"
-                className="rounded-none bg-transparent px-3 py-2 text-sm font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent"
+                className="rounded-none bg-transparent px-3 py-2 text-xs font-medium text-gray-400 shadow-none border-b-2 border-transparent data-[state=active]:text-gray-100 data-[state=active]:border-red-500 data-[state=active]:bg-transparent sm:text-sm"
               >
                 Monthly Summaries
               </TabsTrigger>
@@ -1261,7 +1364,7 @@ const Finance = () => {
           </Tabs>
           </div>
 
-          <div className="w-full xl:w-[320px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6 z-10">
+          <div className="z-10 flex w-full shrink-0 flex-col gap-4 sm:gap-6 xl:sticky xl:top-6 xl:w-[320px]">
             <QuickAddTransactions
               items={quickAddItems}
               onQuickAddClick={handleQuickAddClick}
@@ -1272,8 +1375,8 @@ const Finance = () => {
       </main>
 
       {isMonthReviewOpen && monthReviewArchive && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-800/60 bg-[#0c0c0e]/90 backdrop-blur-xl p-6 shadow-2xl transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-3 backdrop-blur-sm sm:px-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-gray-800/60 bg-[#0c0c0e]/90 p-4 shadow-2xl transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4 sm:p-6">
             <div className="mx-auto mb-3 w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 shadow-[0_0_15px_rgba(220,38,38,0.2)] flex items-center justify-center">
               <Calendar className="w-5 h-5 text-red-400" />
             </div>

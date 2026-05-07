@@ -1,5 +1,7 @@
-export type PlanTier = "free" | "pro";
-export type BillingCycle = "monthly" | "yearly";
+import type { BillingCycle as CommonBillingCycle, PlanType } from "@/types/common";
+
+export type PlanTier = PlanType;
+export type BillingCycle = Extract<CommonBillingCycle, "monthly" | "yearly">;
 
 export type MonetizationFeatureKey =
   | "ruby_ai_full_access"
