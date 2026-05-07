@@ -27,6 +27,8 @@ import Goals from "./pages/Goals";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import Wallets from "./pages/Wallets";
 import RubyAI from "./pages/RubyAI";
+import MonthlyReport from "./pages/MonthlyReport";
+import SmartBudgetPlanner from "./pages/SmartBudgetPlanner";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +78,8 @@ const App = () => (
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/wallets" element={<Wallets />} />
                   <Route path="/ruby-ai" element={<RubyAI />} />
+                  <Route path="/monthly-report" element={<MonthlyReport />} />
+                  <Route path="/smart-budget-planner" element={<SmartBudgetPlanner />} />
                   <Route path="/classic-finance" element={<Finance />} />
                   <Route path="/finance" element={<Finance />} />
                   <Route path="/settings" element={<Settings />} />

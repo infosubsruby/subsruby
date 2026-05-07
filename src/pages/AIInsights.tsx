@@ -186,7 +186,70 @@ const AIInsights = () => {
     [aiInsights, dailySafeSpend, currency, expenseTrendPct]
   );
 
-  const spendingWarnings = priorityInsights.filter(
+  const healthScoreInsights = useMemo<IntelligenceInsightCardItem[]>(
+    () => [
+      {
+        id: "health-savings-lift",
+        title: "Increasing savings rate by 3% could raise your score",
+        explanation: "Ruby AI estimates a measurable score lift when savings rate moves toward the 20% target band.",
+        severity: "medium",
+        confidencePct: 86,
+        category: "Financial Health Improvement",
+        impactLabel: "Estimated +4 points",
+        suggestedAction: "Increase monthly savings transfer by a small fixed amount this cycle.",
+        relatedDataPoint: `Current savings rate ${savingsRate.toFixed(1)}%`,
+        actionLabel: "Improve Savings Rate",
+      },
+      {
+        id: "health-subscription-burden",
+        title: "Subscription burden status",
+        explanation:
+          monthly.incomeCurrent > 0 && (monthlySubscriptionCost / monthly.incomeCurrent) * 100 <= 12
+            ? "Subscription burden is currently healthy and supports score stability."
+            : "Subscription burden is elevated and reducing your health score resilience.",
+        severity:
+          monthly.incomeCurrent > 0 && (monthlySubscriptionCost / monthly.incomeCurrent) * 100 <= 12 ? "low" : "medium",
+        confidencePct: 90,
+        category: "Subscription Burden",
+        impactLabel: `${(monthly.incomeCurrent > 0 ? (monthlySubscriptionCost / monthly.incomeCurrent) * 100 : 0).toFixed(1)}% of income`,
+        suggestedAction: "Review overlapping services and optimize one recurring plan.",
+        relatedDataPoint: formatCurrency(monthlySubscriptionCost, currency),
+        actionLabel: "Optimize Subscriptions",
+      },
+      {
+        id: "health-spending-control",
+        title: "Spending control changed in food and shopping",
+        explanation: "Recent food and shopping outflows are weighing on spending control quality.",
+        severity: expenseTrendPct > 10 ? "high" : "medium",
+        confidencePct: 84,
+        category: "Spending Control",
+        impactLabel: pct(expenseTrendPct),
+        suggestedAction: "Apply a weekly cap to variable categories for the next 2 weeks.",
+        relatedDataPoint: monthly.topCategory,
+        actionLabel: "Adjust Budget",
+      },
+      {
+        id: "health-emergency-fund",
+        title: "Emergency fund progress is supporting your score",
+        explanation:
+          health.topPositiveFactor === "Emergency Fund"
+            ? "Emergency reserve growth is one of your strongest contributors this month."
+            : "Emergency reserve progress remains a positive structural factor.",
+        severity: "low",
+        confidencePct: 82,
+        category: "Emergency Fund",
+        impactLabel: `${health.factors.find((factor) => factor.key === "emergency_fund")?.scoreContribution.toFixed(1) ?? "0"}/15`,
+        suggestedAction: "Keep automated emergency transfers active this month.",
+        relatedDataPoint: health.factors.find((factor) => factor.key === "emergency_fund")?.explanation,
+        actionLabel: "Boost Emergency Fund",
+      },
+    ],
+    [savingsRate, monthly.incomeCurrent, monthlySubscriptionCost, expenseTrendPct, monthly.topCategory, health, currency]
+  );
+
+  const mergedPriorityInsights = [...healthScoreInsights, ...priorityInsights].slice(0, 6);
+
+  const spendingWarnings = mergedPriorityInsights.filter(
     (insight) => insight.category === "Spending Warning" || insight.category === "Risk Detection"
   );
   const savingOpportunities = useMemo(
@@ -387,7 +450,7 @@ const AIInsights = () => {
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Priority Insights</h2>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {priorityInsights.map((insight) => (
+          {mergedPriorityInsights.map((insight) => (
             <IntelligenceInsightCard key={insight.id} insight={insight} />
           ))}
         </div>

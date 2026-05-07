@@ -16,6 +16,11 @@ type InsightItem = {
 type OverviewHeroProps = {
   greeting: string;
   healthScore: number;
+  healthLevel: string;
+  topPositiveFactor: string;
+  topNegativeFactor: string;
+  monthlyScoreChange: number;
+  quickImprovementAction: string;
   summary: string;
   monthlyProgressPct: number;
   monthlyProgressLabel: string;
@@ -38,6 +43,11 @@ const insightIcon = (kind: InsightItem["kind"]) => {
 export const OverviewHero = ({
   greeting,
   healthScore,
+  healthLevel,
+  topPositiveFactor,
+  topNegativeFactor,
+  monthlyScoreChange,
+  quickImprovementAction,
   summary,
   monthlyProgressPct,
   monthlyProgressLabel,
@@ -107,6 +117,7 @@ export const OverviewHero = ({
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-400 shadow-[0_0_15px_rgba(248,113,113,0.9)]" />
           </div>
           <p className={cn("text-5xl font-bold leading-none", healthTone)}>{healthScore}</p>
+          <p className="mt-1 text-xs uppercase tracking-[0.14em] text-zinc-400">{healthLevel}</p>
 
           <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
             <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-zinc-400">
@@ -136,6 +147,21 @@ export const OverviewHero = ({
               </div>
               <p className="text-xs leading-relaxed text-zinc-100">{keyRecommendation}</p>
             </article>
+          </div>
+          <div className="mt-3 rounded-xl border border-white/10 bg-black/25 p-3 text-xs text-zinc-300">
+            <p>
+              Top positive factor: <span className="text-zinc-100">{topPositiveFactor}</span>
+            </p>
+            <p className="mt-1">
+              Top negative factor: <span className="text-zinc-100">{topNegativeFactor}</span>
+            </p>
+            <p className={cn("mt-1", monthlyScoreChange >= 0 ? "text-emerald-300" : "text-red-300")}>
+              Monthly score change: {monthlyScoreChange >= 0 ? "+" : ""}
+              {monthlyScoreChange.toFixed(1)}
+            </p>
+            <p className="mt-1 text-zinc-400">
+              Quick improvement: <span className="text-zinc-200">{quickImprovementAction}</span>
+            </p>
           </div>
         </div>
       </div>

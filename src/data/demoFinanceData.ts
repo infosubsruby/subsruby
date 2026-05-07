@@ -6,6 +6,16 @@ export const DEMO_MONTHLY_EXPENSES = 4380;
 export const DEMO_MONTHLY_SUBSCRIPTIONS = 86;
 export const DEMO_GOAL_PROGRESS_PCT = 47;
 export const DEMO_FINANCIAL_HEALTH_SCORE = 78;
+export const DEMO_HEALTH_PROFILE = {
+  monthlyIncome: 2800,
+  monthlyExpenses: 2050,
+  monthlySavings: 420,
+  monthlySubscriptions: 46,
+  emergencyFundProgressPct: 64,
+  budgetUsagePct: 82,
+  debtRatioPct: 18,
+  goalProgressAvgPct: 57,
+} as const;
 
 export const DEMO_CATEGORIES = [
   "Food & Dining",

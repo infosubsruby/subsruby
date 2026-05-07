@@ -465,6 +465,11 @@ const Overview = () => {
       <OverviewHero
         greeting={greeting}
         healthScore={health.score}
+        healthLevel={health.status}
+        topPositiveFactor={health.topPositiveFactor}
+        topNegativeFactor={health.topNegativeFactor}
+        monthlyScoreChange={health.monthlyScoreChange}
+        quickImprovementAction={health.quickImprovementAction}
         summary={heroSummary}
         monthlyProgressPct={monthlyProgressPct}
         monthlyProgressLabel={`${monthlyProgressPct.toFixed(0)}% elapsed`}

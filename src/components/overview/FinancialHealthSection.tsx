@@ -12,6 +12,14 @@ const statusTone: Record<FinancialHealthResult["status"], string> = {
   Critical: "text-red-300",
 };
 
+const levelTone: Record<FinancialHealthResult["status"], string> = {
+  Excellent: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
+  Good: "border-green-500/30 bg-green-500/10 text-green-100",
+  Moderate: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+  Risky: "border-orange-500/30 bg-orange-500/10 text-orange-100",
+  Critical: "border-red-500/35 bg-red-500/10 text-red-100",
+};
+
 const barTone = (score: number) => {
   if (score >= 80) return "bg-emerald-400";
   if (score >= 65) return "bg-green-400";
@@ -56,6 +64,7 @@ export const FinancialHealthSection = ({
 
   const trendPositive = result.trendComparisonPct >= 0;
   const weeklyPositive = result.weeklyImprovementPct >= 0;
+  const monthlyPositive = result.monthlyScoreChange >= 0;
   const scoreArc = Math.max(0, Math.min(100, animatedScore));
   const angle = (scoreArc / 100) * 360;
 
@@ -86,6 +95,11 @@ export const FinancialHealthSection = ({
 
             <div className="space-y-3">
               <p className="max-w-sm text-sm leading-relaxed text-zinc-300">{result.summary}</p>
+              <div className={cn("rounded-xl border px-3 py-2", levelTone[result.status])}>
+                <p className="text-[10px] uppercase tracking-[0.14em]">Score Level</p>
+                <p className="mt-1 text-xs">{result.statusExplanation}</p>
+                <p className="mt-1 text-xs text-zinc-200">Next action: {result.recommendedNextAction}</p>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-zinc-300">
                   {trendPositive ? (
@@ -94,6 +108,14 @@ export const FinancialHealthSection = ({
                     <ArrowDownRight className="h-3.5 w-3.5 text-red-300" />
                   )}
                   Trend {Math.abs(result.trendComparisonPct).toFixed(1)}%
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-zinc-300">
+                  {monthlyPositive ? (
+                    <ArrowUpRight className="h-3.5 w-3.5 text-emerald-300" />
+                  ) : (
+                    <ArrowDownRight className="h-3.5 w-3.5 text-red-300" />
+                  )}
+                  Monthly {Math.abs(result.monthlyScoreChange).toFixed(1)} pts
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-zinc-300">
                   {weeklyPositive ? (
@@ -115,13 +137,19 @@ export const FinancialHealthSection = ({
               <div key={factor.key}>
                 <div className="mb-1 flex items-center justify-between">
                   <p className="text-xs text-zinc-300">{factor.label}</p>
-                  <p className="text-xs text-zinc-500">{Math.round(factor.score)}</p>
+                  <p className="text-xs text-zinc-500">
+                    {factor.scoreContribution.toFixed(1)}/{factor.weightPct}
+                  </p>
                 </div>
                 <div className="h-1.5 rounded-full bg-zinc-800/90">
                   <div
-                    className={cn("progress-animate h-1.5 rounded-full", barTone(factor.score))}
-                    style={{ width: `${barsReady ? Math.max(4, Math.min(100, factor.score)) : 4}%` }}
+                    className={cn("progress-animate h-1.5 rounded-full", barTone(factor.scorePct))}
+                    style={{ width: `${barsReady ? Math.max(4, Math.min(100, factor.scorePct)) : 4}%` }}
                   />
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[10px] text-zinc-500">
+                  <span>{factor.status}</span>
+                  <span>{factor.weightPct}% weight</span>
                 </div>
               </div>
             ))}
@@ -131,7 +159,7 @@ export const FinancialHealthSection = ({
         <div className="xl:col-span-3">
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-400">AI Health Insights</h3>
           <div className="space-y-2.5">
-            {result.insights.map((insight) => (
+            {result.aiExplanations.map((insight) => (
               <article
                 key={insight}
                 className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs leading-relaxed text-zinc-300 transition hover:border-red-500/35 hover:bg-red-500/10"
@@ -148,7 +176,63 @@ export const FinancialHealthSection = ({
       </div>
 
       <div className="mt-6">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-400">Factor Breakdown</h3>
+        <div className="grid gap-3 md:grid-cols-2">
+          {result.factors.map((factor) => (
+            <article key={`breakdown-${factor.key}`} className="rounded-xl border border-white/10 bg-black/25 p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <p className="text-sm font-medium text-zinc-100">{factor.label}</p>
+                <span className="text-xs text-zinc-400">
+                  {factor.scoreContribution.toFixed(1)}/{factor.weightPct}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400">{factor.explanation}</p>
+              <p className="mt-1 text-xs text-zinc-300">Suggestion: {factor.suggestion}</p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Trend vs previous month: {factor.trendVsPreviousPct >= 0 ? "+" : ""}
+                {factor.trendVsPreviousPct.toFixed(1)}%
+              </p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-400">Improve Your Score</h3>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {result.improvementPlan.map((action) => (
+            <article key={action.id} className="rounded-xl border border-white/10 bg-black/25 p-3">
+              <p className="text-sm font-medium text-zinc-100">{action.title}</p>
+              <div className="mt-2 space-y-1 text-xs text-zinc-400">
+                <p>Estimated impact: +{action.estimatedImpact} pts</p>
+                <p>Difficulty: {action.difficulty}</p>
+                <p>Time: {action.timeToComplete}</p>
+                <p>Category: {action.category}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6">
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-400">Health History</h3>
+        <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <article className="rounded-xl border border-white/10 bg-black/25 p-2.5 text-xs text-zinc-300">
+            Current: <span className="font-medium text-zinc-100">{result.score}</span>
+          </article>
+          <article className="rounded-xl border border-white/10 bg-black/25 p-2.5 text-xs text-zinc-300">
+            Previous: <span className="font-medium text-zinc-100">{result.previousMonthScore}</span>
+          </article>
+          <article className="rounded-xl border border-white/10 bg-black/25 p-2.5 text-xs text-zinc-300">
+            Best: <span className="font-medium text-zinc-100">{result.bestScore}</span>
+          </article>
+          <article className="rounded-xl border border-white/10 bg-black/25 p-2.5 text-xs text-zinc-300">
+            Worst: <span className="font-medium text-zinc-100">{result.worstScore}</span>
+          </article>
+          <article className="rounded-xl border border-white/10 bg-black/25 p-2.5 text-xs text-zinc-300 sm:col-span-2 xl:col-span-2">
+            Biggest improvement: <span className="font-medium text-zinc-100">{result.biggestImprovementFactor}</span>
+          </article>
+        </div>
         <div className="flex items-end gap-2 rounded-2xl border border-white/10 bg-black/25 p-4">
           {result.history.map((point, index) => (
             <div key={`${point}-${index}`} className="flex-1">
