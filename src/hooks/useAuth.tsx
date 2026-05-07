@@ -74,16 +74,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isMockMode, setIsMockMode] = useState(false);
   const [currentPlan, setCurrentPlanState] = useState<PlanType>("free");
 
-  const normalizeAuthProfile = (profileRow: Profile | null, fallbackUser: AuthUser | null): AuthProfile | null => {
+  const getStoredOnboardingCompletion = (userId: string): boolean | null => {
+    if (typeof window === "undefined") return null;
+    const value = window.localStorage.getItem(`hasCompletedOnboarding:${userId}`);
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return null;
+  };
+
+  const setStoredOnboardingCompletion = (userId: string, completed: boolean) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(`hasCompletedOnboarding:${userId}`, completed ? "true" : "false");
+  };
+
+  const normalizeAuthProfile = (
+    profileRow: Profile | null,
+    fallbackUser: AuthUser | null,
+    previousProfile: AuthProfile | null
+  ): AuthProfile | null => {
     if (!profileRow && !fallbackUser) return null;
+    const resolvedUserId = profileRow?.id ?? fallbackUser?.id ?? "demo-user";
+    const persistedOnboarding = getStoredOnboardingCompletion(resolvedUserId);
+    const onboardingCompleted =
+      typeof profileRow?.has_completed_onboarding === "boolean"
+        ? profileRow.has_completed_onboarding
+        : persistedOnboarding ?? previousProfile?.onboardingCompleted ?? false;
+
     return {
-      userId: profileRow?.id ?? fallbackUser?.id ?? "demo-user",
-      preferredCurrency: profileRow?.default_currency ?? "USD",
-      country: null,
-      monthlyIncome: 0,
-      savingsTarget: 0,
-      rubyAIFocus: null,
-      onboardingCompleted: profileRow?.has_completed_onboarding === true,
+      userId: resolvedUserId,
+      preferredCurrency: profileRow?.default_currency ?? previousProfile?.preferredCurrency ?? "USD",
+      country: previousProfile?.country ?? null,
+      monthlyIncome: previousProfile?.monthlyIncome ?? 0,
+      savingsTarget: previousProfile?.savingsTarget ?? 0,
+      rubyAIFocus: previousProfile?.rubyAIFocus ?? null,
+      onboardingCompleted,
     };
   };
 
@@ -216,8 +240,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(authUser);
     if (profileData) {
       setProfile(profileData);
+      if (typeof profileData.has_completed_onboarding === "boolean") {
+        setStoredOnboardingCompletion(userId, profileData.has_completed_onboarding);
+      }
     }
-    setAuthProfile(normalizeAuthProfile(profileData ?? null, authUser));
+    setAuthProfile((prev) => normalizeAuthProfile(profileData ?? null, authUser, prev));
     setCurrentPlanState(profileData?.status === "active" || profileData?.status === "trialing" ? "pro" : "free");
 
     // Check admin status
@@ -260,6 +287,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         default_currency: snapshot.profile.preferredCurrency,
       });
       setAuthProfile(snapshot.profile);
+      setStoredOnboardingCompletion(snapshot.user.id, snapshot.profile.onboardingCompleted);
       setCurrentPlanState(snapshot.currentPlan);
       setIsLoading(false);
       return;
@@ -415,28 +443,82 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateProfile = async (updates: Partial<AuthProfile> & { fullName?: string; avatarUrl?: string | null }) => {
     if (!user) return;
 
+    const fullName = updates.fullName ?? user.fullName;
+    const [firstName, ...lastParts] = fullName.split(" ");
+    const lastName = lastParts.join(" ");
+
+    const nextOnboarding =
+      typeof updates.onboardingCompleted === "boolean"
+        ? updates.onboardingCompleted
+        : authProfile?.onboardingCompleted ?? profile?.has_completed_onboarding === true;
+
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            fullName,
+            avatarUrl: updates.avatarUrl ?? prev.avatarUrl,
+          }
+        : prev
+    );
+    setAuthProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            ...updates,
+            userId: user.id,
+            preferredCurrency: updates.preferredCurrency ?? prev.preferredCurrency,
+            onboardingCompleted: nextOnboarding,
+          }
+        : {
+            userId: user.id,
+            preferredCurrency: updates.preferredCurrency ?? profile?.default_currency ?? "USD",
+            country: null,
+            monthlyIncome: 0,
+            savingsTarget: 0,
+            rubyAIFocus: null,
+            onboardingCompleted: nextOnboarding,
+          }
+    );
+    setProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            first_name: firstName || prev.first_name,
+            last_name: lastName || prev.last_name,
+            avatar_url: updates.avatarUrl ?? prev.avatar_url,
+            default_currency: updates.preferredCurrency ?? prev.default_currency,
+            has_completed_onboarding:
+              typeof updates.onboardingCompleted === "boolean"
+                ? updates.onboardingCompleted
+                : prev.has_completed_onboarding,
+          }
+        : prev
+    );
+    setStoredOnboardingCompletion(user.id, nextOnboarding);
+
     if (isMockMode) {
       const nextAuthProfile: AuthProfile = {
         ...(authProfile ?? createDefaultDemoProfile()),
         ...updates,
         userId: user.id,
+        onboardingCompleted: nextOnboarding,
       };
       const nextUser = {
         ...user,
-        fullName: updates.fullName ?? user.fullName,
+        fullName,
         avatarUrl: updates.avatarUrl ?? user.avatarUrl,
       };
-      setUser(nextUser);
       setAuthProfile(nextAuthProfile);
       setProfile((prev) =>
         prev
           ? {
               ...prev,
-              first_name: updates.fullName ? updates.fullName.split(" ").slice(0, -1).join(" ") || updates.fullName : prev.first_name,
-              last_name: updates.fullName ? updates.fullName.split(" ").slice(-1)[0] ?? "" : prev.last_name,
+              first_name: firstName || prev.first_name,
+              last_name: lastName || prev.last_name,
               avatar_url: updates.avatarUrl ?? prev.avatar_url,
               default_currency: updates.preferredCurrency ?? prev.default_currency,
-              has_completed_onboarding: updates.onboardingCompleted ?? prev.has_completed_onboarding,
+              has_completed_onboarding: nextOnboarding,
             }
           : prev
       );
@@ -446,17 +528,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (!hasSupabaseEnv) return;
 
-    const fullName = updates.fullName ?? user.fullName;
-    const [firstName, ...lastParts] = fullName.split(" ");
-    const lastName = lastParts.join(" ");
-
     await supabase
       .from("profiles")
       .update({
         first_name: firstName || "Ruby",
         last_name: lastName || "User",
         default_currency: updates.preferredCurrency,
-        has_completed_onboarding: updates.onboardingCompleted,
+        has_completed_onboarding: typeof updates.onboardingCompleted === "boolean" ? updates.onboardingCompleted : undefined,
         avatar_url: updates.avatarUrl,
       })
       .eq("id", user.id);
@@ -464,6 +542,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const completeOnboarding = async (updates?: Partial<AuthProfile>) => {
+    if (user?.id) {
+      setStoredOnboardingCompletion(user.id, true);
+    }
     await updateProfile({
       ...updates,
       onboardingCompleted: true,

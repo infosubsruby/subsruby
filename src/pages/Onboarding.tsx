@@ -82,7 +82,7 @@ const SAFE_SPEND_OPTIONS = [
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { user, profile, completeOnboarding, isMockMode } = useAuth();
+  const { user, profile, completeOnboarding, onboardingCompleted, isLoading, isMockMode } = useAuth();
   const { setDefaultCurrency } = useSettings();
   const { state, patch } = useOnboardingFoundation();
   const [stepIndex, setStepIndex] = useState(0);
@@ -90,10 +90,10 @@ const Onboarding = () => {
   const currentStep = ONBOARDING_STEPS[stepIndex];
 
   useEffect(() => {
-    if (profile?.has_completed_onboarding === true) {
+    if (!isLoading && onboardingCompleted) {
       navigate("/overview", { replace: true });
     }
-  }, [navigate, profile?.has_completed_onboarding]);
+  }, [isLoading, navigate, onboardingCompleted]);
 
   const toggleItem = <T extends string>(value: T, list: T[]): T[] => {
     if (list.includes(value)) return list.filter((item) => item !== value);
@@ -121,7 +121,7 @@ const Onboarding = () => {
       });
     }
     toast.success(isMockMode ? "Onboarding completed in demo mode." : "Onboarding completed. Ruby AI is ready.");
-    navigate("/overview");
+    navigate("/overview", { replace: true });
   };
 
   const goNext = () => setStepIndex((prev) => Math.min(ONBOARDING_STEPS.length - 1, prev + 1));
