@@ -135,43 +135,43 @@ export const buildRubyAIContext = ({
 export const buildRubyAISuggestions = (context: RubyAIContext): RubyAISuggestion[] => [
   {
     id: "spend-why",
-    label: "Why high spending?",
-    prompt: "Why did I spend so much this month?",
-  },
-  {
-    id: "save-more",
-    label: "Improve savings",
-    prompt: "How can I save more money this month without extreme cuts?",
-  },
-  {
-    id: "subs-analysis",
-    label: "Analyze subscriptions",
-    prompt: "Analyze my subscriptions and tell me what to cancel first.",
+    label: "Why spend more?",
+    prompt: "Why did I spend more this month?",
   },
   {
     id: "afford-check",
-    label: "Can I afford it?",
-    prompt: "Can I afford a $250 discretionary purchase this week?",
+    label: "Can I afford this?",
+    prompt: "Can I afford a $500 purchase?",
   },
   {
     id: "student-budget",
     label: "Student budget",
-    prompt: "Make me a student budget using my current spending behavior.",
+    prompt: "Create a student budget for me.",
+  },
+  {
+    id: "subs-analysis",
+    label: "Analyze subscriptions",
+    prompt: "Analyze my subscriptions.",
   },
   {
     id: "health-upgrade",
-    label: "Boost health score",
-    prompt: "How can I improve my financial health score quickly?",
-  },
-  {
-    id: "weekly-summary",
-    label: "Weekly summary",
-    prompt: "Give me my weekly financial summary and next actions.",
+    label: "Improve health score",
+    prompt: "How can I improve my Financial Health Score?",
   },
   {
     id: "waste-category",
-    label: "Waste category",
-    prompt: "What category wastes the most money and what should I do?",
+    label: "Reduce first category",
+    prompt: "Which category should I reduce first?",
+  },
+  {
+    id: "safe-spend",
+    label: "Safe-to-spend today",
+    prompt: "What can I safely spend today?",
+  },
+  {
+    id: "emergency-goal",
+    label: "Emergency fund plan",
+    prompt: "Help me reach my emergency fund faster.",
   },
 ].slice(0, context.financialHealthScore > 70 ? 6 : 8);
 
@@ -199,14 +199,21 @@ export const buildRubyAIResponse = (prompt: string, context: RubyAIContext): str
   const text = prompt.toLowerCase();
 
   if (text.includes("why") && text.includes("spend")) {
+    const baselineWeekly = (context.monthlySpending / 4) || 0;
+    const categoryPct = baselineWeekly > 0 ? (context.topSpendingCategoryAmount / baselineWeekly) * 100 : 0;
     return `${assistantHeader} The strongest driver is ${context.topSpendingCategory} (${formatCurrency(
       context.topSpendingCategoryAmount,
       context.currency
-    )}) this month. Budget coverage is ${context.budgetCoveragePct.toFixed(
+    )}) this month. Based on your current spending pattern, this category is ${categoryPct.toFixed(
+      0
+    )}% of your weekly baseline. Budget coverage is ${context.budgetCoveragePct.toFixed(
       1
     )}%, and volatility signal is ${context.riskySpendingSignal.toFixed(
       1
-    )}%. Action: apply a 12% cap to ${context.topSpendingCategory} for the next 14 days and reroute that delta to savings.`;
+    )}%. If you reduce this category by ${formatCurrency(
+      Math.max(8, context.topSpendingCategoryAmount * 0.12),
+      context.currency
+    )} over the next 10 days, you can stabilize your monthly target.`;
   }
 
   if (text.includes("save more") || text.includes("save")) {
@@ -226,7 +233,7 @@ export const buildRubyAIResponse = (prompt: string, context: RubyAIContext): str
     )}% of monthly income (${formatCurrency(context.subscriptionMonthlyCost, context.currency)}/mo, ${formatCurrency(
       context.subscriptionYearlyCost,
       context.currency
-    )}/yr). I recommend canceling or downgrading the lowest-usage tier first and enforcing a hard recurring-cost ceiling of 15% income.`;
+    )}/yr). Ruby AI recommends reviewing the two lowest-usage services first and enforcing a hard recurring-cost ceiling of 15% income.`;
   }
 
   if (text.includes("afford")) {
@@ -255,6 +262,33 @@ export const buildRubyAIResponse = (prompt: string, context: RubyAIContext): str
       context.topSpendingCategoryAmount,
       context.currency
     )} this month. Start with a micro-budget and require a 24-hour cooldown on discretionary purchases in this category.`;
+  }
+
+  if (text.includes("safely spend") || text.includes("safe-to-spend")) {
+    const daysLeft = Math.max(1, 30 - new Date().getDate());
+    const safeToSpend = Math.max(
+      0,
+      (context.monthlyIncome - context.monthlySpending - context.subscriptionMonthlyCost) / daysLeft
+    );
+    return `${assistantHeader} Safe-to-spend estimate is ${formatCurrency(
+      safeToSpend,
+      context.currency
+    )} per day for the rest of this cycle. If you keep discretionary spending near this range, month-end balance stability should remain healthy.`;
+  }
+
+  if (text.includes("emergency fund")) {
+    const monthlySurplus = Math.max(
+      0,
+      context.monthlyIncome - context.monthlySpending - context.subscriptionMonthlyCost
+    );
+    const target = Math.max(context.monthlySpending * 3, context.monthlyIncome * 0.5);
+    const months = monthlySurplus > 0 ? target / Math.max(monthlySurplus, 1) : 999;
+    return `${assistantHeader} Emergency fund acceleration plan: current monthly surplus is ${formatCurrency(
+      monthlySurplus,
+      context.currency
+    )}. At this pace, your emergency fund target could be reached in ${months.toFixed(
+      1
+    )} months. To speed this up, redirect 20% of subscription savings and 10% of variable-category reductions directly into reserves.`;
   }
 
   return `${assistantHeader} I analyzed your live financial context and recommend focusing on three levers now: spending discipline, recurring-cost efficiency, and savings automation. Ask me to generate a targeted plan for any one of these areas.`;

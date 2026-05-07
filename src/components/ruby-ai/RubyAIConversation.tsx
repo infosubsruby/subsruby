@@ -9,6 +9,11 @@ type RubyAIConversationProps = {
   onMessagesChange: (messages: RubyAIMessage[]) => void;
   suggestedPrompts: RubyAISuggestion[];
   onPromptSelect: (prompt: string) => void;
+  contextSnippets?: Array<{
+    label: string;
+    value: string;
+    detail: string;
+  }>;
 };
 
 const messageBubble = (role: RubyAIMessage["role"]) =>
@@ -22,6 +27,7 @@ export const RubyAIConversation = ({
   onMessagesChange,
   suggestedPrompts,
   onPromptSelect,
+  contextSnippets = [],
 }: RubyAIConversationProps) => {
   const [draft, setDraft] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -81,6 +87,17 @@ export const RubyAIConversation = ({
                 {message.role === "assistant" ? "Ruby AI CFO" : "You"}
               </p>
               <p className="text-sm leading-relaxed">{message.content}</p>
+              {message.role === "assistant" && index === messages.length - 1 && contextSnippets.length > 0 ? (
+                <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                  {contextSnippets.slice(0, 2).map((snippet) => (
+                    <div key={snippet.label} className="rounded-lg border border-white/10 bg-black/30 px-2.5 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">{snippet.label}</p>
+                      <p className="text-xs font-medium text-zinc-100">{snippet.value}</p>
+                      <p className="text-[11px] text-zinc-400">{snippet.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </article>
         ))}
@@ -112,6 +129,23 @@ export const RubyAIConversation = ({
           </button>
         ))}
       </div>
+      {!isThinking ? (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {suggestedPrompts.slice(4, 7).map((item) => (
+            <button
+              key={`follow-${item.id}`}
+              type="button"
+              onClick={() => {
+                onPromptSelect(item.prompt);
+                sendMessage(item.prompt);
+              }}
+              className="rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-[11px] text-red-100 transition hover:bg-red-500/20"
+            >
+              Follow-up: {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <form
         onSubmit={(event) => {
