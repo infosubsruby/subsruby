@@ -1,14 +1,19 @@
 import { BrainCircuit } from "lucide-react";
-import { FeaturePlaceholder } from "@/components/layout/FeaturePlaceholder";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_CATEGORIES } from "@/data/demoFinanceData";
 
 const AIInsights = () => {
   return (
-    <FeaturePlaceholder
-      title="AI Insights"
-      subtitle="Actionable intelligence generated from your existing subscription and transaction data."
-      sections={["Anomaly Detector", "Spending Pattern Radar", "Forecast Recommendations", "Renewal Risk Alerts", "Optimization Opportunities"]}
-      icon={<BrainCircuit className="h-5 w-5" />}
-    />
+    <div className="premium-page">
+      <PremiumEmptyState
+        icon={<BrainCircuit className="h-5 w-5" />}
+        headline="Ruby AI is waiting for financial data"
+        description="Once you add transactions, subscriptions, or goals, insights will appear here automatically."
+        primaryAction={{ label: "Add Financial Data", to: "/finance" }}
+        secondaryAction={{ label: "Go to Subscriptions", to: "/dashboard#subscriptions" }}
+        badges={DEMO_CATEGORIES.slice(0, 5)}
+      />
+    </div>
   );
 };
 

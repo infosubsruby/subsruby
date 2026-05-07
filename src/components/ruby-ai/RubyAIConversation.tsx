@@ -63,10 +63,11 @@ export const RubyAIConversation = ({
       </div>
 
       <div className="mb-4 h-[430px] space-y-3 overflow-y-auto rounded-2xl border border-white/10 bg-black/25 p-3">
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <article
             key={message.id}
-            className={`flex gap-2 rounded-xl border px-3 py-2 ${messageBubble(message.role)}`}
+            className={`motion-row-enter flex gap-2 rounded-xl border px-3 py-2 ${messageBubble(message.role)}`}
+            style={{ animationDelay: `${Math.min(index * 38, 260)}ms` }}
           >
             <div className="mt-0.5">
               {message.role === "assistant" ? (
@@ -85,12 +86,12 @@ export const RubyAIConversation = ({
         ))}
 
         {isThinking ? (
-          <article className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-zinc-200">
+          <article className="motion-row-enter rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-zinc-200">
             <p className="text-[10px] uppercase tracking-[0.14em] text-red-200">Ruby AI is analyzing...</p>
             <div className="mt-2 flex gap-1">
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-red-300 [animation-delay:-0.2s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-red-300 [animation-delay:-0.1s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-red-300" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-300 [animation-delay:-0.2s]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-300 [animation-delay:-0.1s]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-300" />
             </div>
           </article>
         ) : null}
@@ -105,7 +106,7 @@ export const RubyAIConversation = ({
               onPromptSelect(item.prompt);
               sendMessage(item.prompt);
             }}
-            className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] text-zinc-300 transition hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-100"
+            className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] text-zinc-300 transition duration-200 hover:-translate-y-0.5 hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-100"
           >
             {item.label}
           </button>
@@ -136,4 +137,3 @@ export const RubyAIConversation = ({
     </section>
   );
 };
-

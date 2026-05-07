@@ -88,7 +88,7 @@ const getMerchantProfile = (transaction: Transaction) => {
   }
 
   return {
-    merchantName: (transaction.description || transaction.category || "Merchant").slice(0, 32),
+    merchantName: (transaction.description || transaction.category || "Recorded Transaction").slice(0, 32),
     merchantIcon: transaction.type === "income" ? "banknote" : "receipt",
     categorySuggestion: null,
     categoryConfidence: 0.55,
@@ -132,7 +132,7 @@ export const getAutoCategorySuggestion = (
   return {
     category: fallbackType === "income" ? "Salary" : null,
     confidence: fallbackType === "income" ? 0.62 : 0.4,
-    merchant: "Unknown",
+    merchant: "Uncategorized",
   };
 };
 
@@ -359,4 +359,3 @@ export const buildTransactionIntelligence = (
 
   return { byId, globalInsights };
 };
-

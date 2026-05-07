@@ -16,6 +16,8 @@ import { RubyAIConversation } from "@/components/ruby-ai/RubyAIConversation";
 import { RubyAIInsightPanel } from "@/components/ruby-ai/RubyAIInsightPanel";
 import { RubyAIMemoryPanel } from "@/components/ruby-ai/RubyAIMemoryPanel";
 import { RubyAISuggestedPrompts } from "@/components/ruby-ai/RubyAISuggestedPrompts";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_CATEGORIES, DEMO_USER_NAME } from "@/data/demoFinanceData";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -158,10 +160,11 @@ const RubyAI = () => {
     },
   ]);
   const [lastPrompt, setLastPrompt] = useState<string>("");
+  const isRubyAIEmpty = transactions.length === 0 && subscriptions.length === 0 && budgets.length === 0;
 
   if (isLoading || isLoadingSubs) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-sm text-zinc-400">
+      <div className="motion-card-enter rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-sm text-zinc-400">
         Initializing Ruby AI financial advisor systems...
       </div>
     );
@@ -191,6 +194,17 @@ const RubyAI = () => {
           </div>
         </div>
       </section>
+
+      {isRubyAIEmpty ? (
+        <PremiumEmptyState
+          icon={<Bot className="h-5 w-5" />}
+          headline="Ask Ruby AI about your finances"
+          description={`Ruby can analyze your spending, subscriptions, goals, and financial health once your workspace has data. Demo advisor profile: ${DEMO_USER_NAME}.`}
+          primaryAction={{ label: "Start Conversation", to: "/finance" }}
+          secondaryAction={{ label: "Open Overview", to: "/overview" }}
+          badges={DEMO_CATEGORIES.slice(0, 6)}
+        />
+      ) : null}
 
       <div className="grid gap-5 xl:grid-cols-12">
         <div className="xl:col-span-8">

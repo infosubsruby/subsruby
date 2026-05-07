@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 
 type FeaturePlaceholderProps = {
   title: string;
@@ -11,16 +12,14 @@ type FeaturePlaceholderProps = {
 export const FeaturePlaceholder = ({ title, subtitle, sections, icon }: FeaturePlaceholderProps) => {
   return (
     <div className="premium-page">
-      <div className="premium-section relative overflow-hidden">
-        <div className="pointer-events-none absolute -left-12 top-[-48px] h-40 w-40 rounded-full bg-red-600/10 blur-3xl" />
-        <div className="mb-2 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/15 text-red-300">
-            {icon ?? <Sparkles className="h-5 w-5" />}
-          </div>
-          <h1 className="premium-heading text-2xl">{title}</h1>
-        </div>
-        <p className="max-w-2xl text-sm text-zinc-400">{subtitle}</p>
-      </div>
+      <PremiumEmptyState
+        icon={icon ?? <Sparkles className="h-5 w-5" />}
+        headline={`${title} workspace is ready`}
+        description={subtitle}
+        primaryAction={{ label: "Open Dashboard", to: "/dashboard" }}
+        secondaryAction={{ label: "Open Finance", to: "/finance" }}
+        badges={sections.slice(0, 5)}
+      />
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {sections.map((section) => (

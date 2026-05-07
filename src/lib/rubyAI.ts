@@ -80,7 +80,7 @@ export const buildRubyAIContext = ({
   }
 
   const topCategoryEntry = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
-  const topSpendingCategory = topCategoryEntry?.[0] ?? "General";
+  const topSpendingCategory = topCategoryEntry?.[0] ?? "No category data yet";
   const topSpendingCategoryAmount = safe(topCategoryEntry?.[1] ?? 0);
 
   const subscriptionMonthlyCost = subscriptions.reduce((acc, sub) => {
@@ -100,17 +100,20 @@ export const buildRubyAIContext = ({
   const spikeDays = dailyValues.filter((value) => value > dailyAvg * 1.35).length;
   const riskySpendingSignal = dailyValues.length ? clamp((spikeDays / dailyValues.length) * 100, 0, 100) : 0;
 
-  const weeklySummary = [
-    savingsRatePct >= 15
-      ? "Savings behavior remained resilient this week."
-      : "Savings velocity softened this week and needs correction.",
-    subscriptionLoadPct > 22
-      ? "Subscription pressure is elevated and optimization is recommended."
-      : "Recurring cost load is currently manageable.",
-    riskySpendingSignal > 30
-      ? "Volatile spending spikes were detected across recent days."
-      : "Spending volatility remained within normal bounds.",
-  ].join(" ");
+  const hasData = monthlyIncome > 0 || monthlySpending > 0 || subscriptionMonthlyCost > 0;
+  const weeklySummary = hasData
+    ? [
+        savingsRatePct >= 15
+          ? "Savings behavior remained resilient this week."
+          : "Savings velocity softened this week and needs correction.",
+        subscriptionLoadPct > 22
+          ? "Subscription pressure is elevated and optimization is recommended."
+          : "Recurring cost load is currently manageable.",
+        riskySpendingSignal > 30
+          ? "Volatile spending spikes were detected across recent days."
+          : "Spending volatility remained within normal bounds.",
+      ].join(" ")
+    : "No financial activity is recorded yet. Add transactions or subscriptions to unlock Ruby AI insights.";
 
   return {
     currency,
@@ -296,4 +299,3 @@ export const buildRubyAIMemoryLine = (context: RubyAIContext) => [
   `Financial health proxy: ${Math.round(context.financialHealthScore)}/100`,
   `Weekly pattern signal: ${context.riskySpendingSignal.toFixed(1)}% volatility`,
 ];
-

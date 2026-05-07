@@ -39,7 +39,10 @@ import {
   Compass,
   Bot,
   Calendar,
+  Landmark,
 } from "lucide-react";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_CATEGORIES, DEMO_GOALS, DEMO_TRANSACTIONS } from "@/data/demoFinanceData";
 
 interface RecurringRule {
   id: string;
@@ -925,6 +928,8 @@ const Finance = () => {
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const remainingDays = Math.max(1, daysInMonth - now.getDate() + 1);
   const dailySafeSpend = balance / remainingDays;
+  const hasFinanceData =
+    displayedTransactions.length > 0 || safeBudgets.length > 0 || safeSubscriptions.length > 0;
 
   return (
     <div className="relative min-h-screen pb-8 premium-page">
@@ -933,6 +938,22 @@ const Finance = () => {
       <main>
         <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col xl:flex-row items-start gap-6">
           <div className="flex-1 min-w-0 flex flex-col gap-6">
+          {!hasFinanceData ? (
+            <PremiumEmptyState
+              icon={<Landmark className="h-5 w-5" />}
+              headline="Build your classic finance foundation"
+              description="Add transactions, budgets, and subscriptions to unlock cash-flow intelligence, monthly summaries, and Ruby AI recommendations."
+              primaryAction={{
+                label: "Add Transaction",
+                onClick: () => {
+                  setQuickAddDraft(null);
+                  setIsTransactionModalOpen(true);
+                },
+              }}
+              secondaryAction={{ label: "Add Budget", onClick: () => setIsBudgetModalOpen(true) }}
+              badges={[...DEMO_CATEGORIES.slice(0, 4), ...DEMO_GOALS.slice(0, 2)]}
+            />
+          ) : null}
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
@@ -1112,6 +1133,10 @@ const Finance = () => {
                 budgets={safeBudgets}
                 onDelete={deleteTransaction}
                 onToggleRecurring={toggleTransactionRecurring}
+                onAddTransaction={() => {
+                  setQuickAddDraft(null);
+                  setIsTransactionModalOpen(true);
+                }}
               />
             </TabsContent>
 
@@ -1153,9 +1178,20 @@ const Finance = () => {
 
             <TabsContent value="monthly-summaries" className="space-y-4">
               {(monthlyArchives?.length ?? 0) === 0 ? (
-                <div className="glass-card rounded-xl p-8 text-center text-sm text-muted-foreground">
-                  Henüz aylık özet bulunmuyor.
-                </div>
+                <PremiumEmptyState
+                  icon={<Calendar className="h-5 w-5" />}
+                  headline="Monthly summaries will appear automatically"
+                  description="As you add transactions this month, Ruby AI will create premium month-end snapshots with insights and trend signals."
+                  primaryAction={{
+                    label: "Add Transaction",
+                    onClick: () => {
+                      setQuickAddDraft(null);
+                      setIsTransactionModalOpen(true);
+                    },
+                  }}
+                  secondaryAction={{ label: "Open Transactions", onClick: () => setSearchParams({ tab: "transactions" }, { replace: true }) }}
+                  badges={DEMO_TRANSACTIONS.slice(0, 4).map((item) => item.merchant)}
+                />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {monthlyArchives?.map((archive) => {

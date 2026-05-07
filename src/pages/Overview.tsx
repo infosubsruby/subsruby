@@ -4,6 +4,7 @@ import { useFinance } from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { formatCurrency } from "@/i18n/currency";
+import { formatDate } from "@/i18n/date";
 import { OverviewHero } from "@/components/overview/OverviewHero";
 import { OverviewBentoGrid } from "@/components/overview/OverviewBentoGrid";
 import { OverviewAIInsightsEngine } from "@/components/overview/OverviewAIInsightsEngine";
@@ -20,6 +21,20 @@ import {
   PredictiveSummaryCards,
   SafeToSpendWidget,
 } from "@/components/predictive/PredictiveWidgets";
+import { LayoutDashboard } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  BrainCircuit,
+  CalendarClock,
+  Goal,
+  ListChecks,
+  ReceiptText,
+  ShieldCheck,
+  Wallet2,
+} from "lucide-react";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_GOALS, DEMO_TRANSACTIONS } from "@/data/demoFinanceData";
 
 const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 const pct = (value: number) => `${safeNumber(value).toFixed(1)}%`;
@@ -70,7 +85,6 @@ const Overview = () => {
     expenseCurrent,
     incomePrevious,
     expensePrevious,
-    topCategoryShare,
     topCategoryLabel,
     monthlySubscriptionCost,
     upcomingBillsCount,
@@ -126,15 +140,13 @@ const Overview = () => {
 
     const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
     const top = sortedCategories[0];
-    const topShare = expenseCurrentAcc > 0 && top ? (top[1] / expenseCurrentAcc) * 100 : 0;
 
     return {
       incomeCurrent: safeNumber(incomeCurrentAcc),
       expenseCurrent: safeNumber(expenseCurrentAcc),
       incomePrevious: safeNumber(incomePreviousAcc),
       expensePrevious: safeNumber(expensePreviousAcc),
-      topCategoryShare: safeNumber(topShare),
-      topCategoryLabel: top?.[0] ?? "N/A",
+      topCategoryLabel: top?.[0] ?? "No category data yet",
       monthlySubscriptionCost: safeNumber(totalSubscriptionMonthly),
       upcomingBillsCount: upcomingCount,
       upcomingBillsValue: safeNumber(upcomingValue),
@@ -247,32 +259,6 @@ const Overview = () => {
     { label: "Subscription Load", value: pct(subscriptionLoad), positive: subscriptionLoad < 20 },
   ];
 
-  const heroInsights = [
-    {
-      title: "Smart Recommendation",
-      detail: "Redirect 8% of non-essential spending into your savings bucket this week to improve resilience.",
-      kind: "opportunity" as const,
-    },
-    {
-      title: "Financial Alert",
-      detail: `${upcomingBillsCount} recurring charges are expected within 14 days.`,
-      kind: "alert" as const,
-    },
-    {
-      title: "Savings Opportunity",
-      detail: `Potential monthly recovery: ${formatCurrency(monthlySubscriptionCost * 0.12, defaultCurrency)} from optimization actions.`,
-      kind: "opportunity" as const,
-    },
-    {
-      title: "Risk Warning",
-      detail:
-        subscriptionLoad > 25
-          ? "Recurring commitments are consuming a high portion of income."
-          : "No major risk spike detected in fixed commitments.",
-      kind: "risk" as const,
-    },
-  ];
-
   const aiInsightCards = useMemo(
     () =>
       buildMockAIInsights({
@@ -297,12 +283,193 @@ const Overview = () => {
     ]
   );
 
+  const monthlyProgressPct = clamp(((now.getDate() / Math.max(1, daysRemaining + now.getDate() - 1)) * 100), 0, 100);
+  const greeting = `Good evening, ${displayName}`;
+  const heroSummary =
+    "Ruby AI analyzed your financial activity. Your savings rate improved this month, but subscription costs are slightly above the recommended range.";
+  const keyRecommendation =
+    subscriptionLoad > 20
+      ? "Reduce recurring costs by 10% and redirect the recovered amount to your emergency fund."
+      : "Keep current spending discipline and auto-transfer part of surplus cash to savings.";
+  const heroInsights = [
+    {
+      title: "AI Recommendation",
+      detail: keyRecommendation,
+      kind: "opportunity" as const,
+    },
+    {
+      title: "AI Signal",
+      detail: `${upcomingBillsCount} recurring charges are expected within 14 days.`,
+      kind: "signal" as const,
+    },
+  ];
+
+  const coreMetrics = [
+    {
+      title: "Total Balance",
+      value: formatCurrency(netBalance, defaultCurrency),
+      trend: `${pct(Math.abs(savingsTrend))} vs last month`,
+      trendPositive: savingsTrend >= 0,
+      description: "Current month net position after income and expenses.",
+      icon: <Wallet2 className="h-4 w-4 text-red-300" />,
+    },
+    {
+      title: "Monthly Income",
+      value: formatCurrency(incomeCurrent, defaultCurrency),
+      trend: `${pct(Math.abs(incomePrevious > 0 ? ((incomeCurrent - incomePrevious) / incomePrevious) * 100 : 0))} trend`,
+      trendPositive: incomeCurrent >= incomePrevious,
+      description: "Income captured in the current monthly cycle.",
+      icon: <ArrowUpRight className="h-4 w-4 text-red-300" />,
+    },
+    {
+      title: "Monthly Expenses",
+      value: formatCurrency(expenseCurrent, defaultCurrency),
+      trend: `${pct(Math.abs(expenseTrend))} vs previous`,
+      trendPositive: expenseTrend <= 0,
+      description: "Total outflows and variable spending this month.",
+      icon: <ArrowDownRight className="h-4 w-4 text-red-300" />,
+    },
+    {
+      title: "Savings Rate",
+      value: pct(savingsRate),
+      trend: `${pct(Math.abs(savingsTrend))} momentum`,
+      trendPositive: savingsTrend >= 0,
+      description: "Net savings as a percentage of monthly income.",
+      icon: <ShieldCheck className="h-4 w-4 text-red-300" />,
+    },
+    {
+      title: "Safe To Spend Today",
+      value: formatCurrency(dailySafeSpend, defaultCurrency),
+      trend: `${daysRemaining} days remaining`,
+      trendPositive: dailySafeSpend >= 0,
+      description: "AI-calculated daily spending threshold for this month.",
+      icon: <CalendarClock className="h-4 w-4 text-red-300" />,
+    },
+    {
+      title: "Upcoming Bills",
+      value: `${upcomingBillsCount} due`,
+      trend: formatCurrency(upcomingBillsValue, defaultCurrency),
+      trendPositive: upcomingBillsCount <= 2,
+      description: "Recurring charges expected in the next 14 days.",
+      icon: <ListChecks className="h-4 w-4 text-red-300" />,
+    },
+  ];
+
+  const aiSummaryCard = {
+    title: "Ruby AI Executive Summary",
+    detail: aiSummary,
+    recommendation: keyRecommendation,
+  };
+
+  const goalsPreview = useMemo(() => {
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const elapsed = Math.max(1, now.getDate());
+    const budgetItems = budgets.slice(0, 3).map((budget) => {
+      const spent = transactions
+        .filter((tx) => tx.type === "expense" && tx.category === budget.category && monthKey(new Date(tx.date)) === currentKey)
+        .reduce((sum, tx) => sum + safeNumber(Number(tx.amount)), 0);
+      const target = safeNumber(Number(budget.limit_amount));
+      const progressPct = target > 0 ? clamp((spent / target) * 100, 0, 100) : 0;
+      const paceProjection = elapsed > 0 ? (spent / elapsed) * daysInMonth : 0;
+      const predictedCompletion = paceProjection <= target ? "On track" : "Needs correction";
+      return {
+        id: budget.id,
+        label: budget.category,
+        target,
+        spent,
+        progressPct,
+        predictedCompletion,
+        tip:
+          predictedCompletion === "On track"
+            ? "Maintain current spending rhythm and keep auto-savings enabled."
+            : "Reduce this category by 8-12% this week to stay on target.",
+      };
+    });
+    return budgetItems;
+  }, [budgets, transactions, now, currentKey]);
+
+  const upcomingPayments = useMemo(() => {
+    const today = new Date(now.toDateString());
+    return subscriptions
+      .filter((sub) => Boolean(sub.next_payment_date))
+      .map((sub) => {
+        const dueDate = new Date(sub.next_payment_date as string);
+        const daysUntil = Math.max(0, Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+        const monthlyAmount = sub.billing_cycle === "yearly" ? safeNumber(Number(sub.price)) / 12 : safeNumber(Number(sub.price));
+        const urgency = daysUntil <= 2 ? "High" : daysUntil <= 7 ? "Medium" : "Low";
+        return {
+          id: sub.id,
+          name: sub.name,
+          amount: monthlyAmount,
+          yearlyImpact: monthlyAmount * 12,
+          dueDate: sub.next_payment_date as string,
+          daysUntil,
+          urgency,
+        };
+      })
+      .sort((a, b) => a.daysUntil - b.daysUntil)
+      .slice(0, 4);
+  }, [subscriptions, now]);
+
+  const spendingAnalytics = useMemo(() => {
+    const monthlyRows = monthlyExpenseSeries.map((expense, index) => ({
+      label: `M-${monthlyExpenseSeries.length - index - 1}`,
+      expense,
+      income: monthlyIncomeSeries[index] ?? 0,
+    }));
+    const categoryRows = transactions
+      .filter((tx) => tx.type === "expense" && monthKey(new Date(tx.date)) === currentKey)
+      .reduce<Record<string, number>>((acc, tx) => {
+        acc[tx.category] = safeNumber(acc[tx.category] || 0) + safeNumber(Number(tx.amount));
+        return acc;
+      }, {});
+    const totalCategorySpend = Object.values(categoryRows).reduce((sum, value) => sum + value, 0);
+    const topCategories = Object.entries(categoryRows)
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        pct: totalCategorySpend > 0 ? (amount / totalCategorySpend) * 100 : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+    return { monthlyRows, topCategories };
+  }, [monthlyExpenseSeries, monthlyIncomeSeries, transactions, currentKey]);
+
+  const recentTransactions = useMemo(
+    () =>
+      [...transactions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 6),
+    [transactions]
+  );
+
+  const isOverviewEmpty = transactions.length === 0 && budgets.length === 0 && subscriptions.length === 0;
+
+  if (isOverviewEmpty) {
+    return (
+      <div className="premium-page">
+        <PremiumEmptyState
+          icon={<LayoutDashboard className="h-5 w-5" />}
+          headline="Your financial overview is ready to activate"
+          description="Add your first data points and Ruby AI will build live balance forecasts, risk alerts, and strategic recommendations."
+          primaryAction={{ label: "Add Transaction", to: "/finance" }}
+          secondaryAction={{ label: "Add Subscription", to: "/dashboard#subscriptions" }}
+          badges={[...DEMO_TRANSACTIONS.slice(0, 4).map((item) => item.merchant), ...DEMO_GOALS.slice(0, 2)]}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="premium-page">
       <OverviewHero
-        userName={displayName}
+        greeting={greeting}
         healthScore={health.score}
-        summary={aiSummary}
+        summary={heroSummary}
+        monthlyProgressPct={monthlyProgressPct}
+        monthlyProgressLabel={`${monthlyProgressPct.toFixed(0)}% elapsed`}
+        safeToSpendValue={formatCurrency(dailySafeSpend, defaultCurrency)}
+        keyRecommendation={keyRecommendation}
         trends={heroTrends}
         insights={heroInsights}
       />
@@ -318,18 +485,42 @@ const Overview = () => {
         )} with ${prediction.monthlyProjection.negativeRiskPct.toFixed(1)}% downside risk.`}
       />
 
-      <RubyAIWidget
-        title="Ruby AI Weekly CFO Note"
-        summary={`For ${displayName}, spending concentration is currently in ${rubyContext.topSpendingCategory}. ${rubyContext.weeklySummary}`}
-        actionLabel="Open Advisory Session"
-      />
+      <section className="premium-section rounded-[26px]">
+        <div className="mb-3 flex items-center gap-2">
+          <BrainCircuit className="h-4 w-4 text-red-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">AI Summary</h2>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+          <p className="text-sm leading-relaxed text-zinc-200">{aiSummaryCard.detail}</p>
+          <p className="mt-2 text-xs text-zinc-400">
+            Recommended action: <span className="text-zinc-200">{aiSummaryCard.recommendation}</span>
+          </p>
+        </div>
+        <div className="mt-4">
+          <RubyAIWidget
+            title="Ruby AI Weekly CFO Note"
+            summary={`For ${displayName}, spending concentration is currently in ${rubyContext.topSpendingCategory}. ${rubyContext.weeklySummary}`}
+            actionLabel="Open Advisory Session"
+          />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Wallet2 className="h-4 w-4 text-red-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Core Financial Metrics</h2>
+        </div>
+        <OverviewBentoGrid metrics={coreMetrics} />
+      </section>
+
+      <OverviewAIInsightsEngine insights={aiInsightCards} />
 
       <section className="premium-section rounded-[28px]">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-          <h2 className="premium-heading">Predictive Finance Engine</h2>
+            <h2 className="premium-heading">Predictive Finance Widgets</h2>
             <p className="text-xs text-zinc-500">
-              Forecasting future balance, safe-to-spend, and proactive risk trajectory.
+              End-of-month balance forecast, spending trajectory, budget risk, and goal completion outlook.
             </p>
           </div>
           <div className="premium-chip border-red-500/35 bg-red-500/10 text-red-200">
@@ -357,50 +548,164 @@ const Overview = () => {
         </div>
       </section>
 
-      <OverviewBentoGrid
-        balanceCard={{
-          title: "Balance Card",
-          value: formatCurrency(netBalance, defaultCurrency),
-          hint: "Current month net balance",
-        }}
-        monthlySpending={{
-          title: "Monthly Spending",
-          value: formatCurrency(expenseCurrent, defaultCurrency),
-          hint: `${pct(expenseTrend)} vs previous month`,
-        }}
-        savingsRate={{
-          title: "Savings Rate",
-          value: pct(savingsRate),
-          hint: "Net savings / income",
-        }}
-        dailySafeSpend={{
-          title: "Daily Safe Spend",
-          value: formatCurrency(dailySafeSpend, defaultCurrency),
-          hint: `${daysRemaining} days remaining this month`,
-        }}
-        upcomingBills={{
-          title: "Upcoming Bills",
-          value: `${upcomingBillsCount} bills`,
-          hint: `${formatCurrency(upcomingBillsValue, defaultCurrency)} due in next 14 days`,
-        }}
-        goalProgress={{
-          title: "Goal Progress",
-          value: pct(goalProgress),
-          hint: "Budget utilization vs set monthly limits",
-        }}
-        spendingDistribution={{
-          title: "Spending Distribution",
-          value: `${topCategoryLabel} (${pct(topCategoryShare)})`,
-          hint: "Top category share this month",
-        }}
-        cashFlowAnalytics={{
-          title: "Cash Flow Analytics",
-          value: `${formatCurrency(incomeCurrent, defaultCurrency)} in / ${formatCurrency(expenseCurrent, defaultCurrency)} out`,
-          hint: "Realtime operating cash flow pulse",
-        }}
-      />
+      <section className="premium-section rounded-[26px]">
+        <div className="mb-3 flex items-center gap-2">
+          <Goal className="h-4 w-4 text-red-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Goals Progress</h2>
+        </div>
+        {goalsPreview.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-black/25 p-4 text-sm text-zinc-400">
+            Add budgets in Classic Finance to activate goals forecasting on this command center.
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-3">
+            {goalsPreview.map((goal) => (
+              <article key={goal.id} className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">{goal.label}</p>
+                <p className="mt-1 text-lg font-semibold text-zinc-100">
+                  {formatCurrency(goal.spent, defaultCurrency)} / {formatCurrency(goal.target, defaultCurrency)}
+                </p>
+                <div className="mt-2 h-1.5 rounded-full bg-zinc-800/90">
+                  <div className="h-1.5 rounded-full bg-red-400" style={{ width: `${Math.max(5, goal.progressPct)}%` }} />
+                </div>
+                <p className="mt-2 text-xs text-zinc-400">Predicted completion: {goal.predictedCompletion}</p>
+                <p className="mt-1 text-xs text-zinc-300">{goal.tip}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
-      <OverviewAIInsightsEngine insights={aiInsightCards} />
+      <section className="premium-section rounded-[26px]">
+        <div className="mb-3 flex items-center gap-2">
+          <CalendarClock className="h-4 w-4 text-red-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Upcoming Payments</h2>
+        </div>
+        {upcomingPayments.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-black/25 p-4 text-sm text-zinc-400">
+            No scheduled recurring payment in the next period.
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {upcomingPayments.map((payment) => (
+              <article key={payment.id} className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium text-zinc-100">{payment.name}</p>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] ${
+                      payment.urgency === "High"
+                        ? "border-red-500/40 bg-red-500/10 text-red-200"
+                        : payment.urgency === "Medium"
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
+                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                    }`}
+                  >
+                    {payment.urgency}
+                  </span>
+                </div>
+                <p className="text-lg font-semibold text-zinc-100">{formatCurrency(payment.amount, defaultCurrency)}</p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Due {formatDate(payment.dueDate, { dateStyle: "medium" })} ({payment.daysUntil} days)
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Yearly impact: {formatCurrency(payment.yearlyImpact, defaultCurrency)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="premium-section rounded-[26px]">
+        <div className="mb-3 flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-red-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Spending Analytics</h2>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-12">
+          <article className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-7">
+            <p className="mb-2 text-xs uppercase tracking-[0.14em] text-zinc-500">Income vs Expense Trend</p>
+            {spendingAnalytics.monthlyRows.every((row) => row.expense === 0 && row.income === 0) ? (
+              <p className="text-sm text-zinc-400">Add transactions to activate trend analytics charts.</p>
+            ) : (
+              <div className="space-y-2">
+                {spendingAnalytics.monthlyRows.map((row) => {
+                  const max = Math.max(1, ...spendingAnalytics.monthlyRows.map((item) => Math.max(item.expense, item.income)));
+                  return (
+                    <div key={row.label} className="rounded-lg border border-white/10 bg-black/20 p-2">
+                      <div className="mb-1 flex items-center justify-between text-[11px] text-zinc-400">
+                        <span>{row.label}</span>
+                        <span>
+                          {formatCurrency(row.income, defaultCurrency)} / {formatCurrency(row.expense, defaultCurrency)}
+                        </span>
+                      </div>
+                      <div className="grid gap-1">
+                        <div className="h-1.5 rounded-full bg-zinc-800/80">
+                          <div className="h-1.5 rounded-full bg-emerald-400" style={{ width: `${(row.income / max) * 100}%` }} />
+                        </div>
+                        <div className="h-1.5 rounded-full bg-zinc-800/80">
+                          <div className="h-1.5 rounded-full bg-red-400" style={{ width: `${(row.expense / max) * 100}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </article>
+          <article className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-5">
+            <p className="mb-2 text-xs uppercase tracking-[0.14em] text-zinc-500">Top Spending Categories</p>
+            {spendingAnalytics.topCategories.length === 0 ? (
+              <p className="text-sm text-zinc-400">No category distribution yet in the current month.</p>
+            ) : (
+              <div className="space-y-2">
+                {spendingAnalytics.topCategories.map((item) => (
+                  <div key={item.category}>
+                    <div className="mb-1 flex items-center justify-between text-xs text-zinc-300">
+                      <span>{item.category}</span>
+                      <span>{formatCurrency(item.amount, defaultCurrency)}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-800/90">
+                      <div className="h-1.5 rounded-full bg-red-400" style={{ width: `${Math.max(5, item.pct)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
+        </div>
+      </section>
+
+      <section className="premium-section rounded-[26px]">
+        <div className="mb-3 flex items-center gap-2">
+          <ReceiptText className="h-4 w-4 text-red-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Recent Transactions</h2>
+        </div>
+        {recentTransactions.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-black/25 p-4 text-sm text-zinc-400">
+            No recent transactions yet. Add your first transaction to populate this activity feed.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recentTransactions.map((tx) => (
+              <article
+                key={tx.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2"
+              >
+                <div>
+                  <p className="text-sm font-medium text-zinc-100">{tx.description || tx.category}</p>
+                  <p className="text-xs text-zinc-400">
+                    {tx.category} • {formatDate(tx.date, { dateStyle: "medium" })}
+                  </p>
+                </div>
+                <p className={`text-sm font-semibold ${tx.type === "income" ? "text-emerald-300" : "text-zinc-100"}`}>
+                  {tx.type === "income" ? "+" : "-"}
+                  {formatCurrency(Math.abs(Number(tx.amount) || 0), tx.currency || defaultCurrency)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

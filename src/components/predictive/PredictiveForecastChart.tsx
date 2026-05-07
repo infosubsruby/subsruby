@@ -12,7 +12,7 @@ const axisStyle = { fontSize: 11, fill: "#a1a1aa" };
 
 export const PredictiveForecastChart = ({ data }: { data: PredictivePoint[] }) => {
   return (
-    <ChartContainer config={config} className="h-[230px] w-full">
+    <ChartContainer config={config} className="motion-card-enter h-[230px] w-full">
       <AreaChart data={data} margin={{ left: 10, right: 12, top: 10, bottom: 0 }}>
         <defs>
           <linearGradient id="predBalanceFill" x1="0" y1="0" x2="0" y2="1">
@@ -34,4 +34,3 @@ export const PredictiveForecastChart = ({ data }: { data: PredictivePoint[] }) =
     </ChartContainer>
   );
 };
-

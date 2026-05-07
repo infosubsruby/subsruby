@@ -101,13 +101,15 @@ export const AppShell = () => {
                     type="button"
                     onClick={() => goTo(item.to)}
                     className={cn(
-                      "group relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
+                      "interactive-nav group relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
                       isActive
                         ? "border-red-500/45 bg-red-500/[0.14] text-red-100 shadow-[0_0_22px_rgba(239,68,68,0.16)]"
                         : "border-transparent bg-transparent text-zinc-300 hover:border-white/10 hover:bg-white/[0.06] hover:text-zinc-100"
                     )}
                   >
-                    {isActive ? <span className="absolute left-0 top-2 h-6 w-1 rounded-r-full bg-red-400" /> : null}
+                    {isActive ? (
+                      <span className="absolute left-0 top-2 h-6 w-1 rounded-r-full bg-red-400 transition-all duration-300" />
+                    ) : null}
                     <Icon className={cn("h-4 w-4", isActive ? "text-red-300" : "text-zinc-400 group-hover:text-zinc-200")} />
                     <span className="font-medium">{item.label}</span>
                   </button>
@@ -177,7 +179,7 @@ export const AppShell = () => {
             </div>
           </header>
 
-          <main className="px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+          <main className="motion-page-enter px-4 pb-10 pt-6 sm:px-6 lg:px-8">
             <Outlet />
           </main>
         </div>

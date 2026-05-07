@@ -62,7 +62,8 @@ export const AIInsightCard = ({ insight }: { insight: AIInsight }) => {
   return (
     <article
       className={cn(
-        "group rounded-[22px] border p-5 shadow-[0_14px_35px_rgba(0,0,0,0.35)] backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_35px_rgba(239,68,68,0.18)]",
+        "interactive-card motion-card-enter group rounded-[22px] border p-5 shadow-[0_14px_35px_rgba(0,0,0,0.35)] backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_35px_rgba(239,68,68,0.18)]",
+        insight.severity === "high" ? "severity-pulse" : "",
         severityTone[insight.severity]
       )}
     >
@@ -77,7 +78,13 @@ export const AIInsightCard = ({ insight }: { insight: AIInsight }) => {
               <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5">
                 {insight.label}
               </span>
-              <span>{insight.timestamp}</span>
+              <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5">
+                {insight.categoryTag}
+              </span>
+              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-emerald-200">
+                Confidence {insight.confidencePct}%
+              </span>
+              <span className="micro-fade opacity-80">{insight.timestamp}</span>
             </div>
           </div>
         </div>
@@ -88,10 +95,14 @@ export const AIInsightCard = ({ insight }: { insight: AIInsight }) => {
       </header>
 
       <p className="text-sm leading-relaxed text-zinc-300">{insight.message}</p>
+      <div className="mt-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Suggested Action</p>
+        <p className="mt-1 text-xs text-zinc-300">{insight.suggestedAction}</p>
+      </div>
 
       <div
         className={cn(
-          "grid transition-all duration-300",
+          "grid transition-all duration-300 ease-out",
           expanded ? "mt-3 grid-rows-[1fr] opacity-100" : "mt-0 grid-rows-[0fr] opacity-0"
         )}
       >

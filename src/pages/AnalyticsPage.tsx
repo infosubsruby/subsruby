@@ -27,6 +27,8 @@ import { RubyAIWidget } from "@/components/ruby-ai/RubyAIWidget";
 import { buildPredictiveFinanceEngine } from "@/lib/predictiveFinanceEngine";
 import { PredictiveForecastChart } from "@/components/predictive/PredictiveForecastChart";
 import { PredictiveInsightsFeed, PredictiveSummaryCards } from "@/components/predictive/PredictiveWidgets";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_CATEGORIES, DEMO_MONTHLY_EXPENSES, DEMO_MONTHLY_INCOME } from "@/data/demoFinanceData";
 
 const pct = (value: number) => `${value.toFixed(1)}%`;
 
@@ -65,8 +67,28 @@ const AnalyticsPage = () => {
 
   if (isLoading || subscriptionsLoading) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-sm text-zinc-400">
+      <div className="motion-card-enter rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-sm text-zinc-400">
         Loading analytics intelligence layer...
+      </div>
+    );
+  }
+
+  const isAnalyticsEmpty = transactions.length === 0 && budgets.length === 0 && subscriptions.length === 0;
+  if (isAnalyticsEmpty) {
+    return (
+      <div className="premium-page">
+        <PremiumEmptyState
+          icon={<BrainCircuit className="h-5 w-5" />}
+          headline="Analytics engine is waiting for live finance signals"
+          description="Once data flows in, this page will show predictive curves, category heatmaps, behavior patterns, and AI analytics summaries."
+          primaryAction={{ label: "Add Financial Data", to: "/finance" }}
+          secondaryAction={{ label: "Open Overview", to: "/overview" }}
+          badges={[
+            `Income ${formatCurrency(DEMO_MONTHLY_INCOME, defaultCurrency)}`,
+            `Expenses ${formatCurrency(DEMO_MONTHLY_EXPENSES, defaultCurrency)}`,
+            ...DEMO_CATEGORIES.slice(0, 3),
+          ]}
+        />
       </div>
     );
   }
@@ -183,13 +205,13 @@ const AnalyticsPage = () => {
             <p>
               Fastest growing:{" "}
               <span className="font-medium text-red-200">
-                {analytics.categoryIntelligence.fastestGrowing?.category ?? "N/A"}
+                {analytics.categoryIntelligence.fastestGrowing?.category ?? "No growth data yet"}
               </span>
             </p>
             <p>
               Most wasteful:{" "}
               <span className="font-medium text-amber-200">
-                {analytics.categoryIntelligence.mostWasteful?.category ?? "N/A"}
+                {analytics.categoryIntelligence.mostWasteful?.category ?? "No category data yet"}
               </span>
             </p>
             {analytics.categoryIntelligence.behavioralPatterns.map((pattern) => (

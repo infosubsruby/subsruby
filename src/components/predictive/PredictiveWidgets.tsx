@@ -10,7 +10,7 @@ export const SafeToSpendWidget = ({
   currency: string;
 }) => {
   return (
-    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+    <article className="interactive-card motion-card-enter rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
       <div className="mb-2 flex items-center gap-2">
         <Gauge className="h-4 w-4 text-red-300" />
         <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Safe-To-Spend</h3>
@@ -40,7 +40,7 @@ export const PredictiveRiskCard = ({
         ? "text-amber-200 border-amber-500/35 bg-amber-500/10"
         : "text-emerald-200 border-emerald-500/35 bg-emerald-500/10";
   return (
-    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+    <article className="interactive-card motion-card-enter rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
       <div className="mb-2 flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 text-red-300" />
         <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Forecast Risk</h3>
@@ -65,7 +65,7 @@ export const PredictiveSummaryCards = ({
 }) => {
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-      <article className="rounded-xl border border-white/10 bg-black/25 p-3">
+      <article className="interactive-card motion-card-enter rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           <TrendingUp className="h-3.5 w-3.5 text-red-300" />
           Weekly Spending Prediction
@@ -74,21 +74,21 @@ export const PredictiveSummaryCards = ({
           {formatCurrency(prediction.spendingProjection.weeklyPrediction, currency)}
         </p>
       </article>
-      <article className="rounded-xl border border-white/10 bg-black/25 p-3">
+      <article className="interactive-card motion-card-enter rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           <ShieldCheck className="h-3.5 w-3.5 text-red-300" />
           Budget Risk
         </div>
         <p className="text-lg font-semibold text-zinc-100">{prediction.budgetRisk.scorePct.toFixed(1)}%</p>
       </article>
-      <article className="rounded-xl border border-white/10 bg-black/25 p-3">
+      <article className="interactive-card motion-card-enter rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           <Sparkles className="h-3.5 w-3.5 text-red-300" />
           Goal Completion Forecast
         </div>
         <p className="text-lg font-semibold text-zinc-100">{prediction.goalForecast.completionLabel}</p>
       </article>
-      <article className="rounded-xl border border-white/10 bg-black/25 p-3">
+      <article className="interactive-card motion-card-enter rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           <Gauge className="h-3.5 w-3.5 text-red-300" />
           Subscription Impact
@@ -115,7 +115,7 @@ export const PredictiveInsightsFeed = ({
   return (
     <div className="space-y-2.5">
       {prediction.insights.map((item) => (
-        <article key={item.title} className={`rounded-xl border px-3 py-2 ${toneClass[item.tone]}`}>
+        <article key={item.title} className={`motion-row-enter rounded-xl border px-3 py-2 ${toneClass[item.tone]}`}>
           <p className="text-[10px] uppercase tracking-[0.14em] opacity-85">{item.title}</p>
           <p className="mt-1 text-xs leading-relaxed">{item.detail}</p>
         </article>
@@ -123,4 +123,3 @@ export const PredictiveInsightsFeed = ({
     </div>
   );
 };
-

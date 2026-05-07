@@ -15,6 +15,8 @@ import {
   PredictiveSummaryCards,
   SafeToSpendWidget,
 } from "@/components/predictive/PredictiveWidgets";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_GOALS, DEMO_TRANSACTIONS } from "@/data/demoFinanceData";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const safe = (value: number) => (Number.isFinite(value) ? value : 0);
@@ -102,10 +104,11 @@ const Goals = () => {
       }),
     [transactions, budgets, subscriptions]
   );
+  const isGoalsEmpty = transactions.length === 0 && budgets.length === 0;
 
   return (
-    <div className="premium-page">
-      <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
+    <div className="premium-page motion-page-enter">
+      <section className="premium-section motion-card-enter relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-14 top-[-40px] h-44 w-44 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-40px] top-10 h-36 w-36 rounded-full bg-rose-500/20 blur-3xl" />
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -125,16 +128,30 @@ const Goals = () => {
         </div>
       </section>
 
+      {isGoalsEmpty ? (
+        <PremiumEmptyState
+          icon={<Target className="h-5 w-5" />}
+          headline="Create your first financial goal"
+          description="Set a savings target and Ruby AI will help you stay on track with smart predictions."
+          primaryAction={{ label: "Create Goal", to: "/finance?tab=budgets" }}
+          secondaryAction={{ label: "Add Transaction", to: "/finance" }}
+          badges={[...DEMO_GOALS, ...DEMO_TRANSACTIONS.slice(0, 2).map((item) => item.merchant)]}
+        />
+      ) : null}
+
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-12">
-        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:col-span-4">
+        <article className="interactive-card motion-card-enter rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:col-span-4">
           <div className="mb-2 flex items-center gap-2 text-zinc-300">
             <Target className="h-4 w-4 text-red-300" />
             <h3 className="text-sm font-semibold uppercase tracking-[0.14em]">Goal Progress</h3>
           </div>
           <p className="text-3xl font-semibold text-zinc-100">{goalProgress.toFixed(1)}%</p>
           <p className="mt-1 text-xs text-zinc-500">Budget utilization vs monthly limits</p>
+          <div className="mt-3 h-1.5 rounded-full bg-zinc-800/90">
+            <div className="progress-animate h-1.5 rounded-full bg-red-400" style={{ width: `${Math.max(4, goalProgress)}%` }} />
+          </div>
         </article>
-        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:col-span-4">
+        <article className="interactive-card motion-card-enter rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:col-span-4">
           <div className="mb-2 flex items-center gap-2 text-zinc-300">
             <Sparkles className="h-4 w-4 text-red-300" />
             <h3 className="text-sm font-semibold uppercase tracking-[0.14em]">Health-Aligned Goal Score</h3>
@@ -142,13 +159,20 @@ const Goals = () => {
           <p className="text-3xl font-semibold text-zinc-100">{health.score}/100</p>
           <p className="mt-1 text-xs text-zinc-500">{health.summary}</p>
         </article>
-        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:col-span-4">
+        <article
+          className={`interactive-card motion-card-enter rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:col-span-4 ${
+            savingsRate >= 20 ? "severity-pulse border-emerald-500/35" : ""
+          }`}
+        >
           <div className="mb-2 flex items-center gap-2 text-zinc-300">
             <Goal className="h-4 w-4 text-red-300" />
             <h3 className="text-sm font-semibold uppercase tracking-[0.14em]">Savings Target Signal</h3>
           </div>
           <p className="text-3xl font-semibold text-zinc-100">{savingsRate.toFixed(1)}%</p>
           <p className="mt-1 text-xs text-zinc-500">Recommended sustainable range: 15%+</p>
+          <div className="mt-3 h-1.5 rounded-full bg-zinc-800/90">
+            <div className="progress-animate h-1.5 rounded-full bg-emerald-400" style={{ width: `${Math.max(4, Math.min(100, savingsRate))}%` }} />
+          </div>
         </article>
       </div>
 

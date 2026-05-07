@@ -1,14 +1,19 @@
 import { Wallet } from "lucide-react";
-import { FeaturePlaceholder } from "@/components/layout/FeaturePlaceholder";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_WALLETS } from "@/data/demoFinanceData";
 
 const Wallets = () => {
   return (
-    <FeaturePlaceholder
-      title="Wallets"
-      subtitle="Manage all account balances and cash movement channels in one premium control layer."
-      sections={["Account Balances", "Payment Methods", "Cash Position Stream", "Currency Exposure", "Allocation Summary"]}
-      icon={<Wallet className="h-5 w-5" />}
-    />
+    <div className="premium-page">
+      <PremiumEmptyState
+        icon={<Wallet className="h-5 w-5" />}
+        headline="Connect or create your first wallet"
+        description="Track cash, cards, savings, crypto, or bank balances in one place."
+        primaryAction={{ label: "Add Wallet", to: "/finance" }}
+        secondaryAction={{ label: "Open Overview", to: "/overview" }}
+        badges={DEMO_WALLETS}
+      />
+    </div>
   );
 };
 

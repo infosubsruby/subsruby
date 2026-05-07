@@ -17,6 +17,7 @@ import {
   Package,
   ReceiptText,
   Smartphone,
+  Receipt,
 } from "lucide-react";
 import { Budget, Transaction } from "@/hooks/useFinance";
 import { Button } from "@/components/ui/button";
@@ -32,12 +33,15 @@ import {
 } from "@/lib/transactionIntelligence";
 import { TransactionAITag } from "@/components/finance/TransactionAITag";
 import { TransactionIntelligenceOverview } from "@/components/finance/TransactionIntelligenceOverview";
+import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
+import { DEMO_TRANSACTIONS } from "@/data/demoFinanceData";
 
 interface TransactionListProps {
   transactions: Transaction[];
   budgets: Budget[];
   onDelete: (id: string) => Promise<{ success: boolean }>;
   onToggleRecurring: (id: string) => Promise<{ success: boolean }>;
+  onAddTransaction?: () => void;
 }
 
 const ICONS = {
@@ -72,6 +76,7 @@ export const TransactionList = ({
   budgets,
   onDelete,
   onToggleRecurring,
+  onAddTransaction,
 }: TransactionListProps) => {
   const tFinance = useTranslations("Finance");
   const tCategories = useTranslations("Categories");
@@ -136,9 +141,14 @@ export const TransactionList = ({
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>No transactions yet. Add your first one!</p>
-      </div>
+      <PremiumEmptyState
+        icon={<Receipt className="h-5 w-5" />}
+        headline="Start tracking your financial activity"
+        description="Add your first transaction and Ruby AI will begin analyzing your spending patterns."
+        primaryAction={{ label: "Add Transaction", onClick: onAddTransaction }}
+        secondaryAction={{ label: "Open Overview", to: "/overview" }}
+        badges={DEMO_TRANSACTIONS.slice(0, 5).map((item) => item.merchant)}
+      />
     );
   }
 
@@ -162,7 +172,7 @@ export const TransactionList = ({
               {bucket}
             </h3>
             <div className="space-y-2">
-              {bucketTransactions.map((transaction) => {
+              {bucketTransactions.map((transaction, index) => {
                 const analysis = intelligence.byId[transaction.id];
                 const rawDesc = (transaction.description ?? "").trim();
                 const categoryLabel = getCategoryLabel(transaction.category);
@@ -186,7 +196,8 @@ export const TransactionList = ({
                 return (
                   <article
                     key={transaction.id}
-                    className="group rounded-2xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_10px_26px_rgba(0,0,0,0.25)] transition hover:border-red-500/35 hover:bg-red-500/[0.04]"
+                    className="interactive-card motion-row-enter group rounded-2xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_10px_26px_rgba(0,0,0,0.25)] transition hover:border-red-500/35 hover:bg-red-500/[0.04]"
+                    style={{ animationDelay: `${Math.min(index * 28, 220)}ms` }}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
@@ -213,7 +224,7 @@ export const TransactionList = ({
                             </Badge>
                             <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-zinc-400">
                               {renderMerchantIcon(analysis)}
-                              {analysis?.merchantName || "Merchant"}
+                              {analysis?.merchantName || "Recorded Merchant"}
                             </span>
                           </div>
 

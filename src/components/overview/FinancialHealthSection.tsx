@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, BrainCircuit, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinancialHealthResult } from "@/lib/financialHealthScore";
@@ -28,13 +29,38 @@ export const FinancialHealthSection = ({
   rubyWidgetSummary?: string;
   predictiveWidgetSummary?: string;
 }) => {
+  const [animatedScore, setAnimatedScore] = useState(0);
+  const [barsReady, setBarsReady] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+    let raf = 0;
+    const duration = 850;
+    const start = performance.now();
+    setBarsReady(false);
+
+    const run = (time: number) => {
+      const progress = Math.min(1, (time - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedScore(Math.round(result.score * eased));
+      if (progress < 1) raf = requestAnimationFrame(run);
+    };
+
+    raf = requestAnimationFrame(run);
+    frame = window.setTimeout(() => setBarsReady(true), 80);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(frame);
+    };
+  }, [result.score]);
+
   const trendPositive = result.trendComparisonPct >= 0;
   const weeklyPositive = result.weeklyImprovementPct >= 0;
-  const scoreArc = Math.max(0, Math.min(100, result.score));
+  const scoreArc = Math.max(0, Math.min(100, animatedScore));
   const angle = (scoreArc / 100) * 360;
 
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-7">
+    <section className="motion-page-enter relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-7">
       <div className="pointer-events-none absolute -left-14 top-[-40px] h-44 w-44 rounded-full bg-red-600/15 blur-3xl" />
       <div className="pointer-events-none absolute right-[-40px] top-10 h-36 w-36 rounded-full bg-rose-500/20 blur-3xl" />
 
@@ -53,7 +79,7 @@ export const FinancialHealthSection = ({
               }}
             >
               <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-[#0b0d12]/95">
-                <p className="text-5xl font-bold leading-none text-zinc-100">{result.score}</p>
+                <p className="text-5xl font-bold leading-none text-zinc-100">{animatedScore}</p>
                 <p className={cn("mt-1 text-sm font-medium", statusTone[result.status])}>{result.status}</p>
               </div>
             </div>
@@ -93,8 +119,8 @@ export const FinancialHealthSection = ({
                 </div>
                 <div className="h-1.5 rounded-full bg-zinc-800/90">
                   <div
-                    className={cn("h-1.5 rounded-full transition-all duration-500", barTone(factor.score))}
-                    style={{ width: `${Math.max(4, Math.min(100, factor.score))}%` }}
+                    className={cn("progress-animate h-1.5 rounded-full", barTone(factor.score))}
+                    style={{ width: `${barsReady ? Math.max(4, Math.min(100, factor.score)) : 4}%` }}
                   />
                 </div>
               </div>
