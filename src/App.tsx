@@ -29,6 +29,8 @@ import Wallets from "./pages/Wallets";
 import RubyAI from "./pages/RubyAI";
 import MonthlyReport from "./pages/MonthlyReport";
 import SmartBudgetPlanner from "./pages/SmartBudgetPlanner";
+import PlanningHub from "./pages/PlanningHub";
+import FinancialHealth from "./pages/FinancialHealth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +75,11 @@ const App = () => (
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/transactions" element={<Navigate to="/finance?tab=transactions" replace />} />
                   <Route path="/subscriptions" element={<Navigate to="/dashboard#subscriptions" replace />} />
+                  <Route path="/planning" element={<PlanningHub />} />
+                  <Route path="/planning/goals" element={<Navigate to="/goals" replace />} />
+                  <Route path="/planning/budget-planner" element={<Navigate to="/smart-budget-planner" replace />} />
+                  <Route path="/planning/monthly-reports" element={<Navigate to="/monthly-report" replace />} />
+                  <Route path="/planning/financial-health" element={<Navigate to="/financial-health" replace />} />
                   <Route path="/ai-insights" element={<AIInsights />} />
                   <Route path="/goals" element={<Goals />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
@@ -80,6 +87,7 @@ const App = () => (
                   <Route path="/ruby-ai" element={<RubyAI />} />
                   <Route path="/monthly-report" element={<MonthlyReport />} />
                   <Route path="/smart-budget-planner" element={<SmartBudgetPlanner />} />
+                  <Route path="/financial-health" element={<FinancialHealth />} />
                   <Route path="/classic-finance" element={<Finance />} />
                   <Route path="/finance" element={<Finance />} />
                   <Route path="/settings" element={<Settings />} />

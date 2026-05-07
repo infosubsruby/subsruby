@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,55 +10,50 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  BarChart3,
-  Bot,
-  BrainCircuit,
-  CalendarDays,
-  CircleDollarSign,
-  CreditCard,
+  ChevronDown,
   FolderKanban,
   Gauge,
-  Goal,
-  Home,
-  Landmark,
-  List,
   LogOut,
-  Settings,
   Sparkles,
   User,
-  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  PLANNING_CHILDREN,
+  PLANNING_GROUP,
+  SIDEBAR_BOTTOM_ITEMS,
+  SIDEBAR_TOP_ITEMS,
+  type SidebarLeafItem,
+} from "@/config/sidebarNavigation";
 
-type SidebarItem = {
-  label: string;
-  to: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
-
-const sidebarItems: SidebarItem[] = [
-  { label: "Overview", to: "/overview", icon: Home },
-  { label: "Transactions", to: "/transactions", icon: List },
-  { label: "Subscriptions", to: "/subscriptions", icon: CreditCard },
-  { label: "AI Insights", to: "/ai-insights", icon: BrainCircuit },
-  { label: "Goals", to: "/goals", icon: Goal },
-  { label: "Analytics", to: "/analytics", icon: BarChart3 },
-  { label: "Wallets", to: "/wallets", icon: Wallet },
-  { label: "Monthly Report", to: "/monthly-report", icon: CalendarDays },
-  { label: "Budget Planner", to: "/smart-budget-planner", icon: CircleDollarSign },
-  { label: "Ruby AI", to: "/ruby-ai", icon: Bot },
-  { label: "Classic Finance", to: "/classic-finance", icon: Landmark },
-  { label: "Settings", to: "/settings", icon: Settings },
-];
+const isActivePath = (pathname: string, to: string) => pathname === to || pathname.startsWith(`${to}/`);
+const matchesLeaf = (pathname: string, item: SidebarLeafItem) =>
+  isActivePath(pathname, item.to) || (item.aliases?.some((alias) => isActivePath(pathname, alias)) ?? false);
 
 export const AppShell = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [planningOpen, setPlanningOpen] = useState(false);
+
+  const isPlanningActive = useMemo(
+    () => isActivePath(location.pathname, PLANNING_GROUP.to) || PLANNING_CHILDREN.some((item) => matchesLeaf(location.pathname, item)),
+    [location.pathname]
+  );
+
+  useEffect(() => {
+    if (isPlanningActive) setPlanningOpen(true);
+  }, [isPlanningActive]);
 
   const activeLabel = useMemo(() => {
-    const current = sidebarItems.find((item) => location.pathname === item.to);
-    return current?.label ?? "Workspace";
+    const planningChild = PLANNING_CHILDREN.find((item) => matchesLeaf(location.pathname, item));
+    if (planningChild) return `${PLANNING_GROUP.label} / ${planningChild.label}`;
+    const topMatch = SIDEBAR_TOP_ITEMS.find((item) => matchesLeaf(location.pathname, item));
+    if (topMatch) return topMatch.label;
+    const bottomMatch = SIDEBAR_BOTTOM_ITEMS.find((item) => matchesLeaf(location.pathname, item));
+    if (bottomMatch) return bottomMatch.label;
+    if (isActivePath(location.pathname, PLANNING_GROUP.to)) return PLANNING_GROUP.label;
+    return "Workspace";
   }, [location.pathname]);
 
   const handleSignOut = async () => {
@@ -95,10 +90,9 @@ export const AppShell = () => {
             </button>
 
             <nav className="custom-scrollbar flex-1 space-y-1.5 overflow-y-auto pr-1">
-              {sidebarItems.map((item) => {
+              {SIDEBAR_TOP_ITEMS.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.to;
-
+                const isActive = matchesLeaf(location.pathname, item);
                 return (
                   <button
                     key={item.to}
@@ -111,9 +105,74 @@ export const AppShell = () => {
                         : "border-transparent bg-transparent text-zinc-300 hover:border-white/10 hover:bg-white/[0.06] hover:text-zinc-100"
                     )}
                   >
-                    {isActive ? (
-                      <span className="absolute left-0 top-2 h-6 w-1 rounded-r-full bg-red-400 transition-all duration-300" />
-                    ) : null}
+                    {isActive ? <span className="absolute left-0 top-2 h-6 w-1 rounded-r-full bg-red-400 transition-all duration-300" /> : null}
+                    <Icon className={cn("h-4 w-4", isActive ? "text-red-300" : "text-zinc-400 group-hover:text-zinc-200")} />
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                );
+              })}
+
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlanningOpen((prev) => !prev);
+                    if (!isPlanningActive) goTo(PLANNING_GROUP.to);
+                  }}
+                  className={cn(
+                    "interactive-nav group relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
+                    isPlanningActive
+                      ? "border-red-500/45 bg-red-500/[0.14] text-red-100 shadow-[0_0_22px_rgba(239,68,68,0.16)]"
+                      : "border-transparent bg-transparent text-zinc-300 hover:border-white/10 hover:bg-white/[0.06] hover:text-zinc-100"
+                  )}
+                >
+                  {isPlanningActive ? <span className="absolute left-0 top-2 h-6 w-1 rounded-r-full bg-red-400 transition-all duration-300" /> : null}
+                  <PLANNING_GROUP.icon className={cn("h-4 w-4", isPlanningActive ? "text-red-300" : "text-zinc-400 group-hover:text-zinc-200")} />
+                  <span className="font-medium">{PLANNING_GROUP.label}</span>
+                  <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform duration-200", planningOpen ? "rotate-180 text-red-300" : "text-zinc-500")} />
+                </button>
+                {planningOpen ? (
+                  <div className="space-y-1 pl-3">
+                    {PLANNING_CHILDREN.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = matchesLeaf(location.pathname, item);
+                      return (
+                        <button
+                          key={item.to}
+                          type="button"
+                          onClick={() => goTo(item.to)}
+                          className={cn(
+                            "group relative flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[13px] transition-all duration-200",
+                            isActive
+                              ? "border-red-500/40 bg-red-500/[0.12] text-red-100"
+                              : "border-transparent text-zinc-400 hover:border-white/10 hover:bg-white/[0.05] hover:text-zinc-100"
+                          )}
+                        >
+                          <Icon className={cn("h-3.5 w-3.5", isActive ? "text-red-300" : "text-zinc-500 group-hover:text-zinc-200")} />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+
+              {SIDEBAR_BOTTOM_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = matchesLeaf(location.pathname, item);
+                return (
+                  <button
+                    key={item.to}
+                    type="button"
+                    onClick={() => goTo(item.to)}
+                    className={cn(
+                      "interactive-nav group relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
+                      isActive
+                        ? "border-red-500/45 bg-red-500/[0.14] text-red-100 shadow-[0_0_22px_rgba(239,68,68,0.16)]"
+                        : "border-transparent bg-transparent text-zinc-300 hover:border-white/10 hover:bg-white/[0.06] hover:text-zinc-100"
+                    )}
+                  >
+                    {isActive ? <span className="absolute left-0 top-2 h-6 w-1 rounded-r-full bg-red-400 transition-all duration-300" /> : null}
                     <Icon className={cn("h-4 w-4", isActive ? "text-red-300" : "text-zinc-400 group-hover:text-zinc-200")} />
                     <span className="font-medium">{item.label}</span>
                   </button>

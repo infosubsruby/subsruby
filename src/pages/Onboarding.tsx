@@ -1,259 +1,485 @@
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Banknote,
+  CheckCircle2,
+  CircleDollarSign,
+  Compass,
+  CreditCard,
+  Goal,
+  PiggyBank,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFinance } from "@/hooks/useFinance";
-import { useSubscriptions } from "@/hooks/useSubscriptions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
-import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { convertWithDynamicRates } from "@/lib/currency";
-import { calculatePotentialSavings } from "@/lib/subscriptionInsights";
-import { Sparkles, Wallet, CreditCard, ArrowRight, CheckCircle2, PiggyBank, TrendingUp } from "lucide-react";
-import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
-import { AddSubscriptionModal } from "@/components/subscription/AddSubscriptionModal";
+import { useSettings } from "@/hooks/useSettings";
+import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
+import { OnboardingChoiceChip } from "@/components/onboarding/OnboardingChoiceChip";
+import { useOnboardingFoundation } from "@/hooks/useOnboardingFoundation";
+import {
+  ACCOUNT_TYPE_OPTIONS,
+  DEFAULT_CATEGORIES,
+  MAIN_GOAL_OPTIONS,
+  RUBY_FOCUS_OPTIONS,
+  type AccountType,
+  type AssistantFocus,
+  type FoundationCategory,
+  type MainFinancialGoal,
+} from "@/lib/onboardingSettingsFoundation";
 import { toast } from "sonner";
-import { useTranslations } from "@/i18n/useTranslations";
 import { supabase } from "@/integrations/supabase/client";
 
-type OnboardingStep = "welcome" | "income" | "subscription" | "wow";
+type OnboardingStep =
+  | "welcome"
+  | "personal_finance"
+  | "account_setup"
+  | "spending_categories"
+  | "budget_setup"
+  | "goals_setup"
+  | "ruby_ai_personalization"
+  | "completion";
+
+const ONBOARDING_STEPS: { key: OnboardingStep; title: string }[] = [
+  { key: "welcome", title: "Welcome to Ruby" },
+  { key: "personal_finance", title: "Personal Finance Setup" },
+  { key: "account_setup", title: "Account Setup" },
+  { key: "spending_categories", title: "Spending Categories" },
+  { key: "budget_setup", title: "Budget Setup" },
+  { key: "goals_setup", title: "Goals Setup" },
+  { key: "ruby_ai_personalization", title: "Ruby AI Personalization" },
+  { key: "completion", title: "Setup Complete" },
+];
+
+const CURRENCY_OPTIONS = ["USD", "EUR", "GBP", "TRY", "CAD", "AUD", "JPY"];
+const REGION_OPTIONS = [
+  "United States",
+  "United Kingdom",
+  "Turkey",
+  "Germany",
+  "France",
+  "Canada",
+  "Australia",
+  "Japan",
+];
+const LOCALE_OPTIONS = ["en-US", "en-GB", "tr-TR", "de-DE", "fr-FR"];
+const BUDGET_METHOD_OPTIONS = [
+  { value: "50_30_20", label: "50/30/20 Method" },
+  { value: "zero_based", label: "Zero-Based Budgeting" },
+  { value: "envelope", label: "Envelope Method" },
+  { value: "custom", label: "Custom Method" },
+];
+const SAFE_SPEND_OPTIONS = [
+  { value: "conservative", label: "Conservative" },
+  { value: "balanced", label: "Balanced" },
+  { value: "aggressive", label: "Aggressive" },
+];
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const [step, setStep] = useState<OnboardingStep>("welcome");
-  const tSetup = useTranslations("Setup");
-  const tLanding = useTranslations("Landing");
-  const { createTransaction } = useFinance();
-  const { subscriptions } = useSubscriptions();
-  const { data: exchangeRatesList } = useExchangeRates();
+  const { setDefaultCurrency } = useSettings();
+  const { state, patch } = useOnboardingFoundation();
+  const [stepIndex, setStepIndex] = useState(0);
 
-  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
-  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
-
-  // Convert rates array to Record<string, number>
-  const exchangeRates = useMemo(() => {
-    if (!exchangeRatesList) return {};
-    return exchangeRatesList.reduce((acc, curr) => {
-      acc[curr.currency_code] = Number(curr.rate);
-      return acc;
-    }, {} as Record<string, number>);
-  }, [exchangeRatesList]);
+  const currentStep = ONBOARDING_STEPS[stepIndex];
 
   useEffect(() => {
     if (profile?.has_completed_onboarding === true) {
-      navigate("/dashboard", { replace: true });
+      navigate("/overview", { replace: true });
     }
   }, [navigate, profile?.has_completed_onboarding]);
 
-  useEffect(() => {
-    if (step === "income") {
-      setIsIncomeModalOpen(true);
-    }
-    if (step === "subscription") {
-      setIsSubModalOpen(true);
-    }
-  }, [step]);
-
-  const handleCompleteStep1 = () => setStep("income");
-
-  const finishOnboarding = () => {
-    if (user?.id) {
-      localStorage.setItem(`hasCompletedOnboarding:${user.id}`, "true");
-      void supabase.from("profiles").update({ has_completed_onboarding: true }).eq("id", user.id);
-    }
-    navigate("/dashboard");
+  const toggleItem = <T extends string>(value: T, list: T[]): T[] => {
+    if (list.includes(value)) return list.filter((item) => item !== value);
+    return [...list, value];
   };
 
-  // WOW Screen Calculations using REAL data from hooks
-  const wowData = useMemo(() => {
-    const safeSubscriptions = subscriptions || [];
-    
-    // Calculate monthly total in USD (or base currency)
-    const monthlyTotal = safeSubscriptions.reduce((total, sub) => {
-      const rawPrice = Number(sub.price ?? 0);
-      const monthlyPrice = sub.billing_cycle === "yearly" ? rawPrice / 12 : rawPrice;
-      const convertedPrice = convertWithDynamicRates(monthlyPrice, sub.currency, "USD", exchangeRates);
-      return total + (isFinite(convertedPrice) ? convertedPrice : 0);
-    }, 0);
+  const recommendedAction = useMemo(() => {
+    if (state.mainFinancialGoal === "emergency_fund") {
+      return `Set an automatic weekly transfer of ${Math.max(15, Math.round(state.monthlySavingsTarget / 4))} ${state.preferredCurrency} to your emergency fund.`;
+    }
+    if (state.rubyFocus.includes("reducing_subscriptions")) {
+      return "Review recurring charges in Subscriptions and cancel one low-value service this week.";
+    }
+    return "Open Budget Planner and confirm category limits for this month to stay on track.";
+  }, [state.mainFinancialGoal, state.monthlySavingsTarget, state.preferredCurrency, state.rubyFocus]);
 
-    const yearlyTotal = monthlyTotal * 12;
-    
-    // Calculate real potential savings
-    const convertedInputs = safeSubscriptions.map(sub => ({
-      price: convertWithDynamicRates(Number(sub.price), sub.currency, "USD", exchangeRates),
-      billing_cycle: sub.billing_cycle,
-      is_marked_unused: sub.is_marked_unused
-    }));
-    
-    const potentialSavings = calculatePotentialSavings(convertedInputs);
-    
-    return {
-      monthlyTotal: monthlyTotal.toFixed(2),
-      yearlyTotal: yearlyTotal.toFixed(2),
-      potentialSavings: potentialSavings.toFixed(2),
-      yearlySavings: (potentialSavings * 12).toFixed(2)
-    };
-  }, [subscriptions, exchangeRates]);
+  const finishOnboarding = async () => {
+    patch({ onboardingCompletedAt: new Date().toISOString() });
+    setDefaultCurrency(state.preferredCurrency);
+    if (user?.id) {
+      localStorage.setItem(`hasCompletedOnboarding:${user.id}`, "true");
+      await supabase
+        .from("profiles")
+        .update({
+          has_completed_onboarding: true,
+          default_currency: state.preferredCurrency,
+          first_name: profile?.first_name ?? "Ruby User",
+        })
+        .eq("id", user.id);
+    }
+    toast.success("Onboarding completed. Ruby AI is ready.");
+    navigate("/overview");
+  };
+
+  const goNext = () => setStepIndex((prev) => Math.min(ONBOARDING_STEPS.length - 1, prev + 1));
+  const goBack = () => setStepIndex((prev) => Math.max(0, prev - 1));
+  const goSkip = () => goNext();
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full flex justify-center">
-        {step === "welcome" && (
-          <div className="max-w-md w-full text-center animate-fade-in">
-            <div className="mb-8 flex justify-center">
-              <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center">
-                <Sparkles className="w-10 h-10 text-primary" />
+    <div className="min-h-screen bg-[#07090d] px-4 py-8 text-zinc-100">
+      <div className="mx-auto w-full max-w-5xl">
+        <div className="grid gap-4 lg:grid-cols-12">
+          <aside className="lg:col-span-4">
+            <div className="sticky top-8 space-y-3">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/25 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-red-200">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Ruby Onboarding
+                </div>
+                <h1 className="text-xl font-semibold tracking-tight">Your AI financial operating system</h1>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Simple setup now, intelligent guidance across Overview, Financial Health, Budget Planner, Goals, Ruby AI, and Insights.
+                </p>
               </div>
+              <OnboardingProgress
+                currentStep={stepIndex + 1}
+                totalSteps={ONBOARDING_STEPS.length}
+                stepTitle={currentStep.title}
+              />
             </div>
-            {(() => {
-              const miniTitle = tLanding("mini_title");
-              const dotIndex = miniTitle.indexOf(".");
-              const firstLine = dotIndex >= 0 ? miniTitle.slice(0, dotIndex + 1) : miniTitle;
-              const secondLine = dotIndex >= 0 ? miniTitle.slice(dotIndex + 1).trim() : "";
-              return (
-            <h1 className="text-4xl font-bold mb-4 tracking-tight">
-              {firstLine} <br />
-              <span className="ruby-text-gradient text-5xl">{secondLine}</span>
-            </h1>
-              );
-            })()}
-            <p className="text-muted-foreground text-lg mb-10">
-              {tLanding("mini_desc")}
-            </p>
-            <Button 
-              size="lg" 
-              onClick={handleCompleteStep1}
-              className="w-full ruby-gradient h-14 text-lg font-semibold rounded-2xl shadow-ruby hover:shadow-ruby-strong transition-all"
-            >
-              {tLanding("get_started")}
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </div>
-        )}
+          </aside>
 
-        {step === "income" && (
-          <div className="max-w-md w-full text-center animate-fade-in">
-            <div className="mb-8 flex justify-center">
-              <div className="w-20 h-20 bg-green-500/10 rounded-3xl flex items-center justify-center">
-                <Wallet className="w-10 h-10 text-green-500" />
-              </div>
-            </div>
-            <h2 className="text-3xl font-bold mb-4">Step 1: Your Income</h2>
-            <p className="text-muted-foreground text-lg mb-10">
-              Enter your monthly net income to calculate your financial health score.
-            </p>
-            <Button 
-              size="lg" 
-              onClick={() => setIsIncomeModalOpen(true)}
-              className="w-full h-14 text-lg font-semibold rounded-2xl transition-all"
-            >
-              Add Monthly Income
-            </Button>
-          </div>
-        )}
+          <section className="lg:col-span-8">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:p-6">
+              <div className="pointer-events-none absolute -right-20 top-[-20px] h-40 w-40 rounded-full bg-red-600/12 blur-3xl" />
 
-        {step === "subscription" && (
-          <div className="max-w-md w-full text-center animate-fade-in">
-            <div className="mb-8 flex justify-center">
-              <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center">
-                <CreditCard className="w-10 h-10 text-primary" />
-              </div>
-            </div>
-            <h2 className="text-3xl font-bold mb-4">Step 2: A Subscription</h2>
-            <p className="text-muted-foreground text-lg mb-10">
-              Add at least one subscription (Netflix, Spotify, etc.) to see your first insight.
-            </p>
-            <Button 
-              size="lg" 
-              onClick={() => setIsSubModalOpen(true)}
-              className="w-full h-14 text-lg font-semibold rounded-2xl transition-all"
-            >
-              Add First Subscription
-            </Button>
-          </div>
-        )}
+              {currentStep.key === "welcome" ? (
+                <div className="space-y-5">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/20 text-red-300">
+                    <Sparkles className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold">Welcome to Ruby</h2>
+                    <p className="mt-2 text-sm text-zinc-400">
+                      Ruby helps you understand money clearly, improve habits, and plan smarter with AI insights tailored to your goals.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300">
+                    You will complete a quick setup to power your Overview, Financial Health Score, Budget Planner, Predictions, and Ruby AI recommendations.
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={goNext} className="gap-2">
+                      Get Started
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
 
-        {step === "wow" && (
-          <div className="max-w-lg w-full text-center animate-fade-in">
-            <div className="mb-8 flex justify-center">
-              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-10 h-10 text-green-500" />
-              </div>
-            </div>
-            
-            <h2 className="text-3xl font-bold mb-8">{tSetup("title")}</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-              <div className="p-6 bg-card border rounded-2xl shadow-sm">
-                <TrendingUp className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">{tSetup("monthly_spending")}</p>
-                <p className="text-3xl font-bold">${wowData.monthlyTotal}</p>
-              </div>
-              <div className="p-6 bg-card border rounded-2xl shadow-sm">
-                <PiggyBank className="w-6 h-6 text-green-500 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">{tSetup("yearly_projection")}</p>
-                <p className="text-3xl font-bold">${wowData.yearlyTotal}</p>
-              </div>
-            </div>
+              {currentStep.key === "personal_finance" ? (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Personal Finance Setup</h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Preferred Currency</Label>
+                      <Select value={state.preferredCurrency} onValueChange={(value) => patch({ preferredCurrency: value })}>
+                        <SelectTrigger className="border-white/12 bg-black/20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CURRENCY_OPTIONS.map((currency) => (
+                            <SelectItem key={currency} value={currency}>
+                              {currency}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Country / Region</Label>
+                      <Select value={state.countryOrRegion} onValueChange={(value) => patch({ countryOrRegion: value })}>
+                        <SelectTrigger className="border-white/12 bg-black/20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {REGION_OPTIONS.map((region) => (
+                            <SelectItem key={region} value={region}>
+                              {region}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Monthly Income</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={state.monthlyIncome}
+                        onChange={(event) => patch({ monthlyIncome: Number(event.target.value) || 0 })}
+                        className="border-white/12 bg-black/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Main Financial Goal</Label>
+                      <Select
+                        value={state.mainFinancialGoal}
+                        onValueChange={(value) => patch({ mainFinancialGoal: value as MainFinancialGoal })}
+                      >
+                        <SelectTrigger className="border-white/12 bg-black/20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MAIN_GOAL_OPTIONS.map((goal) => (
+                            <SelectItem key={goal.value} value={goal.value}>
+                              {goal.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {state.mainFinancialGoal === "custom" ? (
+                    <div className="space-y-2">
+                      <Label>Custom Goal Name</Label>
+                      <Input
+                        value={state.customGoalName}
+                        onChange={(event) => patch({ customGoalName: event.target.value })}
+                        placeholder="Example: Build a 3-month runway"
+                        className="border-white/12 bg-black/20"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
-            <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl mb-10">
-              {Number(wowData.potentialSavings) > 0 ? (
-                <>
-                  <p className="text-lg font-medium text-primary mb-1">
-                    Potential Savings Found! 💰
-                  </p>
-                  <p className="text-muted-foreground text-sm px-4">
-                    You could save up to <span className="font-bold text-foreground">${wowData.potentialSavings}/month</span> (${wowData.yearlySavings}/year) by optimizing your plans.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-lg font-medium text-green-600 mb-1">
-                    {tSetup("excellent_management")}
-                  </p>
-                  <p className="text-muted-foreground text-sm px-4">
-                    {tSetup("management_desc")}
-                  </p>
-                </>
-              )}
-            </div>
+              {currentStep.key === "account_setup" ? (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Account Setup</h2>
+                  <p className="text-sm text-zinc-400">Choose account types to start. You can add real bank sync later.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {ACCOUNT_TYPE_OPTIONS.map((option) => (
+                      <OnboardingChoiceChip
+                        key={option.value}
+                        label={option.label}
+                        selected={state.accountSetup.includes(option.value as AccountType)}
+                        onClick={() => patch({ accountSetup: toggleItem(option.value as AccountType, state.accountSetup) })}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
-            <Button 
-              size="lg" 
-              onClick={finishOnboarding}
-              className="w-full ruby-gradient h-14 text-lg font-semibold rounded-2xl shadow-ruby hover:shadow-ruby-strong transition-all"
-            >
-              {tSetup("go_dashboard")}
-            </Button>
-          </div>
-        )}
+              {currentStep.key === "spending_categories" ? (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Spending Categories</h2>
+                  <p className="text-sm text-zinc-400">Select categories Ruby should prioritize in planning and insights.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {DEFAULT_CATEGORIES.map((category) => (
+                      <OnboardingChoiceChip
+                        key={category}
+                        label={category}
+                        selected={state.selectedCategories.includes(category)}
+                        onClick={() =>
+                          patch({
+                            selectedCategories: toggleItem(category as FoundationCategory, state.selectedCategories),
+                          })
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {currentStep.key === "budget_setup" ? (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Budget Setup</h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Monthly Spending Limit</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={state.monthlySpendingLimit}
+                        onChange={(event) => patch({ monthlySpendingLimit: Number(event.target.value) || 0 })}
+                        className="border-white/12 bg-black/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Savings Target</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={state.monthlySavingsTarget}
+                        onChange={(event) => patch({ monthlySavingsTarget: Number(event.target.value) || 0 })}
+                        className="border-white/12 bg-black/20"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Safe-to-spend Preference</Label>
+                    <Select
+                      value={state.safeToSpendPreference}
+                      onValueChange={(value) =>
+                        patch({ safeToSpendPreference: value as "conservative" | "balanced" | "aggressive" })
+                      }
+                    >
+                      <SelectTrigger className="border-white/12 bg-black/20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SAFE_SPEND_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ) : null}
+
+              {currentStep.key === "goals_setup" ? (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Goals Setup</h2>
+                  <p className="text-sm text-zinc-400">Create your first goal focus and write a short target note if needed.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {MAIN_GOAL_OPTIONS.map((goal) => (
+                      <OnboardingChoiceChip
+                        key={goal.value}
+                        label={goal.label}
+                        selected={state.mainFinancialGoal === goal.value}
+                        onClick={() => patch({ mainFinancialGoal: goal.value as MainFinancialGoal })}
+                      />
+                    ))}
+                  </div>
+                  {state.mainFinancialGoal === "custom" ? (
+                    <div className="space-y-2">
+                      <Label>Custom Goal</Label>
+                      <Textarea
+                        value={state.customGoalName}
+                        onChange={(event) => patch({ customGoalName: event.target.value })}
+                        placeholder="Describe your custom goal..."
+                        className="border-white/12 bg-black/20"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {currentStep.key === "ruby_ai_personalization" ? (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Ruby AI Personalization</h2>
+                  <p className="text-sm text-zinc-400">Choose what Ruby AI should focus on first.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {RUBY_FOCUS_OPTIONS.map((focus) => (
+                      <OnboardingChoiceChip
+                        key={focus.value}
+                        label={focus.label}
+                        selected={state.rubyFocus.includes(focus.value as AssistantFocus)}
+                        onClick={() =>
+                          patch({
+                            rubyFocus: toggleItem(focus.value as AssistantFocus, state.rubyFocus),
+                          })
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {currentStep.key === "completion" ? (
+                <div className="space-y-5">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300">
+                    <CheckCircle2 className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold">Setup Complete</h2>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      Ruby understands your profile and is ready with a guided plan across budget, goals, and financial health.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <article className="rounded-xl border border-white/10 bg-black/20 p-3">
+                      <p className="text-xs text-zinc-500">Preferred Currency</p>
+                      <p className="mt-1 text-sm font-medium text-zinc-100">{state.preferredCurrency}</p>
+                    </article>
+                    <article className="rounded-xl border border-white/10 bg-black/20 p-3">
+                      <p className="text-xs text-zinc-500">Monthly Income</p>
+                      <p className="mt-1 text-sm font-medium text-zinc-100">
+                        {state.monthlyIncome.toLocaleString()} {state.preferredCurrency}
+                      </p>
+                    </article>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+                    First recommended action: {recommendedAction}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={() => void finishOnboarding()} className="gap-2">
+                      Go To Overview
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {currentStep.key !== "welcome" && currentStep.key !== "completion" ? (
+                <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
+                  <Button variant="ghost" onClick={goBack} className="gap-2">
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                  <div className="flex gap-2">
+                    {currentStep.key === "account_setup" || currentStep.key === "spending_categories" ? (
+                      <Button variant="outline" onClick={goSkip}>
+                        Skip
+                      </Button>
+                    ) : null}
+                    <Button onClick={goNext} className="gap-2">
+                      Continue
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </section>
+        </div>
+
+        <section className="mt-4 grid gap-3 md:grid-cols-3">
+          <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="mb-2 flex items-center gap-2 text-red-200">
+              <CircleDollarSign className="h-4 w-4" />
+              <p className="text-xs uppercase tracking-[0.14em]">Budget Ready</p>
+            </div>
+            <p className="text-sm text-zinc-300">Setup data feeds Budget Planner and Safe-to-Spend recommendations.</p>
+          </article>
+          <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="mb-2 flex items-center gap-2 text-red-200">
+              <Goal className="h-4 w-4" />
+              <p className="text-xs uppercase tracking-[0.14em]">Goals Guided</p>
+            </div>
+            <p className="text-sm text-zinc-300">Ruby AI uses goal context to suggest high-impact monthly actions.</p>
+          </article>
+          <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="mb-2 flex items-center gap-2 text-red-200">
+              <Compass className="h-4 w-4" />
+              <p className="text-xs uppercase tracking-[0.14em]">Insights Primed</p>
+            </div>
+            <p className="text-sm text-zinc-300">Predictions and AI Insights start from your selected habits and preferences.</p>
+          </article>
+        </section>
       </div>
-
-      <AddTransactionModal
-        open={isIncomeModalOpen}
-        onOpenChange={setIsIncomeModalOpen}
-        forcedType="income"
-        onCreateTransaction={async (data) => {
-          setStep("subscription");
-          setIsSubModalOpen(true);
-          try {
-            await createTransaction(data);
-            toast.success("Income added successfully!");
-            return { success: true };
-          } catch (e) {
-            console.error(e);
-            toast.error("Couldn't save income. You can continue and try again later.");
-            return { success: false };
-          }
-        }}
-      />
-
-      <AddSubscriptionModal
-        open={isSubModalOpen}
-        onOpenChange={setIsSubModalOpen}
-        onCreated={() => {
-          setStep("wow");
-        }}
-      />
     </div>
   );
 };
