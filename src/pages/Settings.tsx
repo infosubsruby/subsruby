@@ -28,14 +28,21 @@ import {
 } from "lucide-react";
 import { SettingsSectionCard } from "@/components/settings/SettingsSectionCard";
 import { SettingsToggleRow } from "@/components/settings/SettingsToggleRow";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { PRICING_PLANS } from "@/lib/monetization/plans";
+import { useFinance } from "@/hooks/useFinance";
+import { useSubscriptions } from "@/hooks/useSubscriptions";
 
 const Settings = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading: authLoading, signOut } = useAuth();
   const { defaultCurrency, setDefaultCurrency, notifications, setNotificationSetting } = useSettings();
   const { state, patch } = useOnboardingFoundation();
+  const { activePlan, getUsageStatus } = usePlanAccess();
+  const { transactions, budgets } = useFinance();
+  const { subscriptions } = useSubscriptions();
   const [activeSection, setActiveSection] = useState<
-    "profile" | "financial" | "ruby" | "accounts" | "categories" | "reports" | "app" | "privacy"
+    "plan" | "profile" | "financial" | "ruby" | "accounts" | "categories" | "reports" | "app" | "privacy"
   >("profile");
 
   if (!authLoading && !user) {
@@ -59,6 +66,7 @@ const Settings = () => {
     .toUpperCase();
 
   const sectionItems = [
+    { id: "plan", label: "Plan & Billing", icon: Sparkles },
     { id: "profile", label: "Profile", icon: User },
     { id: "financial", label: "Financial Preferences", icon: Wallet },
     { id: "ruby", label: "Ruby AI Settings", icon: BrainCircuit },
@@ -78,6 +86,12 @@ const Settings = () => {
     await signOut();
     navigate("/login");
   };
+
+  const planDefinition = PRICING_PLANS.find((plan) => plan.id === activePlan);
+  const transactionUsage = getUsageStatus("transactions_per_month", transactions.length);
+  const subscriptionUsage = getUsageStatus("subscriptions", subscriptions.length);
+  const goalsUsage = getUsageStatus("goals", budgets.length);
+  const rubyPromptUsage = getUsageStatus("ruby_ai_prompts_per_month", 8);
 
   const isSection = (id: (typeof sectionItems)[number]["id"]) => activeSection === id;
 
@@ -116,6 +130,52 @@ const Settings = () => {
         </aside>
 
         <div className="space-y-4 lg:col-span-8 xl:col-span-9">
+          {isSection("plan") ? (
+            <SettingsSectionCard
+              title="Plan & Billing"
+              description="Current plan status, usage visibility, and billing placeholders."
+              icon={<Sparkles className="h-5 w-5" />}
+            >
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs text-zinc-500">Current Plan</p>
+                <p className="mt-1 text-lg font-semibold text-zinc-100">{planDefinition?.name ?? "Free"}</p>
+                <p className="mt-1 text-xs text-zinc-400">{planDefinition?.description}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <article className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-xs text-zinc-500">Transactions</p>
+                  <p className="mt-1 text-sm text-zinc-100">{transactionUsage.label}</p>
+                </article>
+                <article className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-xs text-zinc-500">Subscriptions</p>
+                  <p className="mt-1 text-sm text-zinc-100">{subscriptionUsage.label}</p>
+                </article>
+                <article className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-xs text-zinc-500">Goals</p>
+                  <p className="mt-1 text-sm text-zinc-100">{goalsUsage.label}</p>
+                </article>
+                <article className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-xs text-zinc-500">Ruby AI Prompts</p>
+                  <p className="mt-1 text-sm text-zinc-100">{rubyPromptUsage.label}</p>
+                </article>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button onClick={() => navigate("/upgrade")} className="justify-start">
+                  Upgrade to Pro
+                </Button>
+                <Button variant="outline" className="justify-start">
+                  Manage Subscription (Placeholder)
+                </Button>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs text-zinc-500">Billing</p>
+                <p className="mt-1 text-sm text-zinc-300">
+                  Billing and payment details are placeholder-safe for now and prepared for future provider integration.
+                </p>
+              </div>
+            </SettingsSectionCard>
+          ) : null}
+
           {isSection("profile") ? (
             <SettingsSectionCard
               title="Profile"

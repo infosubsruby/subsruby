@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertTriangle,
@@ -27,12 +27,18 @@ import {
   IntelligenceInsightCard,
   type IntelligenceInsightCardItem,
 } from "@/components/insights/IntelligenceInsightCard";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { ProValueCallout } from "@/components/monetization/ProValueCallout";
+import { FeatureGate } from "@/components/monetization/FeatureGate";
+import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, Number.isFinite(value) ? value : 0));
 const pct = (value: number) => `${Math.abs(Number.isFinite(value) ? value : 0).toFixed(1)}%`;
 
 const AIInsights = () => {
+  const { canAccessFeature } = usePlanAccess();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { transactions, budgets } = useFinance();
   const { subscriptions } = useSubscriptions();
   const { defaultCurrency } = useSettings();
@@ -403,6 +409,7 @@ const AIInsights = () => {
 
   return (
     <div className="premium-page">
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <section className="premium-section rounded-[28px] p-6 sm:p-7">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -443,18 +450,26 @@ const AIInsights = () => {
           </article>
         </div>
       </section>
+      <ProValueCallout message="Get deeper recommendations with Pro." />
 
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-red-300" />
-          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Priority Insights</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {mergedPriorityInsights.map((insight) => (
-            <IntelligenceInsightCard key={insight.id} insight={insight} />
-          ))}
-        </div>
-      </section>
+      <FeatureGate
+        enabled={canAccessFeature("advanced_ai_insights")}
+        title="Unlock Ruby AI Pro"
+        description="Advanced AI insights include deeper analysis depth, confidence scoring context, and richer recommendations."
+        onUpgradeClick={() => setUpgradeOpen(true)}
+      >
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-red-300" />
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Priority Insights</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {mergedPriorityInsights.map((insight) => (
+              <IntelligenceInsightCard key={insight.id} insight={insight} />
+            ))}
+          </div>
+        </section>
+      </FeatureGate>
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">

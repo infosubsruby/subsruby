@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
   AreaChart,
@@ -29,10 +29,16 @@ import { PredictiveForecastChart } from "@/components/predictive/PredictiveForec
 import { PredictiveInsightsFeed, PredictiveSummaryCards } from "@/components/predictive/PredictiveWidgets";
 import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 import { DEMO_CATEGORIES, DEMO_MONTHLY_EXPENSES, DEMO_MONTHLY_INCOME } from "@/data/demoFinanceData";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { ProValueCallout } from "@/components/monetization/ProValueCallout";
+import { FeatureGate } from "@/components/monetization/FeatureGate";
+import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 
 const pct = (value: number) => `${value.toFixed(1)}%`;
 
 const AnalyticsPage = () => {
+  const { canAccessFeature } = usePlanAccess();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { transactions, budgets, isLoading } = useFinance();
   const { subscriptions, isLoading: subscriptionsLoading } = useSubscriptions();
   const { defaultCurrency } = useSettings();
@@ -95,6 +101,7 @@ const AnalyticsPage = () => {
 
   return (
     <div className="premium-page">
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-14 top-[-44px] h-48 w-48 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-46px] top-5 h-44 w-44 rounded-full bg-rose-500/20 blur-3xl" />
@@ -118,6 +125,7 @@ const AnalyticsPage = () => {
           </div>
         </div>
       </section>
+      <ProValueCallout message="Advanced forecasts available in Pro." />
 
       <div className="grid gap-5 xl:grid-cols-12">
         <AnalyticsGlassCard
@@ -303,29 +311,36 @@ const AnalyticsPage = () => {
         actionLabel="Open Ruby AI Strategy"
       />
 
-      <section className="premium-section rounded-[26px]">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">
-            Predictive Projection Layer
-          </h2>
-          <p className="text-xs text-zinc-500">
-            Future balance forecasting, risk indicators, and monthly projection dynamics.
-          </p>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-12">
-          <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-8">
-            <p className="mb-2 text-xs text-zinc-500">Forecasting Curves</p>
-            <PredictiveForecastChart data={prediction.futureBalanceForecast} />
+      <FeatureGate
+        enabled={canAccessFeature("advanced_analytics")}
+        title="Unlock Ruby AI Pro"
+        description="Advanced analytics and projection layers are part of Ruby AI Pro."
+        onUpgradeClick={() => setUpgradeOpen(true)}
+      >
+        <section className="premium-section rounded-[26px]">
+          <div className="mb-3">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">
+              Predictive Projection Layer
+            </h2>
+            <p className="text-xs text-zinc-500">
+              Future balance forecasting, risk indicators, and monthly projection dynamics.
+            </p>
           </div>
-          <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-4">
-            <p className="mb-2 text-xs text-zinc-500">Predictive Signals</p>
-            <PredictiveInsightsFeed prediction={prediction} />
+          <div className="grid gap-4 xl:grid-cols-12">
+            <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-8">
+              <p className="mb-2 text-xs text-zinc-500">Forecasting Curves</p>
+              <PredictiveForecastChart data={prediction.futureBalanceForecast} />
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/25 p-3 xl:col-span-4">
+              <p className="mb-2 text-xs text-zinc-500">Predictive Signals</p>
+              <PredictiveInsightsFeed prediction={prediction} />
+            </div>
           </div>
-        </div>
-        <div className="mt-4">
-          <PredictiveSummaryCards prediction={prediction} currency={defaultCurrency} />
-        </div>
-      </section>
+          <div className="mt-4">
+            <PredictiveSummaryCards prediction={prediction} currency={defaultCurrency} />
+          </div>
+        </section>
+      </FeatureGate>
     </div>
   );
 };

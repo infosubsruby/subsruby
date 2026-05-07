@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { BrainCircuit, PiggyBank, Sparkles } from "lucide-react";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useFinance } from "@/hooks/useFinance";
@@ -19,6 +19,10 @@ import { DEMO_CATEGORIES, DEMO_MONTHLY_EXPENSES, DEMO_MONTHLY_INCOME } from "@/d
 import { RubyAISuggestedPrompts } from "@/components/ruby-ai/RubyAISuggestedPrompts";
 import { RubyAIWidget } from "@/components/ruby-ai/RubyAIWidget";
 import type { RubyAISuggestion } from "@/lib/rubyAI";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { ProValueCallout } from "@/components/monetization/ProValueCallout";
+import { FeatureGate } from "@/components/monetization/FeatureGate";
+import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -30,6 +34,8 @@ const historyConfig = {
 } satisfies ChartConfig;
 
 const SmartBudgetPlanner = () => {
+  const { canAccessFeature } = usePlanAccess();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { transactions, budgets, isLoading } = useFinance();
   const { subscriptions, isLoading: isLoadingSubs } = useSubscriptions();
   const { defaultCurrency } = useSettings();
@@ -138,6 +144,7 @@ const SmartBudgetPlanner = () => {
 
   return (
     <div className="premium-page">
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-14 top-[-44px] h-48 w-48 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-46px] top-5 h-44 w-44 rounded-full bg-rose-500/20 blur-3xl" />
@@ -155,6 +162,7 @@ const SmartBudgetPlanner = () => {
           <span className="premium-chip">{engine.monthLabel}</span>
         </div>
       </section>
+      <ProValueCallout message="Advanced budget planner and safe-to-spend intelligence are included in Pro." />
 
       <section className="premium-section rounded-[26px]">
         <div className="mb-3 flex items-center justify-between">
@@ -256,14 +264,21 @@ const SmartBudgetPlanner = () => {
         </div>
       </section>
 
-      <section className="premium-section rounded-[26px]">
-        <h2 className="premium-heading mb-3">AI Budget Recommendations</h2>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {engine.aiRecommendations.map((item) => (
-            <SmartBudgetRecommendationCard key={item.id} item={item} />
-          ))}
-        </div>
-      </section>
+      <FeatureGate
+        enabled={canAccessFeature("smart_budget_planner")}
+        title="Unlock Ruby AI Pro"
+        description="Advanced AI budgeting recommendations and adaptive planning are available in Pro."
+        onUpgradeClick={() => setUpgradeOpen(true)}
+      >
+        <section className="premium-section rounded-[26px]">
+          <h2 className="premium-heading mb-3">AI Budget Recommendations</h2>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {engine.aiRecommendations.map((item) => (
+              <SmartBudgetRecommendationCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      </FeatureGate>
 
       <SafeToSpendPanel
         safeToday={engine.safeToSpendSystem.safeToday}

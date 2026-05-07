@@ -41,12 +41,18 @@ import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 import { DEMO_CATEGORIES, DEMO_USER_NAME } from "@/data/demoFinanceData";
 import { formatCurrency } from "@/i18n/currency";
 import { formatDate } from "@/i18n/date";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { ProValueCallout } from "@/components/monetization/ProValueCallout";
+import { FeatureGate } from "@/components/monetization/FeatureGate";
+import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 
 const RubyAI = () => {
+  const { canAccessFeature } = usePlanAccess();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { profile, user } = useAuth();
   const { transactions, budgets, isLoading } = useFinance();
   const { subscriptions, isLoading: isLoadingSubs } = useSubscriptions();
@@ -344,6 +350,7 @@ const RubyAI = () => {
 
   return (
     <div className="premium-page">
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-16 top-[-50px] h-52 w-52 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-50px] top-8 h-44 w-44 rounded-full bg-rose-500/20 blur-3xl" />
@@ -385,6 +392,7 @@ const RubyAI = () => {
           </article>
         </div>
       </section>
+      <ProValueCallout message="Unlock full personal CFO mode with Pro." />
 
       {isRubyAIEmpty ? (
         <PremiumEmptyState
@@ -468,13 +476,20 @@ const RubyAI = () => {
         ) : null}
       </section>
 
-      <section className="premium-section rounded-[24px]">
-        <div className="mb-2 flex items-center gap-2">
-          <WandSparkles className="h-4 w-4 text-red-300" />
-          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Smart Action Cards</h2>
-        </div>
-        <RubyAISmartActionCards actions={smartActions} />
-      </section>
+      <FeatureGate
+        enabled={canAccessFeature("ruby_ai_full_access")}
+        title="Unlock Ruby AI Pro"
+        description="Deep assistant actions and full CFO workflows are part of Ruby AI Pro."
+        onUpgradeClick={() => setUpgradeOpen(true)}
+      >
+        <section className="premium-section rounded-[24px]">
+          <div className="mb-2 flex items-center gap-2">
+            <WandSparkles className="h-4 w-4 text-red-300" />
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Smart Action Cards</h2>
+          </div>
+          <RubyAISmartActionCards actions={smartActions} />
+        </section>
+      </FeatureGate>
 
       <section className="premium-section rounded-[24px]">
         <div className="mb-2 flex items-center gap-2">

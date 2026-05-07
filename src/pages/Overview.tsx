@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFinance } from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
@@ -35,6 +35,10 @@ import {
 } from "lucide-react";
 import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 import { DEMO_GOALS, DEMO_TRANSACTIONS } from "@/data/demoFinanceData";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { ProValueCallout } from "@/components/monetization/ProValueCallout";
+import { FeatureGate } from "@/components/monetization/FeatureGate";
+import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 
 const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 const pct = (value: number) => `${safeNumber(value).toFixed(1)}%`;
@@ -43,6 +47,8 @@ const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const Overview = () => {
+  const { canAccessFeature } = usePlanAccess();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { profile, user } = useAuth();
   const { defaultCurrency } = useSettings();
   const { transactions, budgets } = useFinance();
@@ -462,6 +468,7 @@ const Overview = () => {
 
   return (
     <div className="premium-page">
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <OverviewHero
         greeting={greeting}
         healthScore={health.score}
@@ -478,6 +485,7 @@ const Overview = () => {
         trends={heroTrends}
         insights={heroInsights}
       />
+      <ProValueCallout message="Unlock full predictive finance with Ruby AI Pro." />
 
       <FinancialHealthSection
         result={health}
@@ -520,38 +528,45 @@ const Overview = () => {
 
       <OverviewAIInsightsEngine insights={aiInsightCards} />
 
-      <section className="premium-section rounded-[28px]">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="premium-heading">Predictive Finance Widgets</h2>
-            <p className="text-xs text-zinc-500">
-              End-of-month balance forecast, spending trajectory, budget risk, and goal completion outlook.
-            </p>
+      <FeatureGate
+        enabled={canAccessFeature("predictive_finance")}
+        title="Unlock Ruby AI Pro"
+        description="Predictive forecasting, advanced safe-to-spend, and deeper risk analysis are available in Pro."
+        onUpgradeClick={() => setUpgradeOpen(true)}
+      >
+        <section className="premium-section rounded-[28px]">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="premium-heading">Predictive Finance Widgets</h2>
+              <p className="text-xs text-zinc-500">
+                End-of-month balance forecast, spending trajectory, budget risk, and goal completion outlook.
+              </p>
+            </div>
+            <div className="premium-chip border-red-500/35 bg-red-500/10 text-red-200">
+              End-of-month projection:{" "}
+              <span className="font-semibold">
+                {formatCurrency(prediction.monthlyProjection.projectedEndBalance, defaultCurrency)}
+              </span>
+            </div>
           </div>
-          <div className="premium-chip border-red-500/35 bg-red-500/10 text-red-200">
-            End-of-month projection:{" "}
-            <span className="font-semibold">
-              {formatCurrency(prediction.monthlyProjection.projectedEndBalance, defaultCurrency)}
-            </span>
+          <div className="grid gap-4 xl:grid-cols-12">
+            <div className="premium-chart-panel xl:col-span-8">
+              <p className="mb-2 text-xs text-zinc-500">Future Balance & Spending Forecast</p>
+              <PredictiveForecastChart data={prediction.futureBalanceForecast} />
+            </div>
+            <div className="space-y-4 xl:col-span-4">
+              <SafeToSpendWidget prediction={prediction} currency={defaultCurrency} />
+              <PredictiveRiskCard prediction={prediction} currency={defaultCurrency} />
+            </div>
           </div>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-12">
-          <div className="premium-chart-panel xl:col-span-8">
-            <p className="mb-2 text-xs text-zinc-500">Future Balance & Spending Forecast</p>
-            <PredictiveForecastChart data={prediction.futureBalanceForecast} />
+          <div className="mt-4">
+            <PredictiveSummaryCards prediction={prediction} currency={defaultCurrency} />
           </div>
-          <div className="space-y-4 xl:col-span-4">
-            <SafeToSpendWidget prediction={prediction} currency={defaultCurrency} />
-            <PredictiveRiskCard prediction={prediction} currency={defaultCurrency} />
+          <div className="mt-4">
+            <PredictiveInsightsFeed prediction={prediction} />
           </div>
-        </div>
-        <div className="mt-4">
-          <PredictiveSummaryCards prediction={prediction} currency={defaultCurrency} />
-        </div>
-        <div className="mt-4">
-          <PredictiveInsightsFeed prediction={prediction} />
-        </div>
-      </section>
+        </section>
+      </FeatureGate>
 
       <section className="premium-section rounded-[26px]">
         <div className="mb-3 flex items-center gap-2">

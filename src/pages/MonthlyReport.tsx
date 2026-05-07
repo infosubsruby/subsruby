@@ -25,6 +25,10 @@ import { MonthlyActionPlanCard } from "@/components/monthly-report/MonthlyAction
 import { Button } from "@/components/ui/button";
 import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 import { DEMO_CATEGORIES, DEMO_MONTHLY_EXPENSES, DEMO_MONTHLY_INCOME } from "@/data/demoFinanceData";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { ProValueCallout } from "@/components/monetization/ProValueCallout";
+import { FeatureGate } from "@/components/monetization/FeatureGate";
+import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 
 const safe = (value: number) => (Number.isFinite(value) ? value : 0);
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, safe(value)));
@@ -43,6 +47,8 @@ const getMonthSeriesKeys = (date: Date) =>
   });
 
 const MonthlyReport = () => {
+  const { canAccessFeature } = usePlanAccess();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { transactions, budgets, isLoading } = useFinance();
   const { subscriptions, isLoading: subscriptionsLoading } = useSubscriptions();
   const { defaultCurrency } = useSettings();
@@ -187,6 +193,7 @@ const MonthlyReport = () => {
 
   return (
     <div className="premium-page">
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <section className="premium-section relative overflow-hidden rounded-[30px] p-6 sm:p-7">
         <div className="pointer-events-none absolute -left-14 top-[-44px] h-48 w-48 rounded-full bg-red-600/15 blur-3xl" />
         <div className="pointer-events-none absolute right-[-46px] top-5 h-44 w-44 rounded-full bg-rose-500/20 blur-3xl" />
@@ -220,6 +227,7 @@ const MonthlyReport = () => {
           </label>
         </div>
       </section>
+      <ProValueCallout message="Export monthly reports with Pro." />
 
       <section className="premium-section rounded-[26px]">
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -495,34 +503,41 @@ const MonthlyReport = () => {
         </div>
       </section>
 
-      <section className="premium-section rounded-[26px]">
-        <div className="mb-3 flex items-center gap-2">
-          <FileDown className="h-4 w-4 text-red-300" />
-          <h2 className="premium-heading">Export / Download</h2>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Button variant="outline" className="justify-start">
-            <FileDown className="h-4 w-4" />
-            Export PDF
-          </Button>
-          <Button variant="outline" className="justify-start">
-            <Download className="h-4 w-4" />
-            Download Report
-          </Button>
-          <Button variant="outline" className="justify-start">
-            <Send className="h-4 w-4" />
-            Share Summary
-          </Button>
-          <Button variant="outline" className="justify-start">
-            <Mail className="h-4 w-4" />
-            Email Report
-          </Button>
-        </div>
-        <p className="mt-2 inline-flex items-center gap-1 text-xs text-zinc-500">
-          <TriangleAlert className="h-3.5 w-3.5" />
-          Export actions are UI-only for now and prepared for future backend integrations.
-        </p>
-      </section>
+      <FeatureGate
+        enabled={canAccessFeature("report_export")}
+        title="Unlock Ruby AI Pro"
+        description="Report export and advanced sharing workflows are available in Ruby AI Pro."
+        onUpgradeClick={() => setUpgradeOpen(true)}
+      >
+        <section className="premium-section rounded-[26px]">
+          <div className="mb-3 flex items-center gap-2">
+            <FileDown className="h-4 w-4 text-red-300" />
+            <h2 className="premium-heading">Export / Download</h2>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <Button variant="outline" className="justify-start">
+              <FileDown className="h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button variant="outline" className="justify-start">
+              <Download className="h-4 w-4" />
+              Download Report
+            </Button>
+            <Button variant="outline" className="justify-start">
+              <Send className="h-4 w-4" />
+              Share Summary
+            </Button>
+            <Button variant="outline" className="justify-start">
+              <Mail className="h-4 w-4" />
+              Email Report
+            </Button>
+          </div>
+          <p className="mt-2 inline-flex items-center gap-1 text-xs text-zinc-500">
+            <TriangleAlert className="h-3.5 w-3.5" />
+            Export actions are UI-only for now and prepared for future backend integrations.
+          </p>
+        </section>
+      </FeatureGate>
     </div>
   );
 };

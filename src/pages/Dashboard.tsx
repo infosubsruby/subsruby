@@ -55,6 +55,10 @@ import { formatDate } from "@/i18n/date";
 import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 import { DEMO_TRANSACTIONS } from "@/data/demoFinanceData";
 import { subscriptionPresets } from "@/data/subscriptionPresets";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { ProValueCallout } from "@/components/monetization/ProValueCallout";
+import { FeatureGate } from "@/components/monetization/FeatureGate";
+import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 
 const parseAmount = (value: unknown): number => {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -149,6 +153,7 @@ const Dashboard = () => {
   const { t } = useLanguage();
   const tt = useTranslations("Dashboard");
   const { defaultCurrency } = useSettings();
+  const { canAccessFeature } = usePlanAccess();
   
   useEffect(() => {
     if (!location.hash) return;
@@ -186,6 +191,7 @@ const Dashboard = () => {
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
   const [clearedTransactionIds, setClearedTransactionIds] = useState<string[]>([]);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -201,7 +207,7 @@ const Dashboard = () => {
     }
   }, [transactions]);
 
-  const FREE_PLAN_LIMIT = 3;
+  const FREE_PLAN_LIMIT = 5;
   const isFreeLimited = !isPro && !isAdmin;
   const canAddSubscription = !isFreeLimited || subscriptions.length < FREE_PLAN_LIMIT;
 
@@ -624,6 +630,7 @@ const Dashboard = () => {
   // 2. Render Dashboard (Show content for everyone)
   return (
     <div className="relative min-h-screen pb-8 premium-page">
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 pointer-events-none w-[800px] h-[400px] bg-red-900/20 blur-[120px] rounded-full" />
       
       <main>
@@ -672,6 +679,7 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
+            <ProValueCallout message="Unlock yearly savings optimizer with Ruby AI Pro." />
 
             {subscriptions.length === 0 ? (
               <PremiumEmptyState
@@ -731,31 +739,38 @@ const Dashboard = () => {
                   </div>
                 </section>
 
-                <section className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <BrainCircuit className="h-4 w-4 text-red-300" />
-                    <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">AI Optimization Insights</h2>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {optimizerInsights.map((insight) => (
-                      <SubscriptionOptimizationInsightCard
-                        key={insight.id}
-                        insight={insight}
-                        savingsLabel={
-                          insight.potentialSavings > 0
-                            ? `Potential savings ${formatCurrency(insight.potentialSavings, activeCurrency)} / year`
-                            : "No direct savings estimate"
-                        }
-                        onAction={() => {
-                          if (insight.id === "renewal-cluster") {
-                            setActiveTab("upcoming");
-                            setIsTransactionsOpen(true);
+                <FeatureGate
+                  enabled={canAccessFeature("subscription_optimizer")}
+                  title="Unlock Ruby AI Pro"
+                  description="Detailed subscription optimizer insights and yearly savings intelligence are in Pro."
+                  onUpgradeClick={() => setUpgradeOpen(true)}
+                >
+                  <section className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <BrainCircuit className="h-4 w-4 text-red-300" />
+                      <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">AI Optimization Insights</h2>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      {optimizerInsights.map((insight) => (
+                        <SubscriptionOptimizationInsightCard
+                          key={insight.id}
+                          insight={insight}
+                          savingsLabel={
+                            insight.potentialSavings > 0
+                              ? `Potential savings ${formatCurrency(insight.potentialSavings, activeCurrency)} / year`
+                              : "No direct savings estimate"
                           }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </section>
+                          onAction={() => {
+                            if (insight.id === "renewal-cluster") {
+                              setActiveTab("upcoming");
+                              setIsTransactionsOpen(true);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                </FeatureGate>
 
                 <section id="subscriptions" className="space-y-3">
                   <div className="flex items-center gap-2">
