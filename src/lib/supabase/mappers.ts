@@ -97,6 +97,7 @@ type GoalRowLike = {
   id: string;
   user_id: string;
   title: string;
+  ai_recommendation: string | null;
   target_amount: number | null;
   current_amount: number | null;
   currency: string;
@@ -112,11 +113,12 @@ type GoalRowLike = {
 type GoalInsertLike = {
   user_id: string;
   title: string;
+  ai_recommendation: string | null;
   target_amount: number;
   current_amount: number;
   currency: string;
   deadline: string | null;
-  status: string;
+  status: DbGoalStatus;
   monthly_target: number;
   predicted_completion_date: string | null;
   priority: string;
@@ -151,24 +153,51 @@ type WalletInsertLike = {
   updated_at: string;
 };
 
+type DbGoalStatus = "on_track" | "ahead" | "behind" | "completed" | "paused";
+type FrontendGoalStatus = Goal["status"];
+
+export const mapGoalStatusToDbStatus = (status: FrontendGoalStatus): DbGoalStatus => {
+  switch (status) {
+    case "on-track":
+      return "on_track";
+    case "ahead":
+      return "ahead";
+    case "behind":
+      return "behind";
+    case "completed":
+      return "completed";
+    default:
+      return "behind";
+  }
+};
+
+export const mapDbGoalStatusToGoalStatus = (status: string | null | undefined): FrontendGoalStatus => {
+  switch (status) {
+    case "on_track":
+      return "on-track";
+    case "ahead":
+      return "ahead";
+    case "behind":
+      return "behind";
+    case "completed":
+      return "completed";
+    case "paused":
+      return "behind";
+    default:
+      return "behind";
+  }
+};
+
 export const mapDbGoalToGoal = (row: GoalRowLike): Goal => ({
   id: row.id,
   userId: row.user_id,
   title: row.title,
+  aiRecommendation: row.ai_recommendation,
   targetAmount: toSafeNumber(row.target_amount),
   currentAmount: toSafeNumber(row.current_amount),
   currency: row.currency,
   deadline: row.deadline,
-  status:
-    row.status === "on_track"
-      ? "on-track"
-      : row.status === "ahead"
-      ? "ahead"
-      : row.status === "behind"
-      ? "behind"
-      : row.status === "completed"
-      ? "completed"
-      : "behind",
+  status: mapDbGoalStatusToGoalStatus(row.status),
   monthlyTarget: toSafeNumber(row.monthly_target),
   predictedCompletionDate: row.predicted_completion_date,
   priority: row.priority === "high" || row.priority === "medium" || row.priority === "low" ? row.priority : "medium",
@@ -179,11 +208,12 @@ export const mapDbGoalToGoal = (row: GoalRowLike): Goal => ({
 export const mapGoalToDbInsert = (goal: Goal): GoalInsertLike => ({
   user_id: goal.userId,
   title: goal.title,
+  ai_recommendation: goal.aiRecommendation ?? null,
   target_amount: goal.targetAmount,
   current_amount: goal.currentAmount,
   currency: goal.currency,
   deadline: goal.deadline,
-  status: goal.status === "on-track" ? "on_track" : goal.status,
+  status: mapGoalStatusToDbStatus(goal.status),
   monthly_target: goal.monthlyTarget,
   predicted_completion_date: goal.predictedCompletionDate,
   priority: goal.priority,

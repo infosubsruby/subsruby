@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useFinance, type Transaction } from "@/hooks/useFinance";
+import {
+  useFinance,
+  type Transaction,
+  normalizeRecurringDayForDb,
+  normalizeRecurringDayFromDb,
+} from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { AddTransactionModal } from "@/components/finance/AddTransactionModal";
@@ -68,25 +73,29 @@ interface MonthlyArchive {
   sentiment: "success" | "warning" | "neutral";
 }
 
+type MonthlyArchiveSentiment = "success" | "warning" | "neutral";
+
 type MonthlyArchiveRow = Database["public"]["Tables"]["monthly_archives"]["Row"];
 type MonthlyArchiveInsert = Database["public"]["Tables"]["monthly_archives"]["Insert"];
 
 type MonthlyArchiveTableRow = Pick<
   MonthlyArchiveRow,
-  "month_key" | "total_income" | "total_expense"
-> & {
-  month_year?: string;
-};
+  "month_year" | "total_income" | "total_expense"
+>;
 
 const asMonthlyArchiveTableRow = (row: MonthlyArchiveRow): MonthlyArchiveTableRow => ({
-  month_key: row.month_key,
+  month_year: row.month_year,
   total_income: row.total_income,
   total_expense: row.total_expense,
-  month_year: row.title,
 });
 
-const isArchiveSentiment = (value: string): value is MonthlyArchive["sentiment"] => {
-  return value === "success" || value === "warning" || value === "neutral";
+const normalizeMonthlyArchiveSentiment = (
+  value: string | null | undefined
+): MonthlyArchiveSentiment => {
+  if (value === "success" || value === "warning" || value === "neutral") {
+    return value;
+  }
+  return "neutral";
 };
 
 const isJsonObject = (value: Json): value is Record<string, Json> => {
@@ -146,7 +155,37 @@ const normalizeTransaction = (raw: Json, fallbackUserId: string): Transaction =>
     created_at: readString(raw.created_at) || nowIso,
     currency: readString(raw.currency),
     is_recurring: typeof raw.is_recurring === "boolean" ? raw.is_recurring : null,
-    recurring_day: readString(raw.recurring_day),
+    recurring_day: normalizeRecurringDayFromDb(readNumber(raw.recurring_day)),
+  };
+};
+
+const formatArchiveTitleFromMonthYear = (monthYear: string): string => {
+  const monthYearMatch = monthYear.match(/^(\d{4})-(\d{2})$/);
+  if (monthYearMatch) {
+    const year = Number(monthYearMatch[1]);
+    const month = Number(monthYearMatch[2]);
+    if (Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12) {
+      const monthDate = new Date(year, month - 1, 1);
+      return `${monthDate.toLocaleDateString("tr-TR", { month: "long", year: "numeric" })} Özeti`;
+    }
+  }
+  return `${monthYear} Özeti`;
+};
+
+const mapMonthlyArchiveRowToFinanceSummary = (row: MonthlyArchiveRow): MonthlyArchive => {
+  const monthKey = row.month_year;
+  const sentiment = normalizeMonthlyArchiveSentiment(row.ai_sentiment);
+  return {
+    id: row.id,
+    monthKey,
+    monthYear: row.month_year,
+    title: formatArchiveTitleFromMonthYear(row.month_year),
+    totalIncome: Number(row.total_income || 0),
+    totalExpense: Number(row.total_expense || 0),
+    netSavings: Number(row.net_savings || 0),
+    transactions: [],
+    aiInsight: row.ai_message || "",
+    sentiment,
   };
 };
 
@@ -264,25 +303,7 @@ const Finance = () => {
         const { data, error } = await supabase.from("monthly_archives").select("*").eq("user_id", user.id);
         if (error) throw error;
 
-        const normalized =
-          (data?.map((item): MonthlyArchive => {
-            const transactionList = normalizeTransactions(item.transactions, user.id);
-            const sentiment = isArchiveSentiment(item.sentiment) ? item.sentiment : "neutral";
-            const monthYear = item.title.replace(" Özeti", "");
-
-            return {
-              id: item.id,
-              monthKey: item.month_key,
-              monthYear,
-              title: item.title,
-              totalIncome: Number(item.total_income || 0),
-              totalExpense: Number(item.total_expense || 0),
-              netSavings: Number(item.net_savings || 0),
-              transactions: transactionList,
-              aiInsight: item.ai_insight || "",
-              sentiment,
-            };
-          }) as MonthlyArchive[]) ?? [];
+        const normalized = (data?.map((item) => mapMonthlyArchiveRowToFinanceSummary(item)) ?? []) as MonthlyArchive[];
 
         if (isMounted && Array.isArray(normalized) && normalized.length > 0) {
           setMonthlyArchives(normalized);
@@ -649,9 +670,11 @@ const Finance = () => {
           };
         }
 
-        const matchedArchive = monthlyArchivesTableData.find((a) =>
-          String(a?.month_year || "").includes(String(monthMap[item.name as keyof typeof monthMap] || ""))
-        );
+        const matchedArchive =
+          monthlyArchivesTableData.find((a) => String(a?.month_year || "") === item.monthKey) ??
+          monthlyArchivesTableData.find((a) =>
+            String(a?.month_year || "").includes(String(monthMap[item.name as keyof typeof monthMap] || ""))
+          );
         if (matchedArchive) {
           return {
             ...item,
@@ -824,11 +847,7 @@ const Finance = () => {
         const resettingTransactions = activeTransactions ?? [];
 
         // Adım A: recurring işlemleri hafızaya al
-        type TransactionInsertCompatibility = Database["public"]["Tables"]["transactions"]["Insert"] & {
-          currency?: string | null;
-          is_recurring?: boolean | null;
-          recurring_day?: string | null;
-        };
+        type TransactionInsertCompatibility = Database["public"]["Tables"]["transactions"]["Insert"];
 
         const recurringTransactions = resettingTransactions.filter((t) => t.is_recurring === true);
         const recurringInsertPayloads: TransactionInsertCompatibility[] = recurringTransactions.map((tx) => {
@@ -848,7 +867,7 @@ const Finance = () => {
             date: targetDate,
             currency: tx.currency ?? null,
             is_recurring: true,
-            recurring_day: String(targetDay),
+            recurring_day: normalizeRecurringDayForDb(targetDay),
           };
         });
 
@@ -863,19 +882,17 @@ const Finance = () => {
         const netSavings = totalIncome - totalExpense;
 
         const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const monthLabel = prevMonthDate.toLocaleDateString("tr-TR", {
-          month: "long",
-          year: "numeric",
-        });
+        const monthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`;
+        const monthTitle = formatArchiveTitleFromMonthYear(monthKey);
 
         const insight = buildAiInsight(totalIncome, totalExpense, resettingTransactions);
         const archive: MonthlyArchive = {
           id:
             globalThis.crypto?.randomUUID?.() ??
             `archive-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          monthKey: `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`,
-          monthYear: monthLabel,
-          title: `${monthLabel} Özeti`,
+          monthKey,
+          monthYear: monthKey,
+          title: monthTitle,
           totalIncome,
           totalExpense,
           netSavings,
@@ -890,14 +907,12 @@ const Finance = () => {
 
         const archivePayload: MonthlyArchiveInsert = {
           user_id: user.id,
-          month_key: archive.monthKey,
-          title: archive.title,
+          month_year: archive.monthKey,
           total_income: archive.totalIncome,
           total_expense: archive.totalExpense,
           net_savings: archive.netSavings,
-          ai_insight: archive.aiInsight,
-          sentiment: archive.sentiment,
-          transactions: archive.transactions as unknown as Database["public"]["Tables"]["monthly_archives"]["Insert"]["transactions"],
+          ai_message: archive.aiInsight,
+          ai_sentiment: archive.sentiment,
         };
 
         // Adım B: archive insert (await)
@@ -937,9 +952,8 @@ const Finance = () => {
             month_year: archive.monthYear,
             total_income: archive.totalIncome,
             total_expense: archive.totalExpense,
-            month_key: archive.monthKey,
           },
-          ...prev.filter((item) => item.month_key !== archive.monthKey),
+          ...prev.filter((item) => item.month_year !== archive.monthYear),
         ]);
         setClearedTransactionIds([]);
         setResetRecurringTransactions([]);

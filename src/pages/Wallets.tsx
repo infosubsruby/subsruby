@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -21,6 +21,14 @@ import { useSettings } from "@/hooks/useSettings";
 import { useFinance, type Transaction } from "@/hooks/useFinance";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useAuth } from "@/hooks/useAuth";
+import type { WalletAccount as FinanceWallet, WalletType } from "@/domain/financeModels";
+import {
+  createWallet,
+  deleteWallet,
+  fetchWalletsSafe,
+  updateWallet,
+} from "@/services/core/walletService";
+import type { WalletCreateInput } from "@/services/core/walletMockService";
 import {
   WalletAccountCard,
   type WalletAccountCardData,
@@ -53,6 +61,12 @@ const Wallets = () => {
   const { transactions } = useFinance();
   const { subscriptions } = useSubscriptions();
   const currency = defaultCurrency || "USD";
+  const [walletItems, setWalletItems] = useState<FinanceWallet[]>([]);
+  const [walletsLoading, setWalletsLoading] = useState(true);
+  const [walletsError, setWalletsError] = useState<string | null>(null);
+  const [newWalletName, setNewWalletName] = useState("");
+  const [newWalletBalance, setNewWalletBalance] = useState("0");
+  const [newWalletType, setNewWalletType] = useState<WalletType>("cash");
 
   const now = new Date();
   const currentKey = monthKey(now);
@@ -387,6 +401,77 @@ const Wallets = () => {
   const displayName = profile?.first_name || user?.email?.split("@")[0] || "User";
   const lastSynced = new Date(now.getTime() - 1000 * 60 * 35);
 
+  const loadWallets = useCallback(async () => {
+    if (!user?.id) {
+      setWalletItems([]);
+      setWalletsLoading(false);
+      setWalletsError(null);
+      return;
+    }
+    setWalletsLoading(true);
+    const result = await fetchWalletsSafe(user.id);
+    if (result.error) {
+      setWalletsError(result.error);
+      setWalletItems(result.data ?? []);
+      setWalletsLoading(false);
+      return;
+    }
+    setWalletItems(result.data ?? []);
+    setWalletsError(null);
+    setWalletsLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    void loadWallets();
+  }, [loadWallets]);
+
+  const handleCreateWallet = async () => {
+    if (!user?.id) return;
+    const name = newWalletName.trim();
+    const balance = Number(newWalletBalance);
+    if (!name || !Number.isFinite(balance)) return;
+    const payload: WalletCreateInput = {
+      name,
+      type: newWalletType,
+      balance,
+      currency,
+      provider: "Manual",
+      isManual: true,
+      lastSyncedAt: null,
+    };
+    const result = await createWallet(user.id, payload);
+    if (result.error) {
+      setWalletsError(result.error);
+      return;
+    }
+    setNewWalletName("");
+    setNewWalletBalance("0");
+    await loadWallets();
+  };
+
+  const handleUpdateWallet = async (wallet: FinanceWallet) => {
+    if (!user?.id) return;
+    const result = await updateWallet(user.id, wallet.id, {
+      balance: wallet.balance + 100,
+      lastSyncedAt: new Date().toISOString(),
+    });
+    if (result.error) {
+      setWalletsError(result.error);
+      return;
+    }
+    await loadWallets();
+  };
+
+  const handleDeleteWallet = async (walletId: string) => {
+    if (!user?.id) return;
+    const result = await deleteWallet(user.id, walletId);
+    if (result.error) {
+      setWalletsError(result.error);
+      return;
+    }
+    await loadWallets();
+  };
+
   return (
     <div className="premium-page">
       <section className="premium-section rounded-[28px] p-6 sm:p-7">
@@ -439,6 +524,84 @@ const Wallets = () => {
             <p className="text-xs text-zinc-500">Most Used Wallet</p>
             <p className="mt-1 text-sm font-semibold text-zinc-100">{walletSummary.mostUsed?.name || "No activity yet"}</p>
           </article>
+        </div>
+      </section>
+
+      <section className="premium-section rounded-[24px]">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Wallets (Supabase + Fallback)</h2>
+        {walletsLoading ? (
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-zinc-300">Loading wallets...</div>
+        ) : walletsError ? (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-100">{walletsError}</div>
+        ) : walletItems.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-zinc-300">
+            No wallets yet. Create one below.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {walletItems.map((wallet) => (
+              <article key={wallet.id} className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-100">{wallet.name}</p>
+                    <p className="text-xs text-zinc-400">
+                      {wallet.type} • {formatCurrency(wallet.balance, wallet.currency)} • {wallet.isManual ? "manual" : "synced"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleUpdateWallet(wallet)}
+                      className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200"
+                    >
+                      +100
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteWallet(wallet.id)}
+                      className="rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 text-xs text-red-200"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_140px_160px_auto]">
+          <input
+            value={newWalletName}
+            onChange={(event) => setNewWalletName(event.target.value)}
+            placeholder="Wallet name"
+            className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-zinc-100"
+          />
+          <select
+            value={newWalletType}
+            onChange={(event) => setNewWalletType(event.target.value as WalletType)}
+            className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-zinc-100"
+          >
+            <option value="cash">cash</option>
+            <option value="checking">bank</option>
+            <option value="savings">savings</option>
+            <option value="credit">credit_card</option>
+            <option value="crypto">crypto</option>
+            <option value="investment">investment</option>
+          </select>
+          <input
+            type="number"
+            value={newWalletBalance}
+            onChange={(event) => setNewWalletBalance(event.target.value)}
+            placeholder="Balance"
+            className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-zinc-100"
+          />
+          <button
+            type="button"
+            onClick={() => void handleCreateWallet()}
+            className="rounded-lg border border-red-500/40 bg-red-600/80 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
+          >
+            Create Wallet
+          </button>
         </div>
       </section>
 

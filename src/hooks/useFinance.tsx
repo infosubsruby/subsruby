@@ -63,6 +63,10 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
+type TransactionRow = Database["public"]["Tables"]["transactions"]["Row"];
+type TransactionInsert = Database["public"]["Tables"]["transactions"]["Insert"];
+type TransactionUpdate = Database["public"]["Tables"]["transactions"]["Update"];
+
 const createOptimisticId = (prefix: string) => {
   const rand =
     globalThis.crypto?.randomUUID?.() ??
@@ -71,6 +75,54 @@ const createOptimisticId = (prefix: string) => {
 };
 
 const normalizeDesc = (d: string | null | undefined) => (d ?? "").trim();
+
+export const normalizeRecurringDayForDb = (
+  value: string | number | null | undefined
+): number | null => {
+  if (value == null || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const asInt = Math.trunc(value);
+    return asInt >= 1 && asInt <= 31 ? asInt : null;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return null;
+    const asInt = Math.trunc(parsed);
+    return asInt >= 1 && asInt <= 31 ? asInt : null;
+  }
+  return null;
+};
+
+export const normalizeRecurringDayFromDb = (
+  value: number | string | null | undefined
+): string | null => {
+  if (value == null || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const asInt = Math.trunc(value);
+    return asInt >= 1 && asInt <= 31 ? String(asInt) : null;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return null;
+    const asInt = Math.trunc(parsed);
+    return asInt >= 1 && asInt <= 31 ? String(asInt) : null;
+  }
+  return null;
+};
+
+const mapTransactionRowToTransaction = (row: TransactionRow): Transaction => ({
+  id: row.id,
+  user_id: row.user_id,
+  amount: Number(row.amount),
+  type: row.type === "income" ? "income" : "expense",
+  category: row.category ?? "Other",
+  description: row.description,
+  currency: row.currency,
+  is_recurring: row.is_recurring,
+  recurring_day: normalizeRecurringDayFromDb(row.recurring_day),
+  date: row.date ?? row.created_at.slice(0, 10),
+  created_at: row.created_at,
+});
 
 const isOptimistic = (id: string) => id.startsWith("optimistic-");
 
@@ -131,7 +183,7 @@ export const useFinance = () => {
         return false;
       }
 
-      setTransactions(Array.isArray(data) ? (data as Transaction[]) : []);
+      setTransactions(Array.isArray(data) ? data.map(mapTransactionRowToTransaction) : []);
       return true;
     } catch (error) {
       setTransactions([]);
@@ -230,27 +282,29 @@ export const useFinance = () => {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const incoming = payload.new as Transaction;
+            const normalizedIncoming = mapTransactionRowToTransaction(payload.new as TransactionRow);
             setTransactions((prev) => {
-              if (prev.some((t) => t.id === incoming.id)) return prev;
+              if (prev.some((t) => t.id === normalizedIncoming.id)) return prev;
 
               // If this matches an optimistic entry, replace it to avoid duplicates.
               const optimisticIndex = prev.findIndex(
-                (t) => isOptimistic(t.id) && isSameTransactionPayload(t, incoming)
+                (t) => isOptimistic(t.id) && isSameTransactionPayload(t, normalizedIncoming)
               );
 
               if (optimisticIndex >= 0) {
                 const next = [...prev];
-                next[optimisticIndex] = incoming;
+                next[optimisticIndex] = normalizedIncoming;
                 return next;
               }
 
-              return [incoming, ...prev];
+              return [normalizedIncoming, ...prev];
             });
           } else if (payload.eventType === "UPDATE") {
+            const normalizedIncoming = mapTransactionRowToTransaction(payload.new as TransactionRow);
             setTransactions((prev) =>
               prev.map((t) =>
-                t.id === (payload.new as Transaction).id
-                  ? (payload.new as Transaction)
+                t.id === normalizedIncoming.id
+                  ? normalizedIncoming
                   : t
               )
             );
@@ -354,7 +408,7 @@ export const useFinance = () => {
         description: data.description ?? null,
         currency: data.currency ?? "USD",
         is_recurring: Boolean(data.isRecurring),
-        recurring_day: data.recurringDay ?? null,
+        recurring_day: normalizeRecurringDayFromDb(data.recurringDay),
         date: safeDate,
         created_at: now,
       };
@@ -374,44 +428,40 @@ export const useFinance = () => {
       description: data.description ?? null,
       currency: data.currency ?? null,
       is_recurring: Boolean(data.isRecurring),
-      recurring_day: data.recurringDay ?? null,
+      recurring_day: normalizeRecurringDayFromDb(data.recurringDay),
       date: safeDate,
       created_at: new Date().toISOString(),
     };
 
     setTransactions((prev) => [optimistic, ...prev]);
 
-    type TransactionInsert = Database["public"]["Tables"]["transactions"]["Insert"];
-    const baseInsert: TransactionInsert = {
+    const recurringDayForDb = normalizeRecurringDayForDb(data.recurringDay);
+    const insertPayload: TransactionInsert = {
       user_id: user.id,
       amount: safeAmount,
       type: data.type,
       category: safeCategory,
       description: data.description ?? null,
+      currency: data.currency ?? null,
       date: safeDate,
+      is_recurring: Boolean(data.isRecurring),
+      recurring_day: data.isRecurring ? recurringDayForDb : null,
     };
-    type TransactionInsertCompatibility = TransactionInsert & {
-      is_recurring?: boolean | null;
-      recurring_day?: string | null;
-      currency?: string | null;
-    };
-    const withRecurring: TransactionInsertCompatibility = data.isRecurring
-      ? { ...baseInsert, is_recurring: true, recurring_day: data.recurringDay ?? null }
-      : baseInsert;
-    const withCurrency = data.currency
-      ? ({ ...withRecurring, currency: data.currency } as unknown as TransactionInsert)
-      : (withRecurring as TransactionInsert);
 
-    const firstAttempt = await supabase.from("transactions").insert([withCurrency]).select("*").maybeSingle();
+    const firstAttempt = await supabase.from("transactions").insert([insertPayload]).select("*").maybeSingle();
     let inserted = firstAttempt.data;
     let error = firstAttempt.error;
 
-    if (error && data.currency) {
+    if (error && data.currency != null) {
       const msg = error.message.toLowerCase();
       const isMissingCurrencyColumn =
         msg.includes("currency") && (msg.includes("column") || msg.includes("schema cache") || msg.includes("could not find"));
       if (isMissingCurrencyColumn) {
-        const retry = await supabase.from("transactions").insert([baseInsert]).select("*").maybeSingle();
+        const retryWithoutCurrency: TransactionInsert = {
+          ...insertPayload,
+          currency: undefined,
+        };
+        const retry = await supabase.from("transactions").insert([retryWithoutCurrency]).select("*").maybeSingle();
         inserted = retry.data;
         error = retry.error;
       }
@@ -427,7 +477,7 @@ export const useFinance = () => {
     setTransactions((prev) => {
       const withoutOptimistic = prev.filter((t) => t.id !== optimisticId);
       if (withoutOptimistic.some((t) => t.id === inserted.id)) return withoutOptimistic;
-      return [inserted as Transaction, ...withoutOptimistic];
+      return [mapTransactionRowToTransaction(inserted), ...withoutOptimistic];
     });
 
     toast.success("Transaction added successfully!");
@@ -468,7 +518,9 @@ export const useFinance = () => {
           ? {
               ...t,
               is_recurring: nextValue,
-              recurring_day: nextValue ? (t.recurring_day ?? String(new Date(`${t.date}T00:00:00`).getDate())) : null,
+              recurring_day: nextValue
+                ? (t.recurring_day ?? String(new Date(`${t.date}T00:00:00`).getDate()))
+                : null,
             }
           : t
       )
@@ -478,14 +530,13 @@ export const useFinance = () => {
       return { success: true };
     }
 
-    const updatePayload: Database["public"]["Tables"]["transactions"]["Update"] & {
-      is_recurring?: boolean | null;
-      recurring_day?: string | null;
-    } = {
+    const fallbackDay = String(new Date(`${target.date}T00:00:00`).getDate());
+    const normalizedRecurringDay = normalizeRecurringDayForDb(
+      nextValue ? (target.recurring_day ?? fallbackDay) : null
+    );
+    const updatePayload: TransactionUpdate = {
       is_recurring: nextValue,
-      recurring_day: nextValue
-        ? target.recurring_day ?? String(new Date(`${target.date}T00:00:00`).getDate())
-        : null,
+      recurring_day: nextValue ? normalizedRecurringDay : null,
     };
 
     const { error } = await supabase

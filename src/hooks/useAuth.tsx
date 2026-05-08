@@ -3,6 +3,7 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { PlanType } from "@/types/common";
 import type { AuthProfile, AuthUser } from "@/lib/auth/authTypes";
+import type { Database } from "@/integrations/supabase/types";
 import {
   clearDemoSnapshot,
   createDefaultDemoProfile,
@@ -13,23 +14,8 @@ import {
 } from "@/lib/auth/authService";
 import { hasSupabaseEnv } from "@/lib/supabase/client";
 
-interface Profile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-  email: string | null;
-  avatar_url: string | null;
-  created_at: string;
-  lemon_squeezy_customer_id: string | null;
-  subscription_id: string | null;
-  variant_id: string | null;
-  status: string | null;
-  current_period_end: string | null;
-  has_completed_onboarding: boolean | null;
-  language?: string | null;
-  default_currency?: string | null;
-}
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -96,9 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const resolvedUserId = profileRow?.id ?? fallbackUser?.id ?? "demo-user";
     const persistedOnboarding = getStoredOnboardingCompletion(resolvedUserId);
     const onboardingCompleted =
-      typeof profileRow?.has_completed_onboarding === "boolean"
-        ? profileRow.has_completed_onboarding
-        : persistedOnboarding ?? previousProfile?.onboardingCompleted ?? false;
+      persistedOnboarding ?? previousProfile?.onboardingCompleted ?? false;
 
     return {
       userId: resolvedUserId,
@@ -152,16 +136,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: nextUser.id,
       first_name: nextUser.fullName.split(" ").slice(0, -1).join(" ") || nextUser.fullName,
       last_name: nextUser.fullName.split(" ").slice(-1)[0] ?? "",
-      phone: null,
       email: nextUser.email,
       avatar_url: nextUser.avatarUrl,
       created_at: new Date().toISOString(),
-      lemon_squeezy_customer_id: null,
-      subscription_id: null,
-      variant_id: null,
       status: plan === "pro" ? "active" : "free",
-      current_period_end: null,
-      has_completed_onboarding: nextProfile.onboardingCompleted,
+      subscription_status: plan === "pro" ? "active" : "free",
+      lifetime_access: null,
+      updated_at: null,
       language: "en",
       default_currency: nextProfile.preferredCurrency,
     };
@@ -240,12 +221,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(authUser);
     if (profileData) {
       setProfile(profileData);
-      if (typeof profileData.has_completed_onboarding === "boolean") {
-        setStoredOnboardingCompletion(userId, profileData.has_completed_onboarding);
-      }
     }
     setAuthProfile((prev) => normalizeAuthProfile(profileData ?? null, authUser, prev));
-    setCurrentPlanState(profileData?.status === "active" || profileData?.status === "trialing" ? "pro" : "free");
+    const profilePlanStatus = profileData?.subscription_status ?? profileData?.status;
+    setCurrentPlanState(profilePlanStatus === "active" || profilePlanStatus === "trialing" ? "pro" : "free");
 
     // Check admin status
     const { data: roleData } = await supabase
@@ -273,16 +252,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: snapshot.user.id,
         first_name: snapshot.user.fullName.split(" ").slice(0, -1).join(" ") || snapshot.user.fullName,
         last_name: snapshot.user.fullName.split(" ").slice(-1)[0] ?? "",
-        phone: null,
         email: snapshot.user.email,
         avatar_url: snapshot.user.avatarUrl,
         created_at: new Date().toISOString(),
-        lemon_squeezy_customer_id: null,
-        subscription_id: null,
-        variant_id: null,
         status: snapshot.currentPlan === "pro" ? "active" : "free",
-        current_period_end: null,
-        has_completed_onboarding: snapshot.profile.onboardingCompleted,
+        subscription_status: snapshot.currentPlan === "pro" ? "active" : "free",
+        lifetime_access: null,
+        updated_at: null,
         language: "en",
         default_currency: snapshot.profile.preferredCurrency,
       });
@@ -386,18 +362,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userId = data.user?.id ?? data.session?.user?.id ?? null;
     if (!userId) return { error: null, hasCompletedOnboarding: null };
 
-    const { data: profileRow, error: profileError } = await supabase
-      .from("profiles")
-      .select("has_completed_onboarding")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (profileError) return { error: null, hasCompletedOnboarding: null };
-
-    const hasCompletedOnboarding =
-      typeof profileRow?.has_completed_onboarding === "boolean"
-        ? profileRow.has_completed_onboarding
-        : null;
+    const hasCompletedOnboarding = getStoredOnboardingCompletion(userId);
 
     return { error: null, hasCompletedOnboarding };
   };
@@ -450,7 +415,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const nextOnboarding =
       typeof updates.onboardingCompleted === "boolean"
         ? updates.onboardingCompleted
-        : authProfile?.onboardingCompleted ?? profile?.has_completed_onboarding === true;
+        : authProfile?.onboardingCompleted ?? false;
 
     setUser((prev) =>
       prev
@@ -488,10 +453,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             last_name: lastName || prev.last_name,
             avatar_url: updates.avatarUrl ?? prev.avatar_url,
             default_currency: updates.preferredCurrency ?? prev.default_currency,
-            has_completed_onboarding:
-              typeof updates.onboardingCompleted === "boolean"
-                ? updates.onboardingCompleted
-                : prev.has_completed_onboarding,
           }
         : prev
     );
@@ -518,7 +479,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               last_name: lastName || prev.last_name,
               avatar_url: updates.avatarUrl ?? prev.avatar_url,
               default_currency: updates.preferredCurrency ?? prev.default_currency,
-              has_completed_onboarding: nextOnboarding,
             }
           : prev
       );
@@ -528,15 +488,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (!hasSupabaseEnv) return;
 
+    const profileUpdate: ProfileUpdate = {
+      first_name: firstName || "Ruby",
+      last_name: lastName || "User",
+      default_currency: updates.preferredCurrency,
+      avatar_url: updates.avatarUrl,
+    };
+
     await supabase
       .from("profiles")
-      .update({
-        first_name: firstName || "Ruby",
-        last_name: lastName || "User",
-        default_currency: updates.preferredCurrency,
-        has_completed_onboarding: typeof updates.onboardingCompleted === "boolean" ? updates.onboardingCompleted : undefined,
-        avatar_url: updates.avatarUrl,
-      })
+      .update(profileUpdate)
       .eq("id", user.id);
     await refreshProfile();
   };
@@ -552,8 +513,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const onboardingCompleted =
-    authProfile?.onboardingCompleted ??
-    profile?.has_completed_onboarding === true;
+    authProfile?.onboardingCompleted ?? false;
 
   return (
     <AuthContext.Provider

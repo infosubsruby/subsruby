@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Goal, Sparkles, Target } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useFinance } from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
+import type { Goal as FinanceGoal } from "@/domain/financeModels";
 import { buildRubyAIContext, buildRubyAISuggestions } from "@/lib/rubyAI";
 import { RubyAIWidget } from "@/components/ruby-ai/RubyAIWidget";
 import { RubyAISuggestedPrompts } from "@/components/ruby-ai/RubyAISuggestedPrompts";
@@ -17,15 +19,23 @@ import {
 } from "@/components/predictive/PredictiveWidgets";
 import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 import { DEMO_GOALS, DEMO_TRANSACTIONS } from "@/data/demoFinanceData";
+import { createGoal, deleteGoal, fetchGoalsSafe, updateGoal } from "@/services/core/goalService";
+import type { GoalCreateInput } from "@/services/core/goalMockService";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const safe = (value: number) => (Number.isFinite(value) ? value : 0);
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const Goals = () => {
+  const { user, isLoading: authLoading } = useAuth();
   const { transactions, budgets } = useFinance();
   const { subscriptions } = useSubscriptions();
   const { defaultCurrency } = useSettings();
+  const [goalItems, setGoalItems] = useState<FinanceGoal[]>([]);
+  const [goalsLoading, setGoalsLoading] = useState(true);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
+  const [newGoalTitle, setNewGoalTitle] = useState("");
+  const [newGoalTarget, setNewGoalTarget] = useState("1000");
 
   const now = new Date();
   const current = monthKey(now);
@@ -106,6 +116,80 @@ const Goals = () => {
   );
   const isGoalsEmpty = transactions.length === 0 && budgets.length === 0;
 
+  const loadGoals = useCallback(async () => {
+    if (!user?.id) {
+      setGoalItems([]);
+      setGoalsLoading(false);
+      setGoalsError(null);
+      return;
+    }
+    setGoalsLoading(true);
+    const result = await fetchGoalsSafe(user.id);
+    if (result.error) {
+      setGoalsError(result.error);
+      setGoalItems(result.data ?? []);
+      setGoalsLoading(false);
+      return;
+    }
+    setGoalItems(result.data ?? []);
+    setGoalsError(null);
+    setGoalsLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    void loadGoals();
+  }, [authLoading, loadGoals]);
+
+  const handleCreateGoal = async () => {
+    if (!user?.id) return;
+    const title = newGoalTitle.trim();
+    const targetAmount = Number(newGoalTarget);
+    if (!title || !Number.isFinite(targetAmount) || targetAmount <= 0) return;
+    const payload: GoalCreateInput = {
+      title,
+      targetAmount,
+      currentAmount: 0,
+      currency: defaultCurrency,
+      deadline: null,
+      status: "on-track",
+      monthlyTarget: Math.max(1, Math.round(targetAmount / 12)),
+      predictedCompletionDate: null,
+      aiRecommendation: null,
+      priority: "medium",
+    };
+    const result = await createGoal(user.id, payload);
+    if (result.error) {
+      setGoalsError(result.error);
+      return;
+    }
+    setNewGoalTitle("");
+    await loadGoals();
+  };
+
+  const handleCompleteGoal = async (goal: FinanceGoal) => {
+    if (!user?.id) return;
+    const result = await updateGoal(user.id, goal.id, {
+      status: "completed",
+      currentAmount: Math.max(goal.currentAmount, goal.targetAmount),
+    });
+    if (result.error) {
+      setGoalsError(result.error);
+      return;
+    }
+    await loadGoals();
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    if (!user?.id) return;
+    const result = await deleteGoal(user.id, goalId);
+    if (result.error) {
+      setGoalsError(result.error);
+      return;
+    }
+    await loadGoals();
+  };
+
   return (
     <div className="premium-page motion-page-enter">
       <section className="premium-section motion-card-enter relative overflow-hidden rounded-[30px] p-6 sm:p-7">
@@ -125,6 +209,73 @@ const Goals = () => {
           <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-zinc-300">
             Current savings capacity: <span className="font-semibold text-zinc-100">{formatCurrency(Math.max(monthlyIncome - monthlyExpense, 0), defaultCurrency)}</span>
           </div>
+        </div>
+      </section>
+
+      <section className="premium-section rounded-[24px]">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-300">Goals (Supabase + Fallback)</h2>
+        {goalsLoading ? (
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-zinc-300">Loading goals...</div>
+        ) : goalsError ? (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-100">{goalsError}</div>
+        ) : goalItems.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-zinc-300">
+            No goals yet. Create your first goal below.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {goalItems.map((goal) => (
+              <article key={goal.id} className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-100">{goal.title}</p>
+                    <p className="text-xs text-zinc-400">
+                      {formatCurrency(goal.currentAmount, goal.currency)} / {formatCurrency(goal.targetAmount, goal.currency)} • {goal.status}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleCompleteGoal(goal)}
+                      className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200"
+                    >
+                      Complete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteGoal(goal.id)}
+                      className="rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 text-xs text-red-200"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_160px_auto]">
+          <input
+            value={newGoalTitle}
+            onChange={(event) => setNewGoalTitle(event.target.value)}
+            placeholder="Goal title"
+            className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-zinc-100"
+          />
+          <input
+            type="number"
+            min="1"
+            value={newGoalTarget}
+            onChange={(event) => setNewGoalTarget(event.target.value)}
+            placeholder="Target amount"
+            className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-zinc-100"
+          />
+          <button
+            type="button"
+            onClick={() => void handleCreateGoal()}
+            className="rounded-lg border border-red-500/40 bg-red-600/80 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
+          >
+            Create Goal
+          </button>
         </div>
       </section>
 

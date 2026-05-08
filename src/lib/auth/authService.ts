@@ -163,7 +163,6 @@ export const createProfileForUser = async (user: User, fullName?: string | null)
         last_name: lastName || null,
         avatar_url: typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null,
         default_currency: "USD",
-        has_completed_onboarding: false,
       },
       { onConflict: "id" }
     )
@@ -181,5 +180,5 @@ export const updateProfileRow = async (
 
 export const completeOnboardingRow = async (userId: string) => {
   if (!hasSupabaseEnv) return { data: null, error: null };
-  return supabase.from("profiles").update({ has_completed_onboarding: true }).eq("id", userId);
+  return supabase.from("profiles").update({ updated_at: new Date().toISOString() }).eq("id", userId);
 };

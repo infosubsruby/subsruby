@@ -101,6 +101,7 @@ export interface Goal {
   status: GoalStatus;
   monthlyTarget: number;
   predictedCompletionDate: string | null;
+  aiRecommendation?: string | null;
   priority: GoalPriority;
   createdAt: string;
   updatedAt: string;
