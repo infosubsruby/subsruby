@@ -1,9 +1,11 @@
 import type { Goal } from "@/domain/financeModels";
 import { mapDbGoalToGoal, mapGoalStatusToDbStatus, mapGoalToDbInsert } from "@/lib/supabase/mappers";
+import { createProfileForUser } from "@/lib/auth/authService";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { fail, ok, toFriendlyError, type ServiceResult } from "@/services/core/serviceResult";
 import type { GoalCreateInput, GoalUpdateInput } from "@/services/core/goalMockService";
 import type { Database } from "@/integrations/supabase/types";
+import type { User } from "@supabase/supabase-js";
 
 type GoalRow = Database["public"]["Tables"]["goals"]["Row"];
 type GoalInsert = Database["public"]["Tables"]["goals"]["Insert"];
@@ -12,6 +14,47 @@ type GoalUpdate = Database["public"]["Tables"]["goals"]["Update"];
 const UNAVAILABLE_MESSAGE = "Goals are unavailable because Supabase is not configured.";
 
 const getClientOrFail = (): ReturnType<typeof getSupabaseClient> => getSupabaseClient();
+
+type PostgrestErrorLike = {
+  message: string;
+  code?: string | null;
+  details?: string | null;
+  hint?: string | null;
+};
+
+const formatPostgrestError = (error: PostgrestErrorLike): string => {
+  const parts: string[] = [error.message];
+  if (error.code) parts.push(`code=${error.code}`);
+  if (error.details) parts.push(`details=${error.details}`);
+  if (error.hint) parts.push(`hint=${error.hint}`);
+  return parts.join(" | ");
+};
+
+const ensureProfileExists = async (
+  supabase: NonNullable<ReturnType<typeof getSupabaseClient>>,
+  userId: string,
+  authUser: User
+) => {
+
+  const { data: existingProfile, error: selectError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (selectError) {
+    return { error: formatPostgrestError(selectError as unknown as PostgrestErrorLike) };
+  }
+
+  if (existingProfile) return { error: null };
+
+  const { error: createError } = await createProfileForUser(authUser);
+  if (createError) {
+    return { error: formatPostgrestError(createError as unknown as PostgrestErrorLike) };
+  }
+
+  return { error: null };
+};
 
 const mapGoalInputToDbUpdate = (input: GoalUpdateInput): GoalUpdate => {
   const update: GoalUpdate = {};
@@ -43,8 +86,18 @@ export const fetchGoalsSupabase = async (userId: string): Promise<ServiceResult<
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
     if (error) {
-      if (import.meta.env.DEV) console.error("[Goals][fetch] Supabase error", { userId, error });
-      return fail(error.message);
+      if (import.meta.env.DEV) {
+        console.error("[Goals][fetch] Supabase error", {
+          userId,
+          error: {
+            message: error.message,
+            code: (error as unknown as PostgrestErrorLike).code,
+            details: (error as unknown as PostgrestErrorLike).details,
+            hint: (error as unknown as PostgrestErrorLike).hint,
+          },
+        });
+      }
+      return fail(import.meta.env.DEV ? formatPostgrestError(error as unknown as PostgrestErrorLike) : error.message);
     }
     const rows = (data ?? []) as GoalRow[];
     return ok(rows.map((row) => mapDbGoalToGoal(row)));
@@ -61,9 +114,44 @@ export const createGoalSupabase = async (
   const supabase = getClientOrFail();
   if (!supabase) return fail(UNAVAILABLE_MESSAGE);
   const now = new Date().toISOString();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const authUserId = authData.user?.id ?? null;
+  if (!authUserId) {
+    if (import.meta.env.DEV) {
+      console.error("[Goals][create] No authenticated user", {
+        passedUserId: userId,
+        authError: authError?.message ?? null,
+      });
+    }
+    return fail(import.meta.env.DEV ? "Not authenticated (no current user)." : "Please sign in to save this data.");
+  }
+
+  if (authUserId !== userId && import.meta.env.DEV) {
+    console.error("[Goals][create] Passed userId does not match auth user id", {
+      passedUserId: userId,
+      authUserId,
+    });
+  }
+
+  const profileEnsure = await ensureProfileExists(supabase, authUserId, authData.user);
+  if (profileEnsure.error) {
+    if (import.meta.env.DEV) {
+      console.error("[Goals][create] Failed to ensure profile exists", {
+        authUserId,
+        passedUserId: userId,
+        error: profileEnsure.error,
+      });
+    }
+    return fail(
+      import.meta.env.DEV
+        ? `Could not ensure profile exists: ${profileEnsure.error}`
+        : "Could not save goal. Please check authentication or permissions."
+    );
+  }
+
   const goalForMapper: Goal = {
     id: input.id ?? "",
-    userId,
+    userId: authUserId,
     title: input.title,
     targetAmount: input.targetAmount,
     currentAmount: input.currentAmount,
@@ -80,18 +168,41 @@ export const createGoalSupabase = async (
   const payload: GoalInsert = {
     ...mapGoalToDbInsert(goalForMapper),
     id: input.id,
-    user_id: userId,
+    user_id: authUserId,
   };
   try {
-    const { data, error } = await supabase.from("goals").insert([payload]).select("*").maybeSingle();
+    const { data, error } = await supabase.from("goals").insert(payload).select("*").single();
     if (error || !data) {
-      if (import.meta.env.DEV) console.error("[Goals][create] Supabase insert failed", { userId, payload, error });
-      return fail(error?.message ?? "Could not save goal. Please check authentication or permissions.");
+      if (import.meta.env.DEV && error) {
+        console.error("[Goals][create] Supabase insert failed", {
+          passedUserId: userId,
+          authUserId,
+          payload,
+          error: {
+            message: error.message,
+            code: (error as unknown as PostgrestErrorLike).code,
+            details: (error as unknown as PostgrestErrorLike).details,
+            hint: (error as unknown as PostgrestErrorLike).hint,
+          },
+        });
+      }
+      if (error) {
+        return fail(
+          import.meta.env.DEV
+            ? formatPostgrestError(error as unknown as PostgrestErrorLike)
+            : "Could not save goal. Please check authentication or permissions."
+        );
+      }
+      return fail("Could not save goal. Please check authentication or permissions.");
     }
     return ok(mapDbGoalToGoal(data as GoalRow));
   } catch (error) {
-    if (import.meta.env.DEV) console.error("[Goals][create] Unexpected error", { userId, payload, error });
-    return fail(toFriendlyError(error, "Could not save goal. Please check authentication or permissions."));
+    if (import.meta.env.DEV) console.error("[Goals][create] Unexpected error", { passedUserId: userId, payload, error });
+    return fail(
+      import.meta.env.DEV
+        ? toFriendlyError(error, "Could not save goal.")
+        : "Could not save goal. Please check authentication or permissions."
+    );
   }
 };
 
@@ -112,8 +223,20 @@ export const updateGoalSupabase = async (
       .select("*")
       .maybeSingle();
     if (error) {
-      if (import.meta.env.DEV) console.error("[Goals][update] Supabase error", { userId, goalId, payload, error });
-      return fail(error.message);
+      if (import.meta.env.DEV) {
+        console.error("[Goals][update] Supabase error", {
+          userId,
+          goalId,
+          payload,
+          error: {
+            message: error.message,
+            code: (error as unknown as PostgrestErrorLike).code,
+            details: (error as unknown as PostgrestErrorLike).details,
+            hint: (error as unknown as PostgrestErrorLike).hint,
+          },
+        });
+      }
+      return fail(import.meta.env.DEV ? formatPostgrestError(error as unknown as PostgrestErrorLike) : error.message);
     }
     if (!data) return ok(null);
     return ok(mapDbGoalToGoal(data as GoalRow));
@@ -134,8 +257,19 @@ export const deleteGoalSupabase = async (userId: string, goalId: string): Promis
       .eq("user_id", userId)
       .select("id");
     if (error) {
-      if (import.meta.env.DEV) console.error("[Goals][delete] Supabase error", { userId, goalId, error });
-      return fail(error.message);
+      if (import.meta.env.DEV) {
+        console.error("[Goals][delete] Supabase error", {
+          userId,
+          goalId,
+          error: {
+            message: error.message,
+            code: (error as unknown as PostgrestErrorLike).code,
+            details: (error as unknown as PostgrestErrorLike).details,
+            hint: (error as unknown as PostgrestErrorLike).hint,
+          },
+        });
+      }
+      return fail(import.meta.env.DEV ? formatPostgrestError(error as unknown as PostgrestErrorLike) : error.message);
     }
     return ok((data?.length ?? 0) > 0);
   } catch (error) {

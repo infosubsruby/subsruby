@@ -163,7 +163,9 @@ const Goals = () => {
     };
     const result = await createGoal(user.id, payload);
     if (result.error) {
-      setGoalsError("Could not save goal. Please check authentication or permissions.");
+      setGoalsError(
+        import.meta.env.DEV ? `Could not save goal: ${result.error}` : "Could not save goal. Please check authentication or permissions."
+      );
       if (import.meta.env.DEV) console.error("[Goals][UI][create]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
@@ -182,7 +184,7 @@ const Goals = () => {
       currentAmount: Math.max(goal.currentAmount, goal.targetAmount),
     });
     if (result.error) {
-      setGoalsError(result.error);
+      setGoalsError(import.meta.env.DEV ? `Could not update goal: ${result.error}` : result.error);
       if (import.meta.env.DEV) console.error("[Goals][UI][update]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
@@ -197,7 +199,7 @@ const Goals = () => {
     }
     const result = await deleteGoal(user.id, goalId);
     if (result.error) {
-      setGoalsError(result.error);
+      setGoalsError(import.meta.env.DEV ? `Could not delete goal: ${result.error}` : result.error);
       if (import.meta.env.DEV) console.error("[Goals][UI][delete]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }

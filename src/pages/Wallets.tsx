@@ -444,7 +444,11 @@ const Wallets = () => {
     };
     const result = await createWallet(user.id, payload);
     if (result.error) {
-      setWalletsError("Could not save wallet. Please check authentication or permissions.");
+      setWalletsError(
+        import.meta.env.DEV
+          ? `Could not save wallet: ${result.error}`
+          : "Could not save wallet. Please check authentication or permissions."
+      );
       if (import.meta.env.DEV) console.error("[Wallets][UI][create]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
@@ -464,7 +468,7 @@ const Wallets = () => {
       lastSyncedAt: new Date().toISOString(),
     });
     if (result.error) {
-      setWalletsError(result.error);
+      setWalletsError(import.meta.env.DEV ? `Could not update wallet: ${result.error}` : result.error);
       if (import.meta.env.DEV) console.error("[Wallets][UI][update]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
@@ -479,7 +483,7 @@ const Wallets = () => {
     }
     const result = await deleteWallet(user.id, walletId);
     if (result.error) {
-      setWalletsError(result.error);
+      setWalletsError(import.meta.env.DEV ? `Could not delete wallet: ${result.error}` : result.error);
       if (import.meta.env.DEV) console.error("[Wallets][UI][delete]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }

@@ -6,6 +6,7 @@ import type { AuthProfile, AuthUser } from "@/lib/auth/authTypes";
 import type { Database } from "@/integrations/supabase/types";
 import {
   clearDemoSnapshot,
+  createProfileForUser,
   createDefaultDemoProfile,
   createDefaultDemoUser,
   getStoredDemoSnapshot,
@@ -173,6 +174,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("*")
       .eq("id", userId)
       .maybeSingle();
+
+    if (!profileData && sessionToUse?.user) {
+      const { data: createdProfile, error: createError } = await createProfileForUser(sessionToUse.user);
+      if (createError && import.meta.env.DEV) {
+        console.error("[Auth][profiles] Failed to create missing profile", {
+          userId,
+          message: createError.message,
+        });
+      }
+      if (createdProfile) {
+        profileData = createdProfile;
+      }
+    }
     
     // If user signed in with Google and we have user metadata, sync it
     if (sessionToUse?.user) {
