@@ -40,7 +40,7 @@ const Settings = () => {
   const { user, profile, isLoading: authLoading, signOut, updateProfile, authProfile } = useAuth();
   const { defaultCurrency, setDefaultCurrency, notifications, setNotificationSetting } = useSettings();
   const { state, patch } = useOnboardingFoundation();
-  const { activePlan, getUsageStatus } = usePlanAccess();
+  const { activePlan, getUsageStatus, hasUnlimitedAccess, accessTier } = usePlanAccess();
   const { transactions, budgets } = useFinance();
   const { subscriptions } = useSubscriptions();
   const [activeSection, setActiveSection] = useState<
@@ -109,6 +109,7 @@ const Settings = () => {
   const subscriptionUsage = getUsageStatus("subscriptions", subscriptions.length);
   const goalsUsage = getUsageStatus("goals", budgets.length);
   const rubyPromptUsage = getUsageStatus("ruby_ai_prompts_per_month", 8);
+  const accessLabel = accessTier === "admin" ? "Admin" : accessTier === "lifetime" ? "Lifetime" : activePlan === "pro" ? "Pro" : "Free";
 
   const isSection = (id: (typeof sectionItems)[number]["id"]) => activeSection === id;
 
@@ -160,6 +161,7 @@ const Settings = () => {
                 <p className="text-xs text-zinc-500">Current Plan</p>
                 <p className="mt-1 text-lg font-semibold text-zinc-100">{planDefinition?.name ?? "Free"}</p>
                 <p className="mt-1 text-xs text-zinc-400">{planDefinition?.description}</p>
+                <p className="mt-2 text-xs text-zinc-400">Account type: {accessLabel}{hasUnlimitedAccess ? " (Unlimited)" : ""}</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <article className="rounded-xl border border-white/10 bg-black/20 p-3">
@@ -180,12 +182,20 @@ const Settings = () => {
                 </article>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                <Button onClick={() => navigate("/upgrade")} className="justify-start">
-                  Upgrade to Pro
-                </Button>
-                <Button variant="outline" className="justify-start">
-                  Manage Subscription (Placeholder)
-                </Button>
+                {!hasUnlimitedAccess ? (
+                  <Button onClick={() => navigate("/upgrade")} className="justify-start">
+                    Upgrade to Pro
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="justify-start" disabled>
+                    Unlimited access enabled
+                  </Button>
+                )}
+                {!hasUnlimitedAccess ? (
+                  <Button variant="outline" className="justify-start">
+                    Manage Subscription (Placeholder)
+                  </Button>
+                ) : null}
               </div>
               <div className="rounded-xl border border-white/10 bg-black/20 p-3">
                 <p className="text-xs text-zinc-500">Billing</p>

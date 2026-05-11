@@ -25,7 +25,7 @@ import { formatDate, getActiveLocale } from "@/i18n/date";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, isLoading: authLoading, refreshProfile } = useAuth();
   const { t: tLegacy } = useLanguage();
   const tSecurity = useTranslations("Security");
   const tProfile = useTranslations("Profile");
@@ -412,7 +412,11 @@ const Profile = () => {
     }
   };
 
-  const isPro = ["active", "trialing"].includes(subscriptionStatus ?? "");
+  const hasLifetimeAccess = Boolean(profile?.lifetime_access);
+  const hasUnlimitedAccess = isAdmin || hasLifetimeAccess;
+  const isPaidPro = ["active", "trialing"].includes(subscriptionStatus ?? "");
+  const isPro = hasUnlimitedAccess || isPaidPro;
+  const accountTypeLabel = isAdmin ? "Admin" : hasLifetimeAccess ? "Lifetime" : isPaidPro ? "Pro" : "Free";
   const formattedRenews =
     currentPeriodEnd && !Number.isNaN(new Date(currentPeriodEnd).getTime())
       ? formatDate(currentPeriodEnd, { dateStyle: "medium" })
@@ -728,37 +732,53 @@ const Profile = () => {
                     <div className="flex items-start justify-between gap-6">
                       <div className="min-w-0">
                         <Label className="text-base font-medium">{tProfile("current_plan")}</Label>
-                        <p className="mt-2 text-2xl font-semibold leading-none">Pro Plan</p>
-                        {formattedRenews ? (
+                        <p className="mt-2 text-2xl font-semibold leading-none">{accountTypeLabel} Plan</p>
+                        {formattedRenews && !hasUnlimitedAccess ? (
                           <p className="mt-4 text-sm text-muted-foreground">Next payment: {formattedRenews}</p>
                         ) : null}
+                        {hasUnlimitedAccess ? (
+                          <p className="mt-4 text-sm text-muted-foreground">Access: Unlimited</p>
+                        ) : null}
                       </div>
-                      <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                        onClick={() => void handleManageSubscription()}
-                        disabled={isPortalLoading}
-                      >
-                        {isPortalLoading ? "Yönlendiriliyor..." : "Manage Subscription"}
-                      </Button>
+                      {!hasUnlimitedAccess ? (
+                        <Button
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                          onClick={() => void handleManageSubscription()}
+                          disabled={isPortalLoading}
+                        >
+                          {isPortalLoading ? "Yönlendiriliyor..." : "Manage Subscription"}
+                        </Button>
+                      ) : (
+                        <Button variant="outline" disabled>
+                          Unlimited access
+                        </Button>
+                      )}
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
-                    <div className="flex items-start justify-between gap-6">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-                          <CreditCard className="w-5 h-5 text-primary" />
+                  {!hasUnlimitedAccess ? (
+                    <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">
+                      <div className="flex items-start justify-between gap-6">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                            <CreditCard className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <Label className="text-base font-medium">Payment Method</Label>
+                            <p className="mt-2 text-sm text-muted-foreground">Manage billing in portal</p>
+                          </div>
                         </div>
-                        <div>
-                          <Label className="text-base font-medium">Payment Method</Label>
-                          <p className="mt-2 text-sm text-muted-foreground">Visa ending in 4242</p>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleManageSubscription()}
+                          disabled={isPortalLoading}
+                        >
+                          {isPortalLoading ? "Yönlendiriliyor..." : "Update"}
+                        </Button>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => void handleManageSubscription()} disabled={isPortalLoading}>
-                        {isPortalLoading ? "Yönlendiriliyor..." : "Update"}
-                      </Button>
                     </div>
-                  </div>
+                  ) : null}
                 </>
               ) : (
                 <div className="rounded-xl border border-border/40 bg-transparent p-6 space-y-6">

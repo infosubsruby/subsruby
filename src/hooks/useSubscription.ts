@@ -8,7 +8,7 @@ export const useSubscription = () => {
   const [isPro, setIsPro] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [customerPortalUrl, setCustomerPortalUrl] = useState<string | null>(null);
-  const { user, isMockMode, currentPlan } = useAuth();
+  const { user, isMockMode, currentPlan, isAdmin, profile } = useAuth();
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -22,6 +22,14 @@ export const useSubscription = () => {
         }
 
         if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        if (isAdmin || profile?.lifetime_access) {
+          setIsPro(true);
+          setStatus(isAdmin ? "admin" : "lifetime");
+          setCustomerPortalUrl(null);
           setLoading(false);
           return;
         }
@@ -59,7 +67,7 @@ export const useSubscription = () => {
     };
 
     checkSubscription();
-  }, [currentPlan, isMockMode, user]);
+  }, [currentPlan, isAdmin, isMockMode, profile?.lifetime_access, user]);
 
   return { isPro, status, customerPortalUrl, loading };
 };

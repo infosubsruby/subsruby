@@ -21,7 +21,7 @@ const getStoredPlanOverride = (): PlanTier | null => {
 };
 
 export const usePlanAccess = () => {
-  const { user } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const { isPro, loading } = useSubscription();
   const [devPlanOverride, setDevPlanOverrideState] = useState<PlanTier | null>(getStoredPlanOverride);
 
@@ -35,9 +35,11 @@ export const usePlanAccess = () => {
   }, [devPlanOverride]);
 
   const activePlan: PlanTier = useMemo(() => {
+    const hasLifetimeAccess = Boolean(profile?.lifetime_access);
+    if (isAdmin || hasLifetimeAccess) return "pro";
     if (devPlanOverride) return devPlanOverride;
     return isPro ? "pro" : "free";
-  }, [devPlanOverride, isPro]);
+  }, [devPlanOverride, isAdmin, isPro, profile?.lifetime_access]);
 
   const setDevPlanOverride = (plan: PlanTier | null) => {
     setDevPlanOverrideState(plan);
@@ -64,6 +66,8 @@ export const usePlanAccess = () => {
     loading,
     activePlan,
     isProPlan: activePlan === "pro",
+    hasUnlimitedAccess: isAdmin || Boolean(profile?.lifetime_access),
+    accessTier: isAdmin ? "admin" : profile?.lifetime_access ? "lifetime" : activePlan,
     isDevOverrideEnabled: devPlanOverride !== null,
     devPlanOverride,
     setDevPlanOverride,
