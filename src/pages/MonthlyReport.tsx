@@ -111,7 +111,9 @@ const MonthlyReport = () => {
       .then((result) => {
         if (cancelled) return;
         if (result.error) {
-          setSavedReportError(result.error);
+          setSavedReportError(
+            import.meta.env.DEV ? result.error : "Could not load monthly reports. Please check authentication or permissions."
+          );
           setSavedReports([]);
           return;
         }
@@ -143,7 +145,9 @@ const MonthlyReport = () => {
       .then((result) => {
         if (cancelled) return;
         if (result.error) {
-          setSavedReportError(result.error);
+          setSavedReportError(
+            import.meta.env.DEV ? result.error : "Could not load monthly report. Please check authentication or permissions."
+          );
           setSavedReport(null);
           return;
         }
@@ -169,7 +173,9 @@ const MonthlyReport = () => {
 
     const result = await generateMonthlyReportPersisted(user.id, selectedMonthKey);
     if (result.error) {
-      setSavedReportError(result.error);
+      setSavedReportError(
+        import.meta.env.DEV ? result.error : "Could not save monthly report. Please check authentication or permissions."
+      );
       setGenerationLoading(false);
       return;
     }
@@ -344,30 +350,32 @@ const MonthlyReport = () => {
           </label>
         </div>
       </section>
-      {supabaseEnabled && user ? (
+      {supabaseEnabled ? (
         <section className="premium-section rounded-[26px]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 className="premium-heading">Saved Monthly Reports</h2>
               <p className="mt-1 text-sm text-zinc-400">
-                {savedReport
-                  ? `Saved report found for ${savedReport.month}.`
-                  : savedReportLoading
-                    ? `Loading saved report for ${selectedMonthKey}...`
-                    : `No saved report for ${selectedMonthKey} yet.`}
+                {!user
+                  ? "Sign in to generate and save monthly reports."
+                  : savedReport
+                    ? `Saved report found for ${savedReport.month}.`
+                    : savedReportLoading
+                      ? `Loading saved report for ${selectedMonthKey}...`
+                      : `No saved report for ${selectedMonthKey} yet.`}
               </p>
-              {latestSavedReport ? (
+              {user && latestSavedReport ? (
                 <p className="mt-1 text-xs text-zinc-500">
                   Latest saved: <span className="text-zinc-200">{latestSavedReport.month}</span>
                 </p>
-              ) : savedReportsLoading ? (
+              ) : user && savedReportsLoading ? (
                 <p className="mt-1 text-xs text-zinc-500">Loading saved reports…</p>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
               <Button
                 onClick={handleGenerateReport}
-                disabled={generationLoading || savedReportLoading || savedReportsLoading}
+                disabled={!user || generationLoading || savedReportLoading || savedReportsLoading}
               >
                 {generationLoading ? "Generating…" : savedReport ? "Regenerate Monthly Report" : "Generate Monthly Report"}
               </Button>

@@ -9,7 +9,11 @@ import { createProfileForUser } from "@/lib/auth/authService";
 import { calculateFinancialHealthScore } from "@/lib/financialHealthScore";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { mapDbMonthlyReportToMonthlyReport, mapMonthlyReportToDbInsert } from "@/lib/supabase/mappers";
+import {
+  mapDbMonthlyReportToMonthlyReport,
+  mapMonthlyReportToDbInsert,
+  mapMonthlyReportToDbUpdate,
+} from "@/lib/supabase/mappers";
 import { fail, ok, toFriendlyError, type ServiceResult } from "@/services/core/serviceResult";
 
 type MonthlyReportRow = Database["public"]["Tables"]["monthly_reports"]["Row"];
@@ -36,6 +40,21 @@ const formatPostgrestError = (error: PostgrestErrorLike): string => {
   if (error.details) parts.push(`details=${error.details}`);
   if (error.hint) parts.push(`hint=${error.hint}`);
   return parts.join(" | ");
+};
+
+const logDevPostgrestError = (
+  scope: string,
+  error: unknown,
+  context: Record<string, unknown>
+): void => {
+  if (!import.meta.env.DEV) return;
+  const e = error as PostgrestErrorLike | null | undefined;
+  console.error(`[MonthlyReports] ${scope}`, {
+    ...context,
+    error: e
+      ? { message: e.message, code: e.code ?? null, details: e.details ?? null, hint: e.hint ?? null }
+      : error,
+  });
 };
 
 const safeNumber = (value: number | null | undefined): number => (Number.isFinite(value) ? Number(value) : 0);
@@ -290,13 +309,108 @@ export const upsertMonthlyReportSupabase = async (
     if (!authUserId) return fail("Please sign in to save monthly reports.");
 
     const payload: MonthlyReportInsert = mapMonthlyReportToDbInsert({ ...report, userId: authUserId });
+
     const { data, error } = await supabase
       .from("monthly_reports")
       .upsert(payload, { onConflict: "user_id,month" })
       .select("*")
       .single();
 
-    if (error) return fail(import.meta.env.DEV ? formatPostgrestError(error as unknown as PostgrestErrorLike) : error.message);
+    if (error) {
+      const message = (error as unknown as PostgrestErrorLike | null)?.message ?? "";
+      const code = (error as unknown as PostgrestErrorLike | null)?.code ?? "";
+      const missingConstraint =
+        code === "42P10" || message.includes("no unique or exclusion constraint") || message.includes("ON CONFLICT");
+      if (missingConstraint) {
+        if (import.meta.env.DEV) {
+          console.warn("[MonthlyReports] upsert fallback (missing unique constraint on user_id+month)", {
+            passedUserId: userId,
+            authUserId,
+            month: payload.month,
+          });
+        }
+
+        const { data: existing, error: findError } = await supabase
+          .from("monthly_reports")
+          .select("id")
+          .eq("user_id", authUserId)
+          .eq("month", payload.month)
+          .maybeSingle();
+
+        if (findError) {
+          logDevPostgrestError("upsert fallback find error", findError, {
+            passedUserId: userId,
+            authUserId,
+            month: payload.month,
+          });
+          return fail(import.meta.env.DEV ? formatPostgrestError(findError as unknown as PostgrestErrorLike) : findError.message);
+        }
+
+        if (existing?.id) {
+          const updatePayload = mapMonthlyReportToDbUpdate({
+            totalIncome: report.totalIncome,
+            totalExpenses: report.totalExpenses,
+            netSavings: report.netSavings,
+            savingsRate: report.savingsRate,
+            healthScore: report.healthScore,
+            previousHealthScore: report.previousHealthScore,
+            topCategories: report.topCategories,
+            subscriptionImpact: report.subscriptionImpact,
+            goalProgress: report.goalProgress,
+            aiSummary: report.aiSummary,
+            recommendedActions: report.recommendedActions,
+          });
+
+          const { data: updated, error: updateError } = await supabase
+            .from("monthly_reports")
+            .update(updatePayload)
+            .eq("id", existing.id)
+            .eq("user_id", authUserId)
+            .select("*")
+            .single();
+
+          if (updateError) {
+            logDevPostgrestError("upsert fallback update error", updateError, {
+              passedUserId: userId,
+              authUserId,
+              month: payload.month,
+              updatePayload,
+            });
+            return fail(
+              import.meta.env.DEV ? formatPostgrestError(updateError as unknown as PostgrestErrorLike) : updateError.message
+            );
+          }
+          return ok(mapDbMonthlyReportToMonthlyReport(updated as MonthlyReportRow));
+        }
+
+        const { data: inserted, error: insertError } = await supabase
+          .from("monthly_reports")
+          .insert(payload)
+          .select("*")
+          .single();
+
+        if (insertError) {
+          logDevPostgrestError("upsert fallback insert error", insertError, {
+            passedUserId: userId,
+            authUserId,
+            month: payload.month,
+            payload,
+          });
+          return fail(
+            import.meta.env.DEV ? formatPostgrestError(insertError as unknown as PostgrestErrorLike) : insertError.message
+          );
+        }
+        return ok(mapDbMonthlyReportToMonthlyReport(inserted as MonthlyReportRow));
+      }
+
+      logDevPostgrestError("upsert error", error, {
+        passedUserId: userId,
+        authUserId,
+        month: payload.month,
+        payload,
+      });
+      return fail(import.meta.env.DEV ? formatPostgrestError(error as unknown as PostgrestErrorLike) : error.message);
+    }
     return ok(mapDbMonthlyReportToMonthlyReport(data as MonthlyReportRow));
   } catch (error) {
     if (import.meta.env.DEV) console.error("[MonthlyReports] upsert failed", { userId, report, error });
@@ -343,7 +457,14 @@ export const generateMonthlyReportSupabase = async (
     const authUserId = authData.user?.id ?? null;
     if (!authUserId) return fail("Please sign in to generate monthly reports.");
 
-    const [transactionsRes, subscriptionsRes, goalsRes, walletsRes, budgetsRes, insightsRes] = await Promise.all([
+    const [
+      transactionsRes,
+      subscriptionsRes,
+      goalsRes,
+      walletsRes,
+      budgetsRes,
+      insightsRes,
+    ] = await Promise.all([
       supabase.from("transactions").select("*").eq("user_id", authUserId),
       supabase.from("subscriptions").select("*").eq("user_id", authUserId),
       supabase.from("goals").select("*").eq("user_id", authUserId),
@@ -352,27 +473,18 @@ export const generateMonthlyReportSupabase = async (
       supabase.from("ai_insights").select("*").eq("user_id", authUserId).eq("is_resolved", false),
     ]);
 
-    const firstError =
-      transactionsRes.error ??
-      subscriptionsRes.error ??
-      goalsRes.error ??
-      walletsRes.error ??
-      budgetsRes.error ??
-      insightsRes.error;
+    const sourceErrors: Array<{ source: string; error: unknown }> = [];
+    if (transactionsRes.error) sourceErrors.push({ source: "transactions", error: transactionsRes.error });
+    if (subscriptionsRes.error) sourceErrors.push({ source: "subscriptions", error: subscriptionsRes.error });
+    if (goalsRes.error) sourceErrors.push({ source: "goals", error: goalsRes.error });
+    if (walletsRes.error) sourceErrors.push({ source: "wallets", error: walletsRes.error });
+    if (budgetsRes.error) sourceErrors.push({ source: "budgets", error: budgetsRes.error });
+    if (insightsRes.error) sourceErrors.push({ source: "ai_insights", error: insightsRes.error });
 
-    if (firstError) {
-      if (import.meta.env.DEV) {
-        console.error("[MonthlyReports] data load failed", {
-          month,
-          error: {
-            message: firstError.message,
-            code: (firstError as unknown as PostgrestErrorLike).code,
-            details: (firstError as unknown as PostgrestErrorLike).details,
-            hint: (firstError as unknown as PostgrestErrorLike).hint,
-          },
-        });
+    if (sourceErrors.length) {
+      for (const entry of sourceErrors) {
+        logDevPostgrestError("data source error", entry.error, { source: entry.source, authUserId, month });
       }
-      return fail(import.meta.env.DEV ? formatPostgrestError(firstError as unknown as PostgrestErrorLike) : firstError.message);
     }
 
     const transactions = (transactionsRes.data ?? []) as TransactionRow[];
@@ -495,4 +607,3 @@ export const generateMonthlyReportSupabase = async (
     return fail(toFriendlyError(error, "Failed to generate monthly report."));
   }
 };
-
