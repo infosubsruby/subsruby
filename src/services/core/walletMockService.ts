@@ -11,7 +11,15 @@ const createId = () =>
   globalThis.crypto?.randomUUID?.() ?? `mock-wallet-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const normalizeWalletType = (type: WalletType): WalletType => {
-  if (type === "checking" || type === "savings" || type === "credit" || type === "cash" || type === "crypto" || type === "investment") {
+  if (
+    type === "checking" ||
+    type === "savings" ||
+    type === "credit" ||
+    type === "cash" ||
+    type === "crypto" ||
+    type === "investment" ||
+    type === "custom"
+  ) {
     return type;
   }
   return "checking";
@@ -71,4 +79,3 @@ export const deleteWalletMock = async (userId: string, walletId: string): Promis
   mockStore.wallets.set(next);
   return ok(await asyncResolve(next.length !== current.length));
 };
-

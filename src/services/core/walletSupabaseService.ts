@@ -42,10 +42,14 @@ export const fetchWalletsSupabase = async (userId: string): Promise<ServiceResul
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
-    if (error) return fail(error.message);
+    if (error) {
+      if (import.meta.env.DEV) console.error("[Wallets][fetch] Supabase error", { userId, error });
+      return fail(error.message);
+    }
     const rows = (data ?? []) as WalletRow[];
     return ok(rows.map((row) => mapDbWalletToWallet(row)));
   } catch (error) {
+    if (import.meta.env.DEV) console.error("[Wallets][fetch] Unexpected error", { userId, error });
     return fail(toFriendlyError(error, "Failed to fetch wallets."));
   }
 };
@@ -77,10 +81,14 @@ export const createWalletSupabase = async (
   };
   try {
     const { data, error } = await supabase.from("wallets").insert([payload]).select("*").maybeSingle();
-    if (error || !data) return fail(error?.message ?? "Failed to create wallet.");
+    if (error || !data) {
+      if (import.meta.env.DEV) console.error("[Wallets][create] Supabase insert failed", { userId, payload, error });
+      return fail(error?.message ?? "Could not save wallet. Please check authentication or permissions.");
+    }
     return ok(mapDbWalletToWallet(data as WalletRow));
   } catch (error) {
-    return fail(toFriendlyError(error, "Failed to create wallet."));
+    if (import.meta.env.DEV) console.error("[Wallets][create] Unexpected error", { userId, payload, error });
+    return fail(toFriendlyError(error, "Could not save wallet. Please check authentication or permissions."));
   }
 };
 
@@ -100,10 +108,14 @@ export const updateWalletSupabase = async (
       .eq("user_id", userId)
       .select("*")
       .maybeSingle();
-    if (error) return fail(error.message);
+    if (error) {
+      if (import.meta.env.DEV) console.error("[Wallets][update] Supabase error", { userId, walletId, payload, error });
+      return fail(error.message);
+    }
     if (!data) return ok(null);
     return ok(mapDbWalletToWallet(data as WalletRow));
   } catch (error) {
+    if (import.meta.env.DEV) console.error("[Wallets][update] Unexpected error", { userId, walletId, payload, error });
     return fail(toFriendlyError(error, "Failed to update wallet."));
   }
 };
@@ -118,9 +130,13 @@ export const deleteWalletSupabase = async (userId: string, walletId: string): Pr
       .eq("id", walletId)
       .eq("user_id", userId)
       .select("id");
-    if (error) return fail(error.message);
+    if (error) {
+      if (import.meta.env.DEV) console.error("[Wallets][delete] Supabase error", { userId, walletId, error });
+      return fail(error.message);
+    }
     return ok((data?.length ?? 0) > 0);
   } catch (error) {
+    if (import.meta.env.DEV) console.error("[Wallets][delete] Unexpected error", { userId, walletId, error });
     return fail(toFriendlyError(error, "Failed to delete wallet."));
   }
 };

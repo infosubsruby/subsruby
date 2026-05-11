@@ -230,7 +230,11 @@ export const mapDbWalletToWallet = (row: WalletRowLike): WalletAccount => ({
       ? "checking"
       : row.type === "credit_card"
       ? "credit"
-      : row.type === "savings" || row.type === "cash" || row.type === "crypto" || row.type === "investment"
+      : row.type === "savings" ||
+        row.type === "cash" ||
+        row.type === "crypto" ||
+        row.type === "investment" ||
+        row.type === "custom"
       ? row.type
       : "checking",
   balance: toSafeNumber(row.balance),

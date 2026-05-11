@@ -33,7 +33,7 @@ export interface UserProfile {
   updatedAt: string;
 }
 
-export type WalletType = "checking" | "savings" | "credit" | "cash" | "crypto" | "investment";
+export type WalletType = "checking" | "savings" | "credit" | "cash" | "crypto" | "investment" | "custom";
 
 export interface WalletAccount {
   id: string;

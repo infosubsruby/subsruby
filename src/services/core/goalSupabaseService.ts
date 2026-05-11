@@ -42,10 +42,14 @@ export const fetchGoalsSupabase = async (userId: string): Promise<ServiceResult<
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
-    if (error) return fail(error.message);
+    if (error) {
+      if (import.meta.env.DEV) console.error("[Goals][fetch] Supabase error", { userId, error });
+      return fail(error.message);
+    }
     const rows = (data ?? []) as GoalRow[];
     return ok(rows.map((row) => mapDbGoalToGoal(row)));
   } catch (error) {
+    if (import.meta.env.DEV) console.error("[Goals][fetch] Unexpected error", { userId, error });
     return fail(toFriendlyError(error, "Failed to fetch goals."));
   }
 };
@@ -80,10 +84,14 @@ export const createGoalSupabase = async (
   };
   try {
     const { data, error } = await supabase.from("goals").insert([payload]).select("*").maybeSingle();
-    if (error || !data) return fail(error?.message ?? "Failed to create goal.");
+    if (error || !data) {
+      if (import.meta.env.DEV) console.error("[Goals][create] Supabase insert failed", { userId, payload, error });
+      return fail(error?.message ?? "Could not save goal. Please check authentication or permissions.");
+    }
     return ok(mapDbGoalToGoal(data as GoalRow));
   } catch (error) {
-    return fail(toFriendlyError(error, "Failed to create goal."));
+    if (import.meta.env.DEV) console.error("[Goals][create] Unexpected error", { userId, payload, error });
+    return fail(toFriendlyError(error, "Could not save goal. Please check authentication or permissions."));
   }
 };
 
@@ -103,10 +111,14 @@ export const updateGoalSupabase = async (
       .eq("user_id", userId)
       .select("*")
       .maybeSingle();
-    if (error) return fail(error.message);
+    if (error) {
+      if (import.meta.env.DEV) console.error("[Goals][update] Supabase error", { userId, goalId, payload, error });
+      return fail(error.message);
+    }
     if (!data) return ok(null);
     return ok(mapDbGoalToGoal(data as GoalRow));
   } catch (error) {
+    if (import.meta.env.DEV) console.error("[Goals][update] Unexpected error", { userId, goalId, payload, error });
     return fail(toFriendlyError(error, "Failed to update goal."));
   }
 };
@@ -121,9 +133,13 @@ export const deleteGoalSupabase = async (userId: string, goalId: string): Promis
       .eq("id", goalId)
       .eq("user_id", userId)
       .select("id");
-    if (error) return fail(error.message);
+    if (error) {
+      if (import.meta.env.DEV) console.error("[Goals][delete] Supabase error", { userId, goalId, error });
+      return fail(error.message);
+    }
     return ok((data?.length ?? 0) > 0);
   } catch (error) {
+    if (import.meta.env.DEV) console.error("[Goals][delete] Unexpected error", { userId, goalId, error });
     return fail(toFriendlyError(error, "Failed to delete goal."));
   }
 };

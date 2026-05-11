@@ -56,7 +56,7 @@ const accountTypeForTransaction = (tx: Transaction): WalletAccountType => {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const Wallets = () => {
-  const { profile, user } = useAuth();
+  const { profile, user, isLoading: authLoading, isMockMode } = useAuth();
   const { defaultCurrency } = useSettings();
   const { transactions } = useFinance();
   const { subscriptions } = useSubscriptions();
@@ -405,7 +405,7 @@ const Wallets = () => {
     if (!user?.id) {
       setWalletItems([]);
       setWalletsLoading(false);
-      setWalletsError(null);
+      setWalletsError(authLoading ? null : "Sign in required to load wallets.");
       return;
     }
     setWalletsLoading(true);
@@ -419,14 +419,17 @@ const Wallets = () => {
     setWalletItems(result.data ?? []);
     setWalletsError(null);
     setWalletsLoading(false);
-  }, [user?.id]);
+  }, [authLoading, user?.id]);
 
   useEffect(() => {
     void loadWallets();
   }, [loadWallets]);
 
   const handleCreateWallet = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setWalletsError("Could not save wallet. Please sign in first.");
+      return;
+    }
     const name = newWalletName.trim();
     const balance = Number(newWalletBalance);
     if (!name || !Number.isFinite(balance)) return;
@@ -441,34 +444,46 @@ const Wallets = () => {
     };
     const result = await createWallet(user.id, payload);
     if (result.error) {
-      setWalletsError(result.error);
+      setWalletsError("Could not save wallet. Please check authentication or permissions.");
+      if (import.meta.env.DEV) console.error("[Wallets][UI][create]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
+    setWalletsError(null);
     setNewWalletName("");
     setNewWalletBalance("0");
     await loadWallets();
   };
 
   const handleUpdateWallet = async (wallet: FinanceWallet) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setWalletsError("Could not update wallet. Please sign in first.");
+      return;
+    }
     const result = await updateWallet(user.id, wallet.id, {
       balance: wallet.balance + 100,
       lastSyncedAt: new Date().toISOString(),
     });
     if (result.error) {
       setWalletsError(result.error);
+      if (import.meta.env.DEV) console.error("[Wallets][UI][update]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
+    setWalletsError(null);
     await loadWallets();
   };
 
   const handleDeleteWallet = async (walletId: string) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setWalletsError("Could not delete wallet. Please sign in first.");
+      return;
+    }
     const result = await deleteWallet(user.id, walletId);
     if (result.error) {
       setWalletsError(result.error);
+      if (import.meta.env.DEV) console.error("[Wallets][UI][delete]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
+    setWalletsError(null);
     await loadWallets();
   };
 
@@ -587,6 +602,7 @@ const Wallets = () => {
             <option value="credit">credit_card</option>
             <option value="crypto">crypto</option>
             <option value="investment">investment</option>
+            <option value="custom">custom</option>
           </select>
           <input
             type="number"

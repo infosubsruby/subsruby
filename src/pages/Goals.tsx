@@ -27,7 +27,7 @@ const safe = (value: number) => (Number.isFinite(value) ? value : 0);
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const Goals = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isMockMode } = useAuth();
   const { transactions, budgets } = useFinance();
   const { subscriptions } = useSubscriptions();
   const { defaultCurrency } = useSettings();
@@ -120,7 +120,7 @@ const Goals = () => {
     if (!user?.id) {
       setGoalItems([]);
       setGoalsLoading(false);
-      setGoalsError(null);
+      setGoalsError(authLoading ? null : "Sign in required to load goals.");
       return;
     }
     setGoalsLoading(true);
@@ -134,7 +134,7 @@ const Goals = () => {
     setGoalItems(result.data ?? []);
     setGoalsError(null);
     setGoalsLoading(false);
-  }, [user?.id]);
+  }, [authLoading, user?.id]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -142,7 +142,10 @@ const Goals = () => {
   }, [authLoading, loadGoals]);
 
   const handleCreateGoal = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setGoalsError("Could not save goal. Please sign in first.");
+      return;
+    }
     const title = newGoalTitle.trim();
     const targetAmount = Number(newGoalTarget);
     if (!title || !Number.isFinite(targetAmount) || targetAmount <= 0) return;
@@ -160,33 +163,45 @@ const Goals = () => {
     };
     const result = await createGoal(user.id, payload);
     if (result.error) {
-      setGoalsError(result.error);
+      setGoalsError("Could not save goal. Please check authentication or permissions.");
+      if (import.meta.env.DEV) console.error("[Goals][UI][create]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
+    setGoalsError(null);
     setNewGoalTitle("");
     await loadGoals();
   };
 
   const handleCompleteGoal = async (goal: FinanceGoal) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setGoalsError("Could not update goal. Please sign in first.");
+      return;
+    }
     const result = await updateGoal(user.id, goal.id, {
       status: "completed",
       currentAmount: Math.max(goal.currentAmount, goal.targetAmount),
     });
     if (result.error) {
       setGoalsError(result.error);
+      if (import.meta.env.DEV) console.error("[Goals][UI][update]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
+    setGoalsError(null);
     await loadGoals();
   };
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setGoalsError("Could not delete goal. Please sign in first.");
+      return;
+    }
     const result = await deleteGoal(user.id, goalId);
     if (result.error) {
       setGoalsError(result.error);
+      if (import.meta.env.DEV) console.error("[Goals][UI][delete]", { userId: user.id, mode: isMockMode ? "mock" : "supabase", error: result.error });
       return;
     }
+    setGoalsError(null);
     await loadGoals();
   };
 
