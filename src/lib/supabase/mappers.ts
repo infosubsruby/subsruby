@@ -264,42 +264,79 @@ export const mapWalletToDbInsert = (wallet: WalletAccount): WalletInsertLike => 
   updated_at: wallet.updatedAt,
 });
 
-type AIInsightRowLike = {
-  id: string;
-  user_id: string;
-  type: string;
-  title: string;
-  description: string;
-  severity: AIInsight["severity"];
-  confidence: number | null;
-  financial_impact: number | null;
-  suggested_action: string | null;
-  related_entity_type: string | null;
-  related_entity_id: string | null;
-  created_at: string;
-  resolved_at: string | null;
+type AIInsightRow = Database["public"]["Tables"]["ai_insights"]["Row"];
+type AIInsightInsert = Database["public"]["Tables"]["ai_insights"]["Insert"];
+type AIInsightUpdate = Database["public"]["Tables"]["ai_insights"]["Update"];
+
+const normalizeInsightSeverity = (value: string | null | undefined): AIInsight["severity"] => {
+  if (value === "info" || value === "success" || value === "warning" || value === "critical") return value;
+  return "info";
 };
 
-export const mapDbAIInsightToAIInsight = (row: AIInsightRowLike): AIInsight => ({
+const normalizeRelatedEntityType = (value: string | null | undefined): AIInsight["relatedEntityType"] => {
+  if (
+    value === "transaction" ||
+    value === "subscription" ||
+    value === "goal" ||
+    value === "budget" ||
+    value === "wallet" ||
+    value === "report"
+  ) {
+    return value;
+  }
+  return "report";
+};
+
+export const mapDbAIInsightToAIInsight = (row: AIInsightRow): AIInsight => ({
   id: row.id,
   userId: row.user_id,
   type: row.type,
   title: row.title,
   description: row.description,
-  severity: row.severity,
+  severity: normalizeInsightSeverity(row.severity),
   confidence: toSafeNumber(row.confidence),
   financialImpact: row.financial_impact ?? 0,
   suggestedAction: row.suggested_action ?? "",
-  relatedEntityType:
-    row.related_entity_type === "transaction" ||
-    row.related_entity_type === "subscription" ||
-    row.related_entity_type === "goal" ||
-    row.related_entity_type === "budget" ||
-    row.related_entity_type === "wallet" ||
-    row.related_entity_type === "report"
-      ? row.related_entity_type
-      : "report",
+  relatedEntityType: normalizeRelatedEntityType(row.related_entity_type),
   relatedEntityId: row.related_entity_id,
+  isResolved: Boolean(row.is_resolved),
   createdAt: row.created_at,
   resolvedAt: row.resolved_at,
+  updatedAt: row.updated_at,
 });
+
+export const mapAIInsightToDbInsert = (insight: AIInsight): AIInsightInsert => ({
+  id: insight.id,
+  user_id: insight.userId,
+  type: insight.type,
+  title: insight.title,
+  description: insight.description,
+  severity: normalizeInsightSeverity(insight.severity),
+  confidence: insight.confidence,
+  financial_impact: insight.financialImpact,
+  suggested_action: insight.suggestedAction || null,
+  related_entity_type: insight.relatedEntityType,
+  related_entity_id: insight.relatedEntityId,
+  is_resolved: insight.isResolved,
+  resolved_at: insight.resolvedAt,
+  created_at: insight.createdAt,
+  updated_at: insight.updatedAt,
+});
+
+export const mapAIInsightToDbUpdate = (input: Partial<AIInsight>): AIInsightUpdate => {
+  const update: AIInsightUpdate = {};
+  if (input.userId) update.user_id = input.userId;
+  if (typeof input.type === "string") update.type = input.type;
+  if (typeof input.title === "string") update.title = input.title;
+  if (typeof input.description === "string") update.description = input.description;
+  if (input.severity !== undefined) update.severity = normalizeInsightSeverity(input.severity);
+  if (typeof input.confidence === "number") update.confidence = input.confidence;
+  if (input.financialImpact !== undefined) update.financial_impact = input.financialImpact;
+  if (input.suggestedAction !== undefined) update.suggested_action = input.suggestedAction || null;
+  if (input.relatedEntityType !== undefined) update.related_entity_type = input.relatedEntityType;
+  if (input.relatedEntityId !== undefined) update.related_entity_id = input.relatedEntityId;
+  if (typeof input.isResolved === "boolean") update.is_resolved = input.isResolved;
+  if (input.resolvedAt !== undefined) update.resolved_at = input.resolvedAt;
+  update.updated_at = new Date().toISOString();
+  return update;
+};

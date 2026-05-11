@@ -142,8 +142,10 @@ export interface AIInsight {
   suggestedAction: string;
   relatedEntityType: "transaction" | "subscription" | "goal" | "budget" | "wallet" | "report";
   relatedEntityId: string | null;
+  isResolved: boolean;
   createdAt: string;
   resolvedAt: string | null;
+  updatedAt: string;
 }
 
 export interface FinancialHealthScore {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFinance } from "@/hooks/useFinance";
 import { useSettings } from "@/hooks/useSettings";
@@ -8,7 +8,7 @@ import { formatDate } from "@/i18n/date";
 import { OverviewHero } from "@/components/overview/OverviewHero";
 import { OverviewBentoGrid } from "@/components/overview/OverviewBentoGrid";
 import { OverviewAIInsightsEngine } from "@/components/overview/OverviewAIInsightsEngine";
-import { buildMockAIInsights } from "@/lib/aiInsights";
+import { buildMockAIInsights, type AIInsight as DisplayAIInsight, type AIInsightType } from "@/lib/aiInsights";
 import { calculateFinancialHealthScore } from "@/lib/financialHealthScore";
 import { FinancialHealthSection } from "@/components/overview/FinancialHealthSection";
 import { buildRubyAIContext } from "@/lib/rubyAI";
@@ -39,6 +39,9 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { ProValueCallout } from "@/components/monetization/ProValueCallout";
 import { FeatureGate } from "@/components/monetization/FeatureGate";
 import { UpgradeModal } from "@/components/monetization/UpgradeModal";
+import type { AIInsight as SupabaseAIInsight } from "@/domain/financeModels";
+import { isSupabaseMode } from "@/lib/config/dataMode";
+import { fetchAIInsightsSafe } from "@/services/core/aiInsightService";
 
 const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 const pct = (value: number) => `${safeNumber(value).toFixed(1)}%`;
@@ -46,18 +49,100 @@ const pct = (value: number) => `${safeNumber(value).toFixed(1)}%`;
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+const normalizeDisplayInsightType = (value: string): AIInsightType => {
+  if (
+    value === "spending_warning" ||
+    value === "saving_opportunity" ||
+    value === "subscription_optimization" ||
+    value === "budget_recommendation" ||
+    value === "risk_detection" ||
+    value === "goal_progress" ||
+    value === "behavior_analysis" ||
+    value === "smart_tip"
+  ) {
+    return value;
+  }
+  return "smart_tip";
+};
+
+const mapSupabaseSeverityToDisplay = (severity: SupabaseAIInsight["severity"]): DisplayAIInsight["severity"] => {
+  if (severity === "critical") return "high";
+  if (severity === "warning") return "medium";
+  return "low";
+};
+
+const confidenceToPct = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  if (value > 1 && value <= 100) return Math.round(value);
+  return Math.round(Math.min(100, Math.max(0, value * 100)));
+};
+
+const insightCategoryTag = (insight: SupabaseAIInsight): string => {
+  const type = insight.type.toLowerCase();
+  if (insight.relatedEntityType === "subscription" || type.includes("subscription")) return "Subscriptions";
+  if (insight.relatedEntityType === "goal" || type.includes("goal")) return "Goals";
+  if (type.includes("spending") || type.includes("budget")) return "Spending Behavior";
+  return "Cash Flow";
+};
+
+const insightLabel = (insight: SupabaseAIInsight): string => {
+  const type = insight.type.toLowerCase();
+  if (type.includes("spending") || type.includes("risk")) return "Spending Warning";
+  if (type.includes("saving")) return "Saving Opportunity";
+  if (type.includes("subscription")) return "Subscriptions";
+  if (type.includes("goal")) return "Goal Progress";
+  return "Ruby AI";
+};
+
+const mapSupabaseInsightToDisplayInsight = (insight: SupabaseAIInsight): DisplayAIInsight => ({
+  id: insight.id,
+  type: normalizeDisplayInsightType(insight.type),
+  severity: mapSupabaseSeverityToDisplay(insight.severity),
+  categoryTag: insightCategoryTag(insight),
+  confidencePct: confidenceToPct(insight.confidence),
+  title: insight.title,
+  message: insight.description,
+  details: insight.description,
+  suggestedAction: insight.suggestedAction || "Review the recommendation details.",
+  label: insightLabel(insight),
+  timestamp: insight.createdAt,
+});
+
 const Overview = () => {
   const { canAccessFeature } = usePlanAccess();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const { profile, user } = useAuth();
+  const { profile, user, isMockMode, isLoading: authLoading } = useAuth();
   const { defaultCurrency } = useSettings();
   const { transactions, budgets } = useFinance();
   const { subscriptions } = useSubscriptions();
+  const [supabaseInsights, setSupabaseInsights] = useState<SupabaseAIInsight[]>([]);
 
   const now = new Date();
   const currentKey = monthKey(now);
   const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const previousKey = monthKey(previous);
+
+  const usingSupabaseInsights = isSupabaseMode() && Boolean(user?.id) && !isMockMode;
+
+  const loadSupabaseInsights = useCallback(async () => {
+    if (!usingSupabaseInsights || !user?.id) {
+      setSupabaseInsights([]);
+      return;
+    }
+
+    const result = await fetchAIInsightsSafe(user.id);
+    if (result.error) {
+      if (import.meta.env.DEV) console.error("[Overview][AIInsights] Failed to fetch insights", { error: result.error });
+      setSupabaseInsights([]);
+      return;
+    }
+    setSupabaseInsights(result.data ?? []);
+  }, [usingSupabaseInsights, user?.id]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    void loadSupabaseInsights();
+  }, [authLoading, loadSupabaseInsights]);
 
   const { monthlyIncomeSeries, monthlyExpenseSeries } = useMemo(() => {
     const monthStarts = [5, 4, 3, 2, 1, 0].map((offset) => {
@@ -267,17 +352,21 @@ const Overview = () => {
 
   const aiInsightCards = useMemo(
     () =>
-      buildMockAIInsights({
-        expenseTrendPct: expenseTrend,
-        savingsRatePct: savingsRate,
-        monthlySubscriptionCost,
-        currency: defaultCurrency,
-        goalProgressPct: goalProgress,
-        dailySafeSpend,
-        topCategory: topCategoryLabel,
-        upcomingBillsCount,
-      }),
+      usingSupabaseInsights && supabaseInsights.length > 0
+        ? supabaseInsights.map(mapSupabaseInsightToDisplayInsight)
+        : buildMockAIInsights({
+            expenseTrendPct: expenseTrend,
+            savingsRatePct: savingsRate,
+            monthlySubscriptionCost,
+            currency: defaultCurrency,
+            goalProgressPct: goalProgress,
+            dailySafeSpend,
+            topCategory: topCategoryLabel,
+            upcomingBillsCount,
+          }),
     [
+      usingSupabaseInsights,
+      supabaseInsights,
       expenseTrend,
       savingsRate,
       monthlySubscriptionCost,

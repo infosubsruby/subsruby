@@ -32,9 +32,13 @@ const SeverityIcon = ({ severity }: { severity: IntelligenceSeverity }) => {
 export const IntelligenceInsightCard = ({
   insight,
   onAction,
+  secondaryActionLabel,
+  onSecondaryAction,
 }: {
   insight: IntelligenceInsightCardItem;
   onAction?: () => void;
+  secondaryActionLabel?: string;
+  onSecondaryAction?: () => void;
 }) => {
   return (
     <article className="interactive-card rounded-2xl border border-white/10 bg-black/25 p-4">
@@ -59,16 +63,30 @@ export const IntelligenceInsightCard = ({
       <div className="mt-2 rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-zinc-300">
         Suggested action: {insight.suggestedAction}
       </div>
-      {insight.actionLabel ? (
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3 w-full border-white/15 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08]"
-          onClick={onAction}
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          {insight.actionLabel}
-        </Button>
+      {insight.actionLabel || secondaryActionLabel ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {insight.actionLabel ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-white/15 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08]"
+              onClick={onAction}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {insight.actionLabel}
+            </Button>
+          ) : null}
+          {secondaryActionLabel ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-white/15 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08]"
+              onClick={onSecondaryAction}
+            >
+              {secondaryActionLabel}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </article>
   );

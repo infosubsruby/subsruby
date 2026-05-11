@@ -230,8 +230,10 @@ export const mockAIInsights: AIInsight[] = [
     suggestedAction: "Reduce takeout to two days per week.",
     relatedEntityType: "budget",
     relatedEntityId: "budget-1",
+    isResolved: false,
     createdAt: now,
     resolvedAt: null,
+    updatedAt: now,
   },
 ];
 

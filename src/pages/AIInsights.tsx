@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertTriangle,
@@ -15,12 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { PremiumEmptyState } from "@/components/shared/PremiumEmptyState";
 import { DEMO_CATEGORIES } from "@/data/demoFinanceData";
+import type { AIInsight as SupabaseAIInsight } from "@/domain/financeModels";
+import { useAuth } from "@/hooks/useAuth";
 import { useFinance } from "@/hooks/useFinance";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useSettings } from "@/hooks/useSettings";
 import { formatCurrency } from "@/i18n/currency";
 import { formatDate } from "@/i18n/date";
-import { buildMockAIInsights } from "@/lib/aiInsights";
+import { buildMockAIInsights, type AIInsight as DisplayAIInsight, type AIInsightType } from "@/lib/aiInsights";
 import { buildPredictiveFinanceEngine } from "@/lib/predictiveFinanceEngine";
 import { calculateFinancialHealthScore } from "@/lib/financialHealthScore";
 import {
@@ -31,18 +33,83 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { ProValueCallout } from "@/components/monetization/ProValueCallout";
 import { FeatureGate } from "@/components/monetization/FeatureGate";
 import { UpgradeModal } from "@/components/monetization/UpgradeModal";
+import { isSupabaseMode } from "@/lib/config/dataMode";
+import { createAIInsight, deleteAIInsight, fetchAIInsightsSafe, resolveAIInsight } from "@/services/core/aiInsightService";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, Number.isFinite(value) ? value : 0));
 const pct = (value: number) => `${Math.abs(Number.isFinite(value) ? value : 0).toFixed(1)}%`;
 
+const normalizeDisplayInsightType = (value: string): AIInsightType => {
+  if (
+    value === "spending_warning" ||
+    value === "saving_opportunity" ||
+    value === "subscription_optimization" ||
+    value === "budget_recommendation" ||
+    value === "risk_detection" ||
+    value === "goal_progress" ||
+    value === "behavior_analysis" ||
+    value === "smart_tip"
+  ) {
+    return value;
+  }
+  return "smart_tip";
+};
+
+const mapSupabaseSeverityToDisplay = (severity: SupabaseAIInsight["severity"]): DisplayAIInsight["severity"] => {
+  if (severity === "critical") return "high";
+  if (severity === "warning") return "medium";
+  return "low";
+};
+
+const confidenceToPct = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  if (value > 1 && value <= 100) return Math.round(value);
+  return Math.round(clamp(value * 100, 0, 100));
+};
+
+const insightCategoryTag = (insight: SupabaseAIInsight): string => {
+  const type = insight.type.toLowerCase();
+  if (insight.relatedEntityType === "subscription" || type.includes("subscription")) return "Subscriptions";
+  if (insight.relatedEntityType === "goal" || type.includes("goal")) return "Goals";
+  if (type.includes("spending") || type.includes("budget")) return "Spending Behavior";
+  return "Cash Flow";
+};
+
+const insightLabel = (insight: SupabaseAIInsight): string => {
+  const type = insight.type.toLowerCase();
+  if (type.includes("spending") || type.includes("risk")) return "Spending Warning";
+  if (type.includes("saving")) return "Saving Opportunity";
+  if (type.includes("subscription")) return "Subscriptions";
+  if (type.includes("goal")) return "Goal Progress";
+  return "Ruby AI";
+};
+
+const mapSupabaseInsightToDisplayInsight = (insight: SupabaseAIInsight): DisplayAIInsight => ({
+  id: insight.id,
+  type: normalizeDisplayInsightType(insight.type),
+  severity: mapSupabaseSeverityToDisplay(insight.severity),
+  categoryTag: insightCategoryTag(insight),
+  confidencePct: confidenceToPct(insight.confidence),
+  title: insight.title,
+  message: insight.description,
+  details: insight.description,
+  suggestedAction: insight.suggestedAction || "Review the recommendation details.",
+  label: insightLabel(insight),
+  timestamp: insight.createdAt,
+});
+
 const AIInsights = () => {
   const { canAccessFeature } = usePlanAccess();
+  const { user, isLoading: authLoading, isMockMode } = useAuth();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { transactions, budgets } = useFinance();
   const { subscriptions } = useSubscriptions();
   const { defaultCurrency } = useSettings();
   const currency = defaultCurrency || "USD";
+  const [supabaseInsights, setSupabaseInsights] = useState<SupabaseAIInsight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
   const now = new Date();
   const currentKey = monthKey(now);
@@ -94,19 +161,45 @@ const AIInsights = () => {
   }).length;
   const goalProgress = budgets.length > 0 ? clamp((monthly.expenseCurrent / Math.max(1, budgets.reduce((s, b) => s + Number(b.limit_amount || 0), 0))) * 100) : 0;
 
+  const usingSupabaseInsights = isSupabaseMode() && Boolean(user?.id) && !isMockMode;
+
+  const loadSupabaseInsights = useCallback(async () => {
+    if (!usingSupabaseInsights || !user?.id) return;
+    setInsightsLoading(true);
+    const result = await fetchAIInsightsSafe(user.id);
+    if (result.error) {
+      setInsightsError(result.error);
+      setSupabaseInsights(result.data ?? []);
+      setInsightsLoading(false);
+      return;
+    }
+    setSupabaseInsights(result.data ?? []);
+    setInsightsError(null);
+    setInsightsLoading(false);
+  }, [usingSupabaseInsights, user?.id]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    void loadSupabaseInsights();
+  }, [authLoading, loadSupabaseInsights]);
+
   const aiInsights = useMemo(
     () =>
-      buildMockAIInsights({
-        expenseTrendPct,
-        savingsRatePct: savingsRate,
-        monthlySubscriptionCost,
-        currency,
-        goalProgressPct: goalProgress,
-        dailySafeSpend,
-        topCategory: monthly.topCategory,
-        upcomingBillsCount,
-      }),
+      usingSupabaseInsights
+        ? supabaseInsights.map(mapSupabaseInsightToDisplayInsight)
+        : buildMockAIInsights({
+            expenseTrendPct,
+            savingsRatePct: savingsRate,
+            monthlySubscriptionCost,
+            currency,
+            goalProgressPct: goalProgress,
+            dailySafeSpend,
+            topCategory: monthly.topCategory,
+            upcomingBillsCount,
+          }),
     [
+      usingSupabaseInsights,
+      supabaseInsights,
       expenseTrendPct,
       savingsRate,
       monthlySubscriptionCost,
@@ -177,19 +270,42 @@ const AIInsights = () => {
 
   const priorityInsights = useMemo<IntelligenceInsightCardItem[]>(
     () =>
-      aiInsights.slice(0, 4).map((item, index) => ({
-        id: item.id,
-        title: item.title,
-        explanation: item.message,
-        severity: item.severity,
-        confidencePct: item.confidencePct,
-        category: item.label,
-        impactLabel: index % 2 === 0 ? formatCurrency(Math.abs(dailySafeSpend) * (index + 1), currency) : pct(expenseTrendPct),
-        suggestedAction: item.suggestedAction,
-        relatedDataPoint: item.categoryTag,
-        actionLabel: "Take Action",
-      })),
-    [aiInsights, dailySafeSpend, currency, expenseTrendPct]
+      usingSupabaseInsights
+        ? supabaseInsights.slice(0, 4).map((item, index) => {
+            const impactLabel =
+              Number.isFinite(item.financialImpact) && item.financialImpact !== 0
+                ? formatCurrency(Math.abs(item.financialImpact), currency)
+                : index % 2 === 0
+                ? formatCurrency(Math.abs(dailySafeSpend) * (index + 1), currency)
+                : pct(expenseTrendPct);
+
+            return {
+              id: item.id,
+              title: item.title,
+              explanation: item.description,
+              severity: mapSupabaseSeverityToDisplay(item.severity),
+              confidencePct: confidenceToPct(item.confidence),
+              category: insightLabel(item),
+              impactLabel,
+              suggestedAction: item.suggestedAction || "Review the recommendation details.",
+              relatedDataPoint: insightCategoryTag(item),
+              actionLabel: item.isResolved ? undefined : "Mark Resolved",
+            };
+          })
+        : aiInsights.slice(0, 4).map((item, index) => ({
+            id: item.id,
+            title: item.title,
+            explanation: item.message,
+            severity: item.severity,
+            confidencePct: item.confidencePct,
+            category: item.label,
+            impactLabel:
+              index % 2 === 0 ? formatCurrency(Math.abs(dailySafeSpend) * (index + 1), currency) : pct(expenseTrendPct),
+            suggestedAction: item.suggestedAction,
+            relatedDataPoint: item.categoryTag,
+            actionLabel: "Take Action",
+          })),
+    [aiInsights, currency, dailySafeSpend, expenseTrendPct, supabaseInsights, usingSupabaseInsights]
   );
 
   const healthScoreInsights = useMemo<IntelligenceInsightCardItem[]>(
@@ -392,7 +508,112 @@ const AIInsights = () => {
   const riskLevel = prediction.monthlyProjection.negativeRiskPct > 55 ? "High" : prediction.monthlyProjection.negativeRiskPct > 28 ? "Moderate" : "Low";
   const hasData = transactions.length > 0 || subscriptions.length > 0 || budgets.length > 0;
 
-  if (!hasData) {
+  const handleCreateSampleInsight = useCallback(async () => {
+    if (!user?.id) return;
+    const result = await createAIInsight(user.id, {
+      type: "saving_opportunity",
+      title: "Subscription savings opportunity",
+      description: "Ruby AI found a possible yearly saving opportunity in your recurring payments.",
+      severity: "success",
+      confidence: 0.82,
+      financialImpact: 36,
+      suggestedAction: "Review subscription billing cycles",
+      relatedEntityType: "subscription",
+      relatedEntityId: null,
+      isResolved: false,
+      resolvedAt: null,
+    });
+    if (result.error) {
+      setInsightsError(result.error);
+      return;
+    }
+    await loadSupabaseInsights();
+  }, [loadSupabaseInsights, user?.id]);
+
+  const handleResolveInsight = useCallback(
+    async (insightId: string) => {
+      if (!user?.id) return;
+      const result = await resolveAIInsight(user.id, insightId);
+      if (result.error) {
+        setInsightsError(result.error);
+        return;
+      }
+      await loadSupabaseInsights();
+    },
+    [loadSupabaseInsights, user?.id]
+  );
+
+  const handleDeleteInsight = useCallback(
+    async (insightId: string) => {
+      if (!user?.id) return;
+      const result = await deleteAIInsight(user.id, insightId);
+      if (result.error) {
+        setInsightsError(result.error);
+        return;
+      }
+      await loadSupabaseInsights();
+    },
+    [loadSupabaseInsights, user?.id]
+  );
+
+  if (!user?.id && !isMockMode) {
+    return (
+      <div className="premium-page">
+        <PremiumEmptyState
+          icon={<BrainCircuit className="h-5 w-5" />}
+          headline="Sign in to view AI Insights"
+          description="AI insights are personalized and saved to your account."
+          primaryAction={{ label: "Go to Sign In", to: "/auth" }}
+          secondaryAction={{ label: "Back to Overview", to: "/overview" }}
+          badges={DEMO_CATEGORIES.slice(0, 5)}
+        />
+      </div>
+    );
+  }
+
+  if (usingSupabaseInsights) {
+    if (insightsLoading) {
+      return (
+        <div className="premium-page">
+          <section className="premium-section rounded-[28px] p-6 sm:p-7">
+            <p className="text-sm text-zinc-300">Loading AI insights…</p>
+          </section>
+        </div>
+      );
+    }
+
+    if (insightsError) {
+      return (
+        <div className="premium-page">
+          <PremiumEmptyState
+            icon={<BrainCircuit className="h-5 w-5" />}
+            headline="Could not load AI Insights"
+            description={import.meta.env.DEV ? insightsError : "Please check your connection and try again."}
+            primaryAction={{ label: "Retry", to: "/ai-insights" }}
+            secondaryAction={{ label: "Back to Overview", to: "/overview" }}
+            badges={DEMO_CATEGORIES.slice(0, 5)}
+          />
+        </div>
+      );
+    }
+
+    if (supabaseInsights.length === 0) {
+      return (
+        <div className="premium-page">
+          <PremiumEmptyState
+            icon={<BrainCircuit className="h-5 w-5" />}
+            headline="No AI insights yet"
+            description="Ruby AI will generate insights after more financial activity."
+            primaryAction={{ label: "Add Financial Data", to: "/finance" }}
+            secondaryAction={{ label: "Back to Overview", to: "/overview" }}
+            badges={DEMO_CATEGORIES.slice(0, 5)}
+          />
+        </div>
+      );
+    }
+  }
+
+  if (!hasData && !usingSupabaseInsights) {
     return (
       <div className="premium-page">
         <PremiumEmptyState
@@ -419,8 +640,20 @@ const AIInsights = () => {
               Ruby AI found {aiInsights.length} insights this week. Your biggest opportunity is recurring-cost optimization, while your main risk is rising {monthly.topCategory.toLowerCase()} spending.
             </p>
           </div>
-          <div className="rounded-full border border-red-500/35 bg-red-500/10 px-3 py-1 text-xs text-red-200">
-            Last analysis {formatDate(now, { dateStyle: "medium", timeStyle: "short" })}
+          <div className="flex flex-wrap items-center gap-2">
+            {import.meta.env.DEV && usingSupabaseInsights ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-white/15 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08]"
+                onClick={() => void handleCreateSampleInsight()}
+              >
+                Create Sample Insight
+              </Button>
+            ) : null}
+            <div className="rounded-full border border-red-500/35 bg-red-500/10 px-3 py-1 text-xs text-red-200">
+              Last analysis {formatDate(now, { dateStyle: "medium", timeStyle: "short" })}
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -465,7 +698,23 @@ const AIInsights = () => {
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {mergedPriorityInsights.map((insight) => (
-              <IntelligenceInsightCard key={insight.id} insight={insight} />
+              <IntelligenceInsightCard
+                key={insight.id}
+                insight={insight}
+                onAction={
+                  usingSupabaseInsights && supabaseInsights.some((item) => item.id === insight.id && !item.isResolved)
+                    ? () => void handleResolveInsight(insight.id)
+                    : undefined
+                }
+                secondaryActionLabel={
+                  usingSupabaseInsights && supabaseInsights.some((item) => item.id === insight.id) ? "Delete" : undefined
+                }
+                onSecondaryAction={
+                  usingSupabaseInsights && supabaseInsights.some((item) => item.id === insight.id)
+                    ? () => void handleDeleteInsight(insight.id)
+                    : undefined
+                }
+              />
             ))}
           </div>
         </section>
