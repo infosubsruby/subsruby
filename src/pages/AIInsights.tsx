@@ -35,6 +35,7 @@ import { FeatureGate } from "@/components/monetization/FeatureGate";
 import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 import { isSupabaseMode } from "@/lib/config/dataMode";
 import { createAIInsight, deleteAIInsight, fetchAIInsightsSafe, resolveAIInsight } from "@/services/core/aiInsightService";
+import { generateAIInsightsForUser } from "@/services/core/aiInsightGenerationService";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, Number.isFinite(value) ? value : 0));
@@ -46,9 +47,12 @@ const normalizeDisplayInsightType = (value: string): AIInsightType => {
     value === "saving_opportunity" ||
     value === "subscription_optimization" ||
     value === "budget_recommendation" ||
+    value === "budget_risk" ||
     value === "risk_detection" ||
     value === "goal_progress" ||
     value === "behavior_analysis" ||
+    value === "wallet_alert" ||
+    value === "financial_health_tip" ||
     value === "smart_tip"
   ) {
     return value;
@@ -110,6 +114,8 @@ const AIInsights = () => {
   const [supabaseInsights, setSupabaseInsights] = useState<SupabaseAIInsight[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [generationLoading, setGenerationLoading] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   const now = new Date();
   const currentKey = monthKey(now);
@@ -524,7 +530,7 @@ const AIInsights = () => {
       resolvedAt: null,
     });
     if (result.error) {
-      setInsightsError(result.error);
+      setGenerationError(result.error);
       return;
     }
     await loadSupabaseInsights();
@@ -535,7 +541,7 @@ const AIInsights = () => {
       if (!user?.id) return;
       const result = await resolveAIInsight(user.id, insightId);
       if (result.error) {
-        setInsightsError(result.error);
+        setGenerationError(result.error);
         return;
       }
       await loadSupabaseInsights();
@@ -548,13 +554,27 @@ const AIInsights = () => {
       if (!user?.id) return;
       const result = await deleteAIInsight(user.id, insightId);
       if (result.error) {
-        setInsightsError(result.error);
+        setGenerationError(result.error);
         return;
       }
       await loadSupabaseInsights();
     },
     [loadSupabaseInsights, user?.id]
   );
+
+  const handleGenerateInsights = useCallback(async () => {
+    if (!user?.id) return;
+    setGenerationLoading(true);
+    setGenerationError(null);
+    const result = await generateAIInsightsForUser(user.id);
+    if (result.error) {
+      setGenerationError(result.error);
+      setGenerationLoading(false);
+      return;
+    }
+    await loadSupabaseInsights();
+    setGenerationLoading(false);
+  }, [loadSupabaseInsights, user?.id]);
 
   if (!user?.id && !isMockMode) {
     return (
@@ -600,14 +620,45 @@ const AIInsights = () => {
     if (supabaseInsights.length === 0) {
       return (
         <div className="premium-page">
-          <PremiumEmptyState
-            icon={<BrainCircuit className="h-5 w-5" />}
-            headline="No AI insights yet"
-            description="Ruby AI will generate insights after more financial activity."
-            primaryAction={{ label: "Add Financial Data", to: "/finance" }}
-            secondaryAction={{ label: "Back to Overview", to: "/overview" }}
-            badges={DEMO_CATEGORIES.slice(0, 5)}
-          />
+          {hasData ? (
+            <section className="premium-section rounded-[28px] p-6 sm:p-7">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h1 className="text-2xl font-semibold text-zinc-100">Ruby AI can generate insights from your data</h1>
+                  <p className="mt-2 max-w-2xl text-sm text-zinc-300">
+                    You already have financial activity. Generate rule-based insights to populate your AI Insights feed.
+                  </p>
+                  {generationError ? (
+                    <p className="mt-2 text-sm text-red-200">{import.meta.env.DEV ? generationError : "Could not generate insights."}</p>
+                  ) : null}
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    className="rounded-lg border border-red-500/40 bg-red-600/80 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
+                    onClick={() => void handleGenerateInsights()}
+                    disabled={generationLoading}
+                  >
+                    {generationLoading ? "Ruby AI is analyzing…" : "Generate Insights"}
+                  </Button>
+                  <Link
+                    to="/overview"
+                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-white/[0.08]"
+                  >
+                    Back to Overview
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ) : (
+            <PremiumEmptyState
+              icon={<BrainCircuit className="h-5 w-5" />}
+              headline="No financial data yet"
+              description="Add transactions, subscriptions, wallets, or goals and Ruby AI will generate insights from that activity."
+              primaryAction={{ label: "Add Financial Data", to: "/finance" }}
+              secondaryAction={{ label: "Back to Overview", to: "/overview" }}
+              badges={DEMO_CATEGORIES.slice(0, 5)}
+            />
+          )}
         </div>
       );
     }

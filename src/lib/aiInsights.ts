@@ -5,9 +5,12 @@ export type AIInsightType =
   | "saving_opportunity"
   | "subscription_optimization"
   | "budget_recommendation"
+  | "budget_risk"
   | "risk_detection"
   | "goal_progress"
+  | "wallet_alert"
   | "behavior_analysis"
+  | "financial_health_tip"
   | "smart_tip";
 
 export type AIInsight = {

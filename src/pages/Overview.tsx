@@ -55,9 +55,12 @@ const normalizeDisplayInsightType = (value: string): AIInsightType => {
     value === "saving_opportunity" ||
     value === "subscription_optimization" ||
     value === "budget_recommendation" ||
+    value === "budget_risk" ||
     value === "risk_detection" ||
     value === "goal_progress" ||
     value === "behavior_analysis" ||
+    value === "wallet_alert" ||
+    value === "financial_health_tip" ||
     value === "smart_tip"
   ) {
     return value;
