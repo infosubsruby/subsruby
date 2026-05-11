@@ -1,29 +1,65 @@
-import type { MonthlyReport } from "@/domain/financeModels";
-import { calculateNetCashFlow, calculateSavingsRate, calculateTotalExpenses, calculateTotalIncome, calculateCategorySpendingTotals } from "@/lib/financeCalculations";
-import { asyncResolve, mockStore } from "@/services/core/baseMockStore";
-import { fetchTransactions } from "@/services/core/transactionService";
+import type { MonthlyReportRecord } from "@/domain/financeModels";
+import { isSupabaseMode } from "@/lib/config/dataMode";
+import type { ServiceResult } from "@/services/core/serviceResult";
+import { fail, ok } from "@/services/core/serviceResult";
+import {
+  deleteMonthlyReportSupabase,
+  fetchMonthlyReportByMonthSupabase,
+  fetchMonthlyReportsSupabase,
+  generateMonthlyReportSupabase,
+  upsertMonthlyReportSupabase,
+} from "@/services/core/monthlyReportSupabaseService";
 
-export const fetchReports = async (userId: string): Promise<MonthlyReport[]> => {
-  const items = mockStore.reports.get().filter((item) => item.userId === userId);
-  return asyncResolve(items);
+const isDemoUser = (userId: string): boolean => userId === "demo-user" || userId.startsWith("demo-");
+
+const resolveMonthlyReportCall = async <T>(
+  userId: string,
+  supabaseCall: () => Promise<ServiceResult<T>>,
+  fallbackCall: () => Promise<ServiceResult<T>>
+): Promise<ServiceResult<T>> => {
+  if (!isSupabaseMode() || isDemoUser(userId)) return fallbackCall();
+  return supabaseCall();
 };
 
-export const generateMonthlyReport = async (userId: string, monthKey: string): Promise<MonthlyReport> => {
-  const transactions = await fetchTransactions(userId);
-  const report: MonthlyReport = {
-    id: `report-${userId}-${monthKey}`,
+export const fetchMonthlyReportsSafe = async (userId: string): Promise<ServiceResult<MonthlyReportRecord[]>> =>
+  resolveMonthlyReportCall(userId, () => fetchMonthlyReportsSupabase(userId), async () => ok([]));
+
+export const fetchMonthlyReports = async (userId: string): Promise<MonthlyReportRecord[]> => {
+  const result = await fetchMonthlyReportsSafe(userId);
+  return result.data ?? [];
+};
+
+export const fetchMonthlyReportByMonth = async (
+  userId: string,
+  month: string
+): Promise<ServiceResult<MonthlyReportRecord | null>> =>
+  resolveMonthlyReportCall(userId, () => fetchMonthlyReportByMonthSupabase(userId, month), async () => ok(null));
+
+export const generateMonthlyReport = async (
+  userId: string,
+  month: string
+): Promise<ServiceResult<MonthlyReportRecord>> =>
+  resolveMonthlyReportCall(
     userId,
-    monthKey,
-    income: calculateTotalIncome(transactions),
-    expenses: calculateTotalExpenses(transactions),
-    netCashFlow: calculateNetCashFlow(transactions),
-    savingsRate: calculateSavingsRate(transactions),
-    topCategories: calculateCategorySpendingTotals(transactions).slice(0, 5),
-    summary: `Auto-generated mock report for ${monthKey}.`,
-    generatedAt: new Date().toISOString(),
-  };
+    () => generateMonthlyReportSupabase(userId, month),
+    async () => fail("Monthly reports are not available in demo mode.")
+  );
 
-  const next = [report, ...mockStore.reports.get().filter((item) => item.id !== report.id)];
-  mockStore.reports.set(next);
-  return asyncResolve(report);
-};
+export const upsertMonthlyReport = async (
+  userId: string,
+  report: MonthlyReportRecord
+): Promise<ServiceResult<MonthlyReportRecord>> =>
+  resolveMonthlyReportCall(
+    userId,
+    () => upsertMonthlyReportSupabase(userId, report),
+    async () => fail("Monthly reports are not available in demo mode.")
+  );
+
+export const deleteMonthlyReport = async (userId: string, reportId: string): Promise<ServiceResult<boolean>> =>
+  resolveMonthlyReportCall(
+    userId,
+    () => deleteMonthlyReportSupabase(userId, reportId),
+    async () => fail("Monthly reports are not available in demo mode.")
+  );
+
+export const fetchReports = fetchMonthlyReports;

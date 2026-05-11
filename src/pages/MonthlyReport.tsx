@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -9,8 +9,9 @@ import {
   Sparkles,
   TriangleAlert,
 } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Tooltip as ChartTooltip, XAxis, YAxis } from "recharts";
 import { useFinance } from "@/hooks/useFinance";
+import { useAuth } from "@/hooks/useAuth";
 import { useSettings } from "@/hooks/useSettings";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { formatCurrency } from "@/i18n/currency";
@@ -29,10 +30,17 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { ProValueCallout } from "@/components/monetization/ProValueCallout";
 import { FeatureGate } from "@/components/monetization/FeatureGate";
 import { UpgradeModal } from "@/components/monetization/UpgradeModal";
+import { isSupabaseMode } from "@/lib/config/dataMode";
+import type { MonthlyReportRecord } from "@/domain/financeModels";
+import {
+  fetchMonthlyReportByMonth,
+  fetchMonthlyReportsSafe,
+  generateMonthlyReport as generateMonthlyReportPersisted,
+} from "@/services/core/reportService";
 
 const safe = (value: number) => (Number.isFinite(value) ? value : 0);
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, safe(value)));
-const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
+const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
 const historyChartConfig = {
   income: { label: "Income", color: "#34d399" },
@@ -49,15 +57,27 @@ const getMonthSeriesKeys = (date: Date) =>
 const MonthlyReport = () => {
   const { canAccessFeature } = usePlanAccess();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { user } = useAuth();
+  const supabaseEnabled = isSupabaseMode();
   const { transactions, budgets, isLoading } = useFinance();
   const { subscriptions, isLoading: subscriptionsLoading } = useSubscriptions();
   const { defaultCurrency } = useSettings();
   const [selectedMonthOffset, setSelectedMonthOffset] = useState(0);
+  const [savedReport, setSavedReport] = useState<MonthlyReportRecord | null>(null);
+  const [savedReportLoading, setSavedReportLoading] = useState(false);
+  const [savedReportError, setSavedReportError] = useState<string | null>(null);
+  const [generationLoading, setGenerationLoading] = useState(false);
+  const [savedReports, setSavedReports] = useState<MonthlyReportRecord[]>([]);
+  const [savedReportsLoading, setSavedReportsLoading] = useState(false);
 
   const selectedDate = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth() - selectedMonthOffset, 1);
   }, [selectedMonthOffset]);
+
+  const selectedMonthKey = useMemo(() => monthKey(selectedDate), [selectedDate]);
+
+  const savedMonthSet = useMemo(() => new Set(savedReports.map((report) => report.month)), [savedReports]);
 
   const selectableMonths = useMemo(
     () =>
@@ -65,13 +85,110 @@ const MonthlyReport = () => {
         const date = new Date();
         date.setMonth(date.getMonth() - index);
         const offset = index;
+        const key = monthKey(date);
+        const savedLabel = savedMonthSet.has(key) ? " • Saved" : "";
         return {
           offset,
-          label: date.toLocaleString("en-US", { month: "long", year: "numeric" }),
+          label: `${date.toLocaleString("en-US", { month: "long", year: "numeric" })}${savedLabel}`,
         };
       }),
-    []
+    [savedMonthSet]
   );
+
+  const latestSavedReport = useMemo(() => savedReports[0] ?? null, [savedReports]);
+
+  useEffect(() => {
+    if (!user || !supabaseEnabled) {
+      setSavedReports([]);
+      return;
+    }
+
+    let cancelled = false;
+    setSavedReportsLoading(true);
+    setSavedReportError(null);
+
+    fetchMonthlyReportsSafe(user.id)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.error) {
+          setSavedReportError(result.error);
+          setSavedReports([]);
+          return;
+        }
+        const reports = result.data ?? [];
+        const sorted = [...reports].sort((a, b) => b.month.localeCompare(a.month));
+        setSavedReports(sorted);
+      })
+      .finally(() => {
+        if (!cancelled) setSavedReportsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabaseEnabled, user]);
+
+  useEffect(() => {
+    if (!user || !supabaseEnabled) {
+      setSavedReport(null);
+      setSavedReportLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSavedReportLoading(true);
+    setSavedReportError(null);
+
+    fetchMonthlyReportByMonth(user.id, selectedMonthKey)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.error) {
+          setSavedReportError(result.error);
+          setSavedReport(null);
+          return;
+        }
+        setSavedReport(result.data ?? null);
+      })
+      .finally(() => {
+        if (!cancelled) setSavedReportLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabaseEnabled, user, selectedMonthKey]);
+
+  const handleGenerateReport = useCallback(async () => {
+    if (!user) {
+      setSavedReportError("Please sign in to generate a monthly report.");
+      return;
+    }
+
+    setGenerationLoading(true);
+    setSavedReportError(null);
+
+    const result = await generateMonthlyReportPersisted(user.id, selectedMonthKey);
+    if (result.error) {
+      setSavedReportError(result.error);
+      setGenerationLoading(false);
+      return;
+    }
+
+    const generated = result.data ?? null;
+    setSavedReport(generated);
+    if (generated) {
+      setSavedReports((prev) => {
+        const next = [...prev];
+        const existingIndex = next.findIndex((item) => item.month === generated.month);
+        if (existingIndex >= 0) next[existingIndex] = generated;
+        else next.unshift(generated);
+        next.sort((a, b) => b.month.localeCompare(a.month));
+        return next;
+      });
+    }
+
+    setGenerationLoading(false);
+  }, [user, selectedMonthKey]);
 
   const report = useMemo(() => {
     const selectedMonthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -227,6 +344,76 @@ const MonthlyReport = () => {
           </label>
         </div>
       </section>
+      {supabaseEnabled && user ? (
+        <section className="premium-section rounded-[26px]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="premium-heading">Saved Monthly Reports</h2>
+              <p className="mt-1 text-sm text-zinc-400">
+                {savedReport
+                  ? `Saved report found for ${savedReport.month}.`
+                  : savedReportLoading
+                    ? `Loading saved report for ${selectedMonthKey}...`
+                    : `No saved report for ${selectedMonthKey} yet.`}
+              </p>
+              {latestSavedReport ? (
+                <p className="mt-1 text-xs text-zinc-500">
+                  Latest saved: <span className="text-zinc-200">{latestSavedReport.month}</span>
+                </p>
+              ) : savedReportsLoading ? (
+                <p className="mt-1 text-xs text-zinc-500">Loading saved reports…</p>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleGenerateReport}
+                disabled={generationLoading || savedReportLoading || savedReportsLoading}
+              >
+                {generationLoading ? "Generating…" : savedReport ? "Regenerate Monthly Report" : "Generate Monthly Report"}
+              </Button>
+            </div>
+          </div>
+          {savedReportError ? (
+            <div className="mt-3 inline-flex items-start gap-2 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-sm text-red-100">
+              <TriangleAlert className="mt-0.5 h-4 w-4" />
+              <span>{savedReportError}</span>
+            </div>
+          ) : null}
+          {savedReport ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <article className="premium-card-quiet">
+                <p className="premium-subheading">Total Income</p>
+                <p className="mt-1 text-lg font-semibold text-zinc-100">
+                  {formatCurrency(savedReport.totalIncome, defaultCurrency)}
+                </p>
+              </article>
+              <article className="premium-card-quiet">
+                <p className="premium-subheading">Total Expenses</p>
+                <p className="mt-1 text-lg font-semibold text-zinc-100">
+                  {formatCurrency(savedReport.totalExpenses, defaultCurrency)}
+                </p>
+              </article>
+              <article className="premium-card-quiet">
+                <p className="premium-subheading">Net Savings</p>
+                <p className={`mt-1 text-lg font-semibold ${savedReport.netSavings >= 0 ? "text-emerald-300" : "text-red-300"}`}>
+                  {formatCurrency(savedReport.netSavings, defaultCurrency)}
+                </p>
+              </article>
+              <article className="premium-card-quiet">
+                <p className="premium-subheading">Health Score</p>
+                <p className="mt-1 text-lg font-semibold text-zinc-100">
+                  {savedReport.healthScore.toFixed(0)}/100
+                </p>
+              </article>
+            </div>
+          ) : null}
+          {savedReport?.aiSummary ? (
+            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-zinc-300">
+              {savedReport.aiSummary}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
       <ProValueCallout message="Export monthly reports with Pro." />
 
       <section className="premium-section rounded-[26px]">

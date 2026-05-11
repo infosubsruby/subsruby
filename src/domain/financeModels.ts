@@ -171,6 +171,48 @@ export interface MonthlyReport {
   generatedAt: string;
 }
 
+export type MonthlyReportTopCategory = {
+  category: string;
+  amount: number;
+  percentageOfExpenses?: number;
+};
+
+export type MonthlyReportSubscriptionImpact = {
+  count: number;
+  monthlyCost: number;
+  yearlyCost: number;
+};
+
+export type MonthlyReportGoalProgress = {
+  goalsCount: number;
+  averageProgressPct: number;
+};
+
+export type MonthlyReportRecommendedAction = {
+  title: string;
+  action: string;
+  expectedImpact?: string;
+};
+
+export interface MonthlyReportRecord {
+  id: string;
+  userId: string;
+  month: string;
+  totalIncome: number;
+  totalExpenses: number;
+  netSavings: number;
+  savingsRate: number;
+  healthScore: number;
+  previousHealthScore: number | null;
+  topCategories: MonthlyReportTopCategory[];
+  subscriptionImpact: MonthlyReportSubscriptionImpact;
+  goalProgress: MonthlyReportGoalProgress;
+  aiSummary: string;
+  recommendedActions: MonthlyReportRecommendedAction[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type RubyAIMessageRole = "user" | "assistant" | "system";
 
 export interface RubyAIMessage {

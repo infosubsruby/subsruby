@@ -1,4 +1,15 @@
-import type { AIInsight, Goal, Subscription, Transaction, WalletAccount } from "@/domain/financeModels";
+import type {
+  AIInsight,
+  Goal,
+  MonthlyReportGoalProgress,
+  MonthlyReportRecord,
+  MonthlyReportRecommendedAction,
+  MonthlyReportSubscriptionImpact,
+  MonthlyReportTopCategory,
+  Subscription,
+  Transaction,
+  WalletAccount,
+} from "@/domain/financeModels";
 import type { Database } from "@/integrations/supabase/types";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -337,6 +348,114 @@ export const mapAIInsightToDbUpdate = (input: Partial<AIInsight>): AIInsightUpda
   if (input.relatedEntityId !== undefined) update.related_entity_id = input.relatedEntityId;
   if (typeof input.isResolved === "boolean") update.is_resolved = input.isResolved;
   if (input.resolvedAt !== undefined) update.resolved_at = input.resolvedAt;
+  update.updated_at = new Date().toISOString();
+  return update;
+};
+
+type MonthlyReportRow = Database["public"]["Tables"]["monthly_reports"]["Row"];
+type MonthlyReportInsert = Database["public"]["Tables"]["monthly_reports"]["Insert"];
+type MonthlyReportUpdate = Database["public"]["Tables"]["monthly_reports"]["Update"];
+
+const isJsonObject = (value: Json | null | undefined): value is Record<string, Json> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const mapJsonToTopCategories = (value: Json | null | undefined): MonthlyReportTopCategory[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item): MonthlyReportTopCategory | null => {
+      if (!isJsonObject(item)) return null;
+      const category = typeof item.category === "string" ? item.category : "";
+      const amount = typeof item.amount === "number" ? item.amount : 0;
+      const percentageOfExpenses = typeof item.percentageOfExpenses === "number" ? item.percentageOfExpenses : undefined;
+      if (!category) return null;
+      return { category, amount, percentageOfExpenses };
+    })
+    .filter((item): item is MonthlyReportTopCategory => Boolean(item));
+};
+
+const mapJsonToSubscriptionImpact = (value: Json | null | undefined): MonthlyReportSubscriptionImpact => {
+  if (!isJsonObject(value)) return { count: 0, monthlyCost: 0, yearlyCost: 0 };
+  return {
+    count: typeof value.count === "number" ? value.count : 0,
+    monthlyCost: typeof value.monthlyCost === "number" ? value.monthlyCost : 0,
+    yearlyCost: typeof value.yearlyCost === "number" ? value.yearlyCost : 0,
+  };
+};
+
+const mapJsonToGoalProgress = (value: Json | null | undefined): MonthlyReportGoalProgress => {
+  if (!isJsonObject(value)) return { goalsCount: 0, averageProgressPct: 0 };
+  return {
+    goalsCount: typeof value.goalsCount === "number" ? value.goalsCount : 0,
+    averageProgressPct: typeof value.averageProgressPct === "number" ? value.averageProgressPct : 0,
+  };
+};
+
+const mapJsonToRecommendedActions = (value: Json | null | undefined): MonthlyReportRecommendedAction[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item): MonthlyReportRecommendedAction | null => {
+      if (!isJsonObject(item)) return null;
+      const title = typeof item.title === "string" ? item.title : "";
+      const action = typeof item.action === "string" ? item.action : "";
+      const expectedImpact = typeof item.expectedImpact === "string" ? item.expectedImpact : undefined;
+      if (!title || !action) return null;
+      return { title, action, expectedImpact };
+    })
+    .filter((item): item is MonthlyReportRecommendedAction => Boolean(item));
+};
+
+export const mapDbMonthlyReportToMonthlyReport = (row: MonthlyReportRow): MonthlyReportRecord => ({
+  id: row.id,
+  userId: row.user_id,
+  month: row.month,
+  totalIncome: toSafeNumber(row.total_income),
+  totalExpenses: toSafeNumber(row.total_expenses),
+  netSavings: toSafeNumber(row.net_savings),
+  savingsRate: toSafeNumber(row.savings_rate),
+  healthScore: toSafeNumber(row.health_score),
+  previousHealthScore: row.previous_health_score ?? null,
+  topCategories: mapJsonToTopCategories(row.top_categories),
+  subscriptionImpact: mapJsonToSubscriptionImpact(row.subscription_impact),
+  goalProgress: mapJsonToGoalProgress(row.goal_progress),
+  aiSummary: row.ai_summary,
+  recommendedActions: mapJsonToRecommendedActions(row.recommended_actions),
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+export const mapMonthlyReportToDbInsert = (report: MonthlyReportRecord): MonthlyReportInsert => ({
+  user_id: report.userId,
+  month: report.month,
+  total_income: report.totalIncome,
+  total_expenses: report.totalExpenses,
+  net_savings: report.netSavings,
+  savings_rate: report.savingsRate,
+  health_score: report.healthScore,
+  previous_health_score: report.previousHealthScore,
+  top_categories: report.topCategories as unknown as Json,
+  subscription_impact: report.subscriptionImpact as unknown as Json,
+  goal_progress: report.goalProgress as unknown as Json,
+  ai_summary: report.aiSummary,
+  recommended_actions: report.recommendedActions as unknown as Json,
+  created_at: report.createdAt,
+  updated_at: report.updatedAt,
+});
+
+export const mapMonthlyReportToDbUpdate = (input: Partial<MonthlyReportRecord>): MonthlyReportUpdate => {
+  const update: MonthlyReportUpdate = {};
+  if (typeof input.userId === "string") update.user_id = input.userId;
+  if (typeof input.month === "string") update.month = input.month;
+  if (typeof input.totalIncome === "number") update.total_income = input.totalIncome;
+  if (typeof input.totalExpenses === "number") update.total_expenses = input.totalExpenses;
+  if (typeof input.netSavings === "number") update.net_savings = input.netSavings;
+  if (typeof input.savingsRate === "number") update.savings_rate = input.savingsRate;
+  if (typeof input.healthScore === "number") update.health_score = input.healthScore;
+  if (input.previousHealthScore !== undefined) update.previous_health_score = input.previousHealthScore;
+  if (input.topCategories) update.top_categories = input.topCategories as unknown as Json;
+  if (input.subscriptionImpact) update.subscription_impact = input.subscriptionImpact as unknown as Json;
+  if (input.goalProgress) update.goal_progress = input.goalProgress as unknown as Json;
+  if (typeof input.aiSummary === "string") update.ai_summary = input.aiSummary;
+  if (input.recommendedActions) update.recommended_actions = input.recommendedActions as unknown as Json;
   update.updated_at = new Date().toISOString();
   return update;
 };
