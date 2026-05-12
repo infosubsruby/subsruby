@@ -7,6 +7,11 @@ import type {
   MonthlyReportRecommendedAction,
   MonthlyReportSubscriptionImpact,
   MonthlyReportTopCategory,
+  AppSettingsAccentColor,
+  AppSettingsInsightFrequency,
+  AppSettingsRecord,
+  AppSettingsRiskSensitivity,
+  AppSettingsTheme,
   RubyAIConversation,
   RubyAIMessage,
   RubyAIMessageMetadata,
@@ -24,6 +29,9 @@ type SubscriptionRow = Database["public"]["Tables"]["subscriptions"]["Row"];
 type SubscriptionInsert = Database["public"]["Tables"]["subscriptions"]["Insert"];
 type FinancialHealthHistoryRow = Database["public"]["Tables"]["financial_health_history"]["Row"];
 type FinancialHealthHistoryInsert = Database["public"]["Tables"]["financial_health_history"]["Insert"];
+type AppSettingsRow = Database["public"]["Tables"]["app_settings"]["Row"];
+type AppSettingsInsert = Database["public"]["Tables"]["app_settings"]["Insert"];
+type AppSettingsUpdate = Database["public"]["Tables"]["app_settings"]["Update"];
 
 const toSafeNumber = (value: number | null | undefined): number => (Number.isFinite(value) ? Number(value) : 0);
 
@@ -589,3 +597,88 @@ export const mapFinancialHealthSnapshotToDbInsert = (
   notes: input.notes,
   created_at: input.createdAt,
 });
+
+const ensureAppSettingsTheme = (value: string | null | undefined): AppSettingsTheme => {
+  if (value === "dark" || value === "system") return value;
+  return "dark";
+};
+
+const ensureAppSettingsInsightFrequency = (value: string | null | undefined): AppSettingsInsightFrequency => {
+  if (value === "daily" || value === "weekly" || value === "monthly") return value;
+  return "weekly";
+};
+
+const ensureAppSettingsRiskSensitivity = (value: string | null | undefined): AppSettingsRiskSensitivity => {
+  if (value === "low" || value === "medium" || value === "high") return value;
+  return "medium";
+};
+
+const ensureAppSettingsAccentColor = (value: string | null | undefined): AppSettingsAccentColor => {
+  if (value === "ruby" || value === "crimson" || value === "violet" || value === "emerald") return value;
+  if (value === "red") return "ruby";
+  return "ruby";
+};
+
+const mapAccentColorToDb = (value: AppSettingsAccentColor): string => {
+  if (value === "ruby") return "red";
+  return value;
+};
+
+export const mapDbAppSettingsToAppSettings = (row: AppSettingsRow): AppSettingsRecord => ({
+  id: row.id,
+  userId: row.user_id,
+  theme: ensureAppSettingsTheme(row.theme),
+  accentColor: ensureAppSettingsAccentColor(row.accent_color),
+  compactMode: Boolean(row.compact_mode),
+  animationsEnabled: Boolean(row.animations_enabled),
+  insightFrequency: ensureAppSettingsInsightFrequency(row.insight_frequency),
+  riskSensitivity: ensureAppSettingsRiskSensitivity(row.risk_sensitivity),
+  studentMode: Boolean(row.student_mode),
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+export const mapAppSettingsToDbInsert = (input: {
+  userId: string;
+  theme: AppSettingsTheme;
+  accentColor: AppSettingsAccentColor;
+  compactMode: boolean;
+  animationsEnabled: boolean;
+  insightFrequency: AppSettingsInsightFrequency;
+  riskSensitivity: AppSettingsRiskSensitivity;
+  studentMode: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}): AppSettingsInsert => ({
+  user_id: input.userId,
+  theme: input.theme,
+  accent_color: mapAccentColorToDb(input.accentColor),
+  compact_mode: input.compactMode,
+  animations_enabled: input.animationsEnabled,
+  insight_frequency: input.insightFrequency,
+  risk_sensitivity: input.riskSensitivity,
+  student_mode: input.studentMode,
+  created_at: input.createdAt,
+  updated_at: input.updatedAt,
+});
+
+export const mapAppSettingsToDbUpdate = (input: Partial<{
+  theme: AppSettingsTheme;
+  accentColor: AppSettingsAccentColor;
+  compactMode: boolean;
+  animationsEnabled: boolean;
+  insightFrequency: AppSettingsInsightFrequency;
+  riskSensitivity: AppSettingsRiskSensitivity;
+  studentMode: boolean;
+}>): AppSettingsUpdate => {
+  const update: AppSettingsUpdate = {};
+  if (input.theme) update.theme = input.theme;
+  if (input.accentColor) update.accent_color = mapAccentColorToDb(input.accentColor);
+  if (typeof input.compactMode === "boolean") update.compact_mode = input.compactMode;
+  if (typeof input.animationsEnabled === "boolean") update.animations_enabled = input.animationsEnabled;
+  if (input.insightFrequency) update.insight_frequency = input.insightFrequency;
+  if (input.riskSensitivity) update.risk_sensitivity = input.riskSensitivity;
+  if (typeof input.studentMode === "boolean") update.student_mode = input.studentMode;
+  update.updated_at = new Date().toISOString();
+  return update;
+};

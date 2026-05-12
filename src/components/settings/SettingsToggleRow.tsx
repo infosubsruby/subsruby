@@ -7,12 +7,14 @@ export const SettingsToggleRow = ({
   checked,
   onCheckedChange,
   icon,
+  disabled,
 }: {
   label: string;
   description?: string;
   checked: boolean;
   onCheckedChange: (value: boolean) => void;
   icon?: ReactNode;
+  disabled?: boolean;
 }) => {
   return (
     <div className="flex items-start justify-between gap-3 rounded-xl border border-white/8 bg-black/20 p-3">
@@ -23,7 +25,7 @@ export const SettingsToggleRow = ({
           {description ? <p className="mt-0.5 text-xs text-zinc-500">{description}</p> : null}
         </div>
       </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>
   );
 };

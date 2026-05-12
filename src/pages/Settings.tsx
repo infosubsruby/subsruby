@@ -34,10 +34,11 @@ import { useFinance } from "@/hooks/useFinance";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { toast } from "sonner";
 import { getDataMode } from "@/lib/config/dataMode";
+import { getOrCreateAppSettings, updateAppSettings } from "@/services/core/appSettingsService";
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, profile, isLoading: authLoading, signOut, updateProfile, authProfile } = useAuth();
+  const { user, profile, isLoading: authLoading, signOut, updateProfile, authProfile, isMockMode } = useAuth();
   const { defaultCurrency, setDefaultCurrency, notifications, setNotificationSetting } = useSettings();
   const { state, patch } = useOnboardingFoundation();
   const { activePlan, getUsageStatus, hasUnlimitedAccess, accessTier } = usePlanAccess();
@@ -47,12 +48,53 @@ const Settings = () => {
     "plan" | "profile" | "financial" | "ruby" | "accounts" | "categories" | "reports" | "app" | "privacy"
   >("profile");
   const dataMode = getDataMode();
+  const appSettingsEnabled = dataMode === "supabase" && !isMockMode;
   const fullName = `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || user?.fullName || "Ruby User";
   const [editableFullName, setEditableFullName] = useState(fullName);
+  const [appSettingsLoading, setAppSettingsLoading] = useState(false);
+  const [appSettingsSaving, setAppSettingsSaving] = useState(false);
+  const [appSettingsError, setAppSettingsError] = useState<string | null>(null);
 
   useEffect(() => {
     setEditableFullName(fullName);
   }, [fullName]);
+
+  useEffect(() => {
+    const currentUserId = user?.id ?? null;
+    if (!currentUserId) return;
+    if (isMockMode) return;
+    if (dataMode !== "supabase") return;
+
+    let cancelled = false;
+    setAppSettingsLoading(true);
+    setAppSettingsError(null);
+
+    void getOrCreateAppSettings(currentUserId).then((result) => {
+      if (cancelled) return;
+      if (result.error) {
+        setAppSettingsError(result.error);
+        setAppSettingsLoading(false);
+        return;
+      }
+      const settings = result.data;
+      patch({
+        insightFrequency: settings.insightFrequency,
+        riskSensitivity: settings.riskSensitivity,
+        studentMode: settings.studentMode,
+        appPreferences: {
+          theme: settings.theme,
+          accentColor: settings.accentColor,
+          compactMode: settings.compactMode,
+          animations: settings.animationsEnabled,
+        },
+      });
+      setAppSettingsLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, dataMode, isMockMode, patch]);
 
   if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
@@ -104,6 +146,34 @@ const Settings = () => {
     toast.success("Profile preferences saved.");
   };
 
+  const persistAppSetting = async (
+    updates: Partial<{
+      theme: "dark" | "system";
+      accentColor: "ruby" | "crimson" | "violet" | "emerald";
+      compactMode: boolean;
+      animationsEnabled: boolean;
+      insightFrequency: "daily" | "weekly" | "monthly";
+      riskSensitivity: "low" | "medium" | "high";
+      studentMode: boolean;
+    }>
+  ) => {
+    const currentUserId = user?.id ?? null;
+    if (!currentUserId) return;
+    if (isMockMode) return;
+    if (dataMode !== "supabase") return;
+
+    setAppSettingsSaving(true);
+    setAppSettingsError(null);
+    const result = await updateAppSettings(currentUserId, updates);
+    setAppSettingsSaving(false);
+
+    if (result.error) {
+      setAppSettingsError(result.error);
+      toast.error("Could not save app settings.");
+      return;
+    }
+  };
+
   const planDefinition = PRICING_PLANS.find((plan) => plan.id === activePlan);
   const transactionUsage = getUsageStatus("transactions_per_month", transactions.length);
   const subscriptionUsage = getUsageStatus("subscriptions", subscriptions.length);
@@ -120,9 +190,16 @@ const Settings = () => {
         <p className="mt-2 max-w-2xl text-sm text-zinc-400">
           Configure your profile, financial defaults, Ruby AI behavior, app preferences, and reporting controls.
         </p>
-        <p className="mt-3 inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-zinc-400">
-          Data Mode: {dataMode === "supabase" ? "Supabase Connected" : "Demo Mode"}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <p className="inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-zinc-400">
+            Data Mode: {dataMode === "supabase" ? "Supabase Connected" : "Demo Mode"}
+          </p>
+          {appSettingsEnabled ? (
+            <p className="inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-zinc-400">
+              App Settings: {appSettingsLoading ? "Loading" : appSettingsError ? "Error" : appSettingsSaving ? "Saving" : "Synced"}
+            </p>
+          ) : null}
+        </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-12">
@@ -331,6 +408,11 @@ const Settings = () => {
               description="Personalize focus, frequency, and recommendation sensitivity."
               icon={<BrainCircuit className="h-5 w-5" />}
             >
+              {appSettingsEnabled && appSettingsError ? (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-100">
+                  {appSettingsError}
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <Label>Assistant Focus</Label>
                 <Select
@@ -359,7 +441,11 @@ const Settings = () => {
                   <Label>Insight Frequency</Label>
                   <Select
                     value={state.insightFrequency}
-                    onValueChange={(value) => patch({ insightFrequency: value as "daily" | "weekly" | "monthly" })}
+                    onValueChange={(value) => {
+                      const next = value as "daily" | "weekly" | "monthly";
+                      patch({ insightFrequency: next });
+                      void persistAppSetting({ insightFrequency: next });
+                    }}
                   >
                     <SelectTrigger className="border-white/12 bg-black/20">
                       <SelectValue />
@@ -375,7 +461,11 @@ const Settings = () => {
                   <Label>Risk Sensitivity</Label>
                   <Select
                     value={state.riskSensitivity}
-                    onValueChange={(value) => patch({ riskSensitivity: value as "low" | "medium" | "high" })}
+                    onValueChange={(value) => {
+                      const next = value as "low" | "medium" | "high";
+                      patch({ riskSensitivity: next });
+                      void persistAppSetting({ riskSensitivity: next });
+                    }}
                   >
                     <SelectTrigger className="border-white/12 bg-black/20">
                       <SelectValue />
@@ -392,7 +482,11 @@ const Settings = () => {
                 label="Student Mode"
                 description="Prioritize educational and low-volatility financial recommendations."
                 checked={state.studentMode}
-                onCheckedChange={(value) => patch({ studentMode: value })}
+                disabled={appSettingsEnabled && (appSettingsLoading || appSettingsSaving)}
+                onCheckedChange={(value) => {
+                  patch({ studentMode: value });
+                  void persistAppSetting({ studentMode: value });
+                }}
                 icon={<Bell className="h-4 w-4" />}
               />
               <SettingsToggleRow
@@ -506,14 +600,22 @@ const Settings = () => {
               description="Visual and interaction defaults for your workspace."
               icon={<Palette className="h-5 w-5" />}
             >
+              {appSettingsEnabled && appSettingsError ? (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-100">
+                  {appSettingsError}
+                </div>
+              ) : null}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Theme</Label>
                   <Select
                     value={state.appPreferences.theme}
-                    onValueChange={(value) =>
-                      patch({ appPreferences: { ...state.appPreferences, theme: value as "dark" | "system" } })
-                    }
+                    disabled={appSettingsEnabled && (appSettingsLoading || appSettingsSaving)}
+                    onValueChange={(value) => {
+                      const next = value as "dark" | "system";
+                      patch({ appPreferences: { ...state.appPreferences, theme: next } });
+                      void persistAppSetting({ theme: next });
+                    }}
                   >
                     <SelectTrigger className="border-white/12 bg-black/20">
                       <SelectValue />
@@ -528,14 +630,17 @@ const Settings = () => {
                   <Label>Accent Color</Label>
                   <Select
                     value={state.appPreferences.accentColor}
-                    onValueChange={(value) =>
+                    disabled={appSettingsEnabled && (appSettingsLoading || appSettingsSaving)}
+                    onValueChange={(value) => {
+                      const next = value as "ruby" | "crimson" | "violet" | "emerald";
                       patch({
                         appPreferences: {
                           ...state.appPreferences,
-                          accentColor: value as "ruby" | "crimson" | "violet" | "emerald",
+                          accentColor: next,
                         },
-                      })
-                    }
+                      });
+                      void persistAppSetting({ accentColor: next });
+                    }}
                   >
                     <SelectTrigger className="border-white/12 bg-black/20">
                       <SelectValue />
@@ -553,13 +658,21 @@ const Settings = () => {
                 label="Compact Mode"
                 description="Use denser spacing for data-heavy workflows."
                 checked={state.appPreferences.compactMode}
-                onCheckedChange={(value) => patch({ appPreferences: { ...state.appPreferences, compactMode: value } })}
+                disabled={appSettingsEnabled && (appSettingsLoading || appSettingsSaving)}
+                onCheckedChange={(value) => {
+                  patch({ appPreferences: { ...state.appPreferences, compactMode: value } });
+                  void persistAppSetting({ compactMode: value });
+                }}
               />
               <SettingsToggleRow
                 label="Animations"
                 description="Enable smooth transitions and interaction effects."
                 checked={state.appPreferences.animations}
-                onCheckedChange={(value) => patch({ appPreferences: { ...state.appPreferences, animations: value } })}
+                disabled={appSettingsEnabled && (appSettingsLoading || appSettingsSaving)}
+                onCheckedChange={(value) => {
+                  patch({ appPreferences: { ...state.appPreferences, animations: value } });
+                  void persistAppSetting({ animationsEnabled: value });
+                }}
               />
             </SettingsSectionCard>
           ) : null}

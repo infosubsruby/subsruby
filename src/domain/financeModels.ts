@@ -293,6 +293,25 @@ export interface AppSettings {
   updatedAt: string;
 }
 
+export type AppSettingsTheme = "dark" | "system";
+export type AppSettingsInsightFrequency = "daily" | "weekly" | "monthly";
+export type AppSettingsRiskSensitivity = "low" | "medium" | "high";
+export type AppSettingsAccentColor = "ruby" | "crimson" | "violet" | "emerald";
+
+export interface AppSettingsRecord {
+  id: string;
+  userId: string;
+  theme: AppSettingsTheme;
+  accentColor: AppSettingsAccentColor;
+  compactMode: boolean;
+  animationsEnabled: boolean;
+  insightFrequency: AppSettingsInsightFrequency;
+  riskSensitivity: AppSettingsRiskSensitivity;
+  studentMode: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface OnboardingState {
   userId: string;
   completed: boolean;
