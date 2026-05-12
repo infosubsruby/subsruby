@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bot,
   BrainCircuit,
@@ -28,7 +28,6 @@ import {
   buildRubyAIInsightCards,
   buildRubyAIMemoryLine,
   buildRubyAISuggestions,
-  type RubyAIMessage,
 } from "@/lib/rubyAI";
 import { RubyAIConversation } from "@/components/ruby-ai/RubyAIConversation";
 import { RubyAIInsightPanel } from "@/components/ruby-ai/RubyAIInsightPanel";
@@ -45,6 +44,10 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { ProValueCallout } from "@/components/monetization/ProValueCallout";
 import { FeatureGate } from "@/components/monetization/FeatureGate";
 import { UpgradeModal } from "@/components/monetization/UpgradeModal";
+import { Button } from "@/components/ui/button";
+import { isSupabaseMode } from "@/lib/config/dataMode";
+import type { RubyAIConversation as RubyAIConversationRecord, RubyAIMessage } from "@/domain/financeModels";
+import { fetchRubyAIConversationsSafe, fetchRubyAIMessagesSafe, createRubyAIConversationSafe, sendRubyAIMessageSafe } from "@/services/core/rubyAIService";
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -53,7 +56,7 @@ const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 const RubyAI = () => {
   const { canAccessFeature } = usePlanAccess();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const { profile, user } = useAuth();
+  const { profile, user, isMockMode } = useAuth();
   const { transactions, budgets, isLoading } = useFinance();
   const { subscriptions, isLoading: isLoadingSubs } = useSubscriptions();
   const { defaultCurrency } = useSettings();
@@ -329,16 +332,191 @@ const RubyAI = () => {
   );
 
   const userName = profile?.first_name || user?.email?.split("@")[0] || "there";
-  const [messages, setMessages] = useState<RubyAIMessage[]>([
-    {
-      id: "assistant-init",
-      role: "assistant",
-      createdAt: new Date().toISOString(),
-      content: `Ruby AI CFO is online. Hi ${userName}, I have loaded your spending, subscriptions, and financial health context. Ask me anything about optimization, risk, affordability, or goal strategy.`,
-    },
-  ]);
+  const initialMessages = useMemo<RubyAIMessage[]>(
+    () => [
+      {
+        id: "system-init",
+        conversationId: "local",
+        role: "system",
+        createdAt: new Date().toISOString(),
+        content: `Ruby AI is ready with rule-based guidance. Hi ${userName} — ask about saving, subscriptions, budgets, goals, or financial health.`,
+        metadata: { source: "ui" },
+      },
+    ],
+    [userName]
+  );
+
+  const usingSupabaseRubyAI = isSupabaseMode() && Boolean(user?.id) && !isMockMode;
+
+  const [conversations, setConversations] = useState<RubyAIConversationRecord[]>([]);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+
+  const [messages, setMessages] = useState<RubyAIMessage[]>(initialMessages);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+
   const [lastPrompt, setLastPrompt] = useState<string>("");
   const isRubyAIEmpty = transactions.length === 0 && subscriptions.length === 0 && budgets.length === 0;
+
+  const loadConversations = useCallback(async () => {
+    if (!user?.id || !usingSupabaseRubyAI) {
+      setConversations([]);
+      setSelectedConversationId(null);
+      return;
+    }
+
+    setConversationsLoading(true);
+    setChatError(null);
+
+    const result = await fetchRubyAIConversationsSafe(user.id);
+    if (result.error) {
+      setChatError(
+        import.meta.env.DEV ? result.error : "Could not load Ruby AI conversations. Please check authentication or permissions."
+      );
+      setConversations([]);
+      setConversationsLoading(false);
+      return;
+    }
+
+    const items = result.data ?? [];
+    setConversations(items);
+    setConversationsLoading(false);
+    if (!selectedConversationId && items.length) {
+      setSelectedConversationId(items[0].id);
+    }
+  }, [selectedConversationId, user?.id, usingSupabaseRubyAI]);
+
+  const loadMessages = useCallback(
+    async (conversationId: string) => {
+      if (!user?.id || !usingSupabaseRubyAI) return;
+      setMessagesLoading(true);
+      setChatError(null);
+
+      const result = await fetchRubyAIMessagesSafe(user.id, conversationId);
+      if (result.error) {
+        setChatError(import.meta.env.DEV ? result.error : "Could not load messages. Please check authentication or permissions.");
+        setMessages(initialMessages);
+        setMessagesLoading(false);
+        return;
+      }
+
+      const items = result.data ?? [];
+      setMessages(items.length ? items : initialMessages);
+      setMessagesLoading(false);
+    },
+    [initialMessages, user?.id, usingSupabaseRubyAI]
+  );
+
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
+
+  useEffect(() => {
+    if (!usingSupabaseRubyAI) return;
+    if (!selectedConversationId) {
+      setMessages(initialMessages);
+      return;
+    }
+    void loadMessages(selectedConversationId);
+  }, [initialMessages, loadMessages, selectedConversationId, usingSupabaseRubyAI]);
+
+  const handleStartConversation = useCallback(async () => {
+    if (!user?.id) {
+      setChatError("Please sign in to start a Ruby AI conversation.");
+      return;
+    }
+
+    setChatError(null);
+    setConversationsLoading(true);
+    const result = await createRubyAIConversationSafe(user.id, { title: "New Ruby AI Chat", mode: null });
+    if (result.error) {
+      setChatError(import.meta.env.DEV ? result.error : "Could not start a conversation. Please check authentication or permissions.");
+      setConversationsLoading(false);
+      return;
+    }
+    const created = result.data;
+    setConversations((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
+    setSelectedConversationId(created.id);
+    setMessages(initialMessages);
+    setConversationsLoading(false);
+  }, [initialMessages, user?.id]);
+
+  const buildLocalRuleBasedResponse = useCallback(
+    (prompt: string): string => {
+      const text = prompt.toLowerCase();
+      if (text.includes("save")) {
+        return `Based on your available financial data, here’s a rule-based approach: reduce your top spending category by 5–10%, review recurring subscriptions, and automate a small transfer after payday.`;
+      }
+      if (text.includes("subscription")) {
+        return `Based on your available financial data, Ruby AI can help with a rule-based subscription review: identify the top 2 recurring costs, cancel or downgrade one low-value item, and set a recurring-cost ceiling.`;
+      }
+      if (text.includes("budget")) {
+        return `Based on your available financial data, improve your budget by comparing category spending against income and goals, then add 2–3 category caps for the next 30 days.`;
+      }
+      if (text.includes("goal")) {
+        return `Based on your available financial data, focus contributions on your highest priority goal first, then expand to secondary goals once momentum is stable.`;
+      }
+      return `Based on your available financial data, Ruby AI can provide rule-based guidance on spending, goals, subscriptions, and financial health.`;
+    },
+    []
+  );
+
+  const handleSendMessage = useCallback(
+    async (prompt: string) => {
+      if (!user?.id) {
+        setChatError("Please sign in to chat with Ruby AI.");
+        return;
+      }
+
+      setChatError(null);
+      setIsThinking(true);
+
+      if (!usingSupabaseRubyAI) {
+        const nowIso = new Date().toISOString();
+        const userMessage: RubyAIMessage = {
+          id: `local-user-${nowIso}`,
+          conversationId: selectedConversationId ?? "local",
+          role: "user",
+          content: prompt,
+          createdAt: nowIso,
+          metadata: { source: "local" },
+        };
+        const assistantMessage: RubyAIMessage = {
+          id: `local-assistant-${nowIso}`,
+          conversationId: selectedConversationId ?? "local",
+          role: "assistant",
+          content: buildLocalRuleBasedResponse(prompt),
+          createdAt: nowIso,
+          metadata: { source: "local-rule-based" },
+        };
+        setMessages((prev) => [...prev, userMessage, assistantMessage]);
+        setIsThinking(false);
+        return;
+      }
+
+      const result = await sendRubyAIMessageSafe(user.id, selectedConversationId, prompt);
+      if (result.error) {
+        setChatError(import.meta.env.DEV ? result.error : "Could not save Ruby AI message. Please check authentication or permissions.");
+        setIsThinking(false);
+        return;
+      }
+
+      const payload = result.data;
+      if (payload) {
+        setSelectedConversationId(payload.conversation.id);
+        setMessages(payload.messages.length ? payload.messages : initialMessages);
+        setConversations((prev) => {
+          const next = [payload.conversation, ...prev.filter((c) => c.id !== payload.conversation.id)];
+          return next;
+        });
+      }
+
+      setIsThinking(false);
+    },
+    [buildLocalRuleBasedResponse, initialMessages, selectedConversationId, user?.id, usingSupabaseRubyAI]
+  );
 
   if (isLoading || isLoadingSubs) {
     return (
@@ -434,25 +612,72 @@ const RubyAI = () => {
 
       <div className="grid gap-5 xl:grid-cols-12">
         <div className="xl:col-span-8">
-          <RubyAIConversation
-            context={context}
-            messages={messages}
-            onMessagesChange={setMessages}
-            suggestedPrompts={suggestions}
-            onPromptSelect={setLastPrompt}
-            contextSnippets={[
-              {
-                label: "Safe To Spend Today",
-                value: formatCurrency(safeToSpend, defaultCurrency),
-                detail: `${daysRemaining} days remaining in this cycle`,
-              },
-              {
-                label: "Subscription Load",
-                value: `${context.subscriptionLoadPct.toFixed(1)}%`,
-                detail: `${formatCurrency(context.subscriptionMonthlyCost, defaultCurrency)} monthly recurring`,
-              },
-            ]}
-          />
+          {usingSupabaseRubyAI && conversations.length === 0 && !conversationsLoading ? (
+            <PremiumEmptyState
+              icon={<Bot className="h-5 w-5" />}
+              headline="Start a Ruby AI conversation"
+              description="Conversations and messages are saved to Supabase for your account."
+              primaryAction={{ label: "Start Conversation", onClick: handleStartConversation }}
+              secondaryAction={{ label: "Open Overview", to: "/overview" }}
+              badges={DEMO_CATEGORIES.slice(0, 6)}
+            />
+          ) : (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs uppercase tracking-[0.16em] text-zinc-500">Conversation</div>
+                {usingSupabaseRubyAI ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={selectedConversationId ?? ""}
+                      onChange={(event) => setSelectedConversationId(event.target.value || null)}
+                      className="h-9 rounded-md border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none"
+                      disabled={conversationsLoading || messagesLoading}
+                    >
+                      {conversations.map((conv) => (
+                        <option key={conv.id} value={conv.id}>
+                          {conv.title}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      variant="outline"
+                      className="h-9 border-white/15 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08]"
+                      onClick={handleStartConversation}
+                      disabled={conversationsLoading || messagesLoading}
+                    >
+                      New
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+              {chatError ? (
+                <div className="rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-sm text-red-100">
+                  {chatError}
+                </div>
+              ) : null}
+              <RubyAIConversation
+                context={context}
+                messages={messages}
+                suggestedPrompts={suggestions}
+                onPromptSelect={setLastPrompt}
+                onSendMessage={handleSendMessage}
+                isThinking={isThinking || messagesLoading}
+                disabled={messagesLoading || conversationsLoading}
+                contextSnippets={[
+                  {
+                    label: "Safe To Spend Today",
+                    value: formatCurrency(safeToSpend, defaultCurrency),
+                    detail: `${daysRemaining} days remaining in this cycle`,
+                  },
+                  {
+                    label: "Subscription Load",
+                    value: `${context.subscriptionLoadPct.toFixed(1)}%`,
+                    detail: `${formatCurrency(context.subscriptionMonthlyCost, defaultCurrency)} monthly recurring`,
+                  },
+                ]}
+              />
+            </div>
+          )}
         </div>
         <div className="space-y-5 xl:col-span-4">
           <RubyAIInsightPanel cards={insightCards} />

@@ -6,6 +6,10 @@ import type {
   MonthlyReportRecommendedAction,
   MonthlyReportSubscriptionImpact,
   MonthlyReportTopCategory,
+  RubyAIConversation,
+  RubyAIMessage,
+  RubyAIMessageMetadata,
+  RubyAIMessageRole,
   Subscription,
   Transaction,
   WalletAccount,
@@ -459,3 +463,87 @@ export const mapMonthlyReportToDbUpdate = (input: Partial<MonthlyReportRecord>):
   update.updated_at = new Date().toISOString();
   return update;
 };
+
+type RubyAIConversationRow = Database["public"]["Tables"]["ruby_ai_conversations"]["Row"];
+type RubyAIConversationInsert = Database["public"]["Tables"]["ruby_ai_conversations"]["Insert"];
+
+type RubyAIMessageRow = Database["public"]["Tables"]["ruby_ai_messages"]["Row"];
+type RubyAIMessageInsert = Database["public"]["Tables"]["ruby_ai_messages"]["Insert"];
+
+const ensureRubyAIRole = (value: string): RubyAIMessageRole => {
+  if (value === "user" || value === "assistant" || value === "system") return value;
+  return "assistant";
+};
+
+const mapJsonToRubyAIMessageMetadata = (value: Json | null | undefined): RubyAIMessageMetadata => {
+  if (value === undefined) return null;
+  if (value === null) return null;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.map((item) => mapJsonToRubyAIMessageMetadata(item));
+  const out: Record<string, RubyAIMessageMetadata> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, Json>)) {
+    if (raw === undefined) continue;
+    out[key] = mapJsonToRubyAIMessageMetadata(raw);
+  }
+  return out;
+};
+
+const mapRubyAIMessageMetadataToJson = (value: RubyAIMessageMetadata | undefined): Json => {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.map((item) => mapRubyAIMessageMetadataToJson(item));
+  const out: Record<string, Json> = {};
+  for (const [key, raw] of Object.entries(value)) {
+    out[key] = mapRubyAIMessageMetadataToJson(raw);
+  }
+  return out;
+};
+
+export const mapDbRubyAIConversationToConversation = (row: RubyAIConversationRow): RubyAIConversation => ({
+  id: row.id,
+  userId: row.user_id,
+  title: row.title,
+  contextTag: row.mode ?? "general",
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  messages: [],
+});
+
+export const mapRubyAIConversationToDbInsert = (input: {
+  userId: string;
+  title: string;
+  mode?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}): RubyAIConversationInsert => ({
+  user_id: input.userId,
+  title: input.title,
+  mode: input.mode ?? null,
+  created_at: input.createdAt,
+  updated_at: input.updatedAt,
+});
+
+export const mapDbRubyAIMessageToMessage = (row: RubyAIMessageRow): RubyAIMessage => ({
+  id: row.id,
+  conversationId: row.conversation_id,
+  role: ensureRubyAIRole(row.role),
+  content: row.content,
+  createdAt: row.created_at,
+  metadata: mapJsonToRubyAIMessageMetadata(row.metadata),
+});
+
+export const mapRubyAIMessageToDbInsert = (input: {
+  userId: string;
+  conversationId: string;
+  role: RubyAIMessageRole;
+  content: string;
+  metadata?: RubyAIMessage["metadata"];
+  createdAt?: string;
+}): RubyAIMessageInsert => ({
+  user_id: input.userId,
+  conversation_id: input.conversationId,
+  role: input.role,
+  content: input.content,
+  metadata: mapRubyAIMessageMetadataToJson(input.metadata),
+  created_at: input.createdAt,
+});

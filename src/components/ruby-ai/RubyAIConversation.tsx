@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Bot, SendHorizonal, UserRound } from "lucide-react";
-import type { RubyAIContext, RubyAIMessage, RubyAISuggestion } from "@/lib/rubyAI";
-import { buildRubyAIResponse } from "@/lib/rubyAI";
+import type { RubyAIContext, RubyAISuggestion } from "@/lib/rubyAI";
+import type { RubyAIMessage } from "@/domain/financeModels";
 
 type RubyAIConversationProps = {
   context: RubyAIContext;
   messages: RubyAIMessage[];
-  onMessagesChange: (messages: RubyAIMessage[]) => void;
   suggestedPrompts: RubyAISuggestion[];
   onPromptSelect: (prompt: string) => void;
+  onSendMessage: (content: string) => Promise<void>;
+  isThinking: boolean;
+  disabled?: boolean;
   contextSnippets?: Array<{
     label: string;
     value: string;
@@ -17,45 +19,27 @@ type RubyAIConversationProps = {
 };
 
 const messageBubble = (role: RubyAIMessage["role"]) =>
-  role === "assistant"
+  role === "assistant" || role === "system"
     ? "border-red-500/25 bg-red-500/10 text-zinc-100"
     : "border-white/10 bg-black/25 text-zinc-300";
 
 export const RubyAIConversation = ({
   context,
   messages,
-  onMessagesChange,
   suggestedPrompts,
   onPromptSelect,
+  onSendMessage,
+  isThinking,
+  disabled = false,
   contextSnippets = [],
 }: RubyAIConversationProps) => {
   const [draft, setDraft] = useState("");
-  const [isThinking, setIsThinking] = useState(false);
 
-  const sendMessage = (raw: string) => {
+  const sendMessage = async (raw: string) => {
     const prompt = raw.trim();
-    if (!prompt || isThinking) return;
-
-    const userMessage: RubyAIMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: prompt,
-      createdAt: new Date().toISOString(),
-    };
-    onMessagesChange([...messages, userMessage]);
+    if (!prompt || isThinking || disabled) return;
     setDraft("");
-    setIsThinking(true);
-
-    window.setTimeout(() => {
-      const assistantMessage: RubyAIMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: buildRubyAIResponse(prompt, context),
-        createdAt: new Date().toISOString(),
-      };
-      onMessagesChange([...messages, userMessage, assistantMessage]);
-      setIsThinking(false);
-    }, 900);
+    await onSendMessage(prompt);
   };
 
   return (
@@ -64,7 +48,9 @@ export const RubyAIConversation = ({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-zinc-100 sm:text-xl">Ruby AI Conversation</h2>
-          <p className="text-[11px] text-zinc-500 sm:text-xs">Personal AI CFO mode. Context-aware financial advisory responses.</p>
+          <p className="text-[11px] text-zinc-500 sm:text-xs">
+            Rule-based finance assistant. Top category: {context.topSpendingCategory}.
+          </p>
         </div>
       </div>
 
@@ -76,7 +62,7 @@ export const RubyAIConversation = ({
             style={{ animationDelay: `${Math.min(index * 38, 260)}ms` }}
           >
             <div className="mt-0.5">
-              {message.role === "assistant" ? (
+              {message.role === "assistant" || message.role === "system" ? (
                 <Bot className="h-4 w-4 text-red-300" />
               ) : (
                 <UserRound className="h-4 w-4 text-zinc-400" />
@@ -84,10 +70,12 @@ export const RubyAIConversation = ({
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.14em] opacity-70">
-                {message.role === "assistant" ? "Ruby AI CFO" : "You"}
+                {message.role === "assistant" ? "Ruby AI CFO" : message.role === "system" ? "System" : "You"}
               </p>
               <p className="text-sm leading-relaxed">{message.content}</p>
-              {message.role === "assistant" && index === messages.length - 1 && contextSnippets.length > 0 ? (
+              {(message.role === "assistant" || message.role === "system") &&
+              index === messages.length - 1 &&
+              contextSnippets.length > 0 ? (
                 <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
                   {contextSnippets.slice(0, 2).map((snippet) => (
                     <div key={snippet.label} className="rounded-lg border border-white/10 bg-black/30 px-2.5 py-2">
@@ -121,7 +109,7 @@ export const RubyAIConversation = ({
             type="button"
             onClick={() => {
               onPromptSelect(item.prompt);
-              sendMessage(item.prompt);
+              void sendMessage(item.prompt);
             }}
             className="whitespace-nowrap rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] text-zinc-300 transition duration-200 hover:-translate-y-0.5 hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-100"
           >
@@ -137,7 +125,7 @@ export const RubyAIConversation = ({
               type="button"
               onClick={() => {
                 onPromptSelect(item.prompt);
-                sendMessage(item.prompt);
+                void sendMessage(item.prompt);
               }}
               className="whitespace-nowrap rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-[11px] text-red-100 transition hover:bg-red-500/20"
             >
@@ -150,7 +138,7 @@ export const RubyAIConversation = ({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          sendMessage(draft);
+          void sendMessage(draft);
         }}
         className="sticky bottom-0 z-10 flex items-center gap-2 rounded-xl border border-white/10 bg-black/70 p-2 backdrop-blur"
       >
@@ -162,6 +150,7 @@ export const RubyAIConversation = ({
         />
         <button
           type="submit"
+          disabled={disabled || isThinking}
           className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-500/40 bg-red-500/20 px-3 text-xs font-medium text-red-100 transition hover:bg-red-500/30"
         >
           <SendHorizonal className="h-3.5 w-3.5" />

@@ -215,13 +215,21 @@ export interface MonthlyReportRecord {
 
 export type RubyAIMessageRole = "user" | "assistant" | "system";
 
+export type RubyAIMessageMetadata =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: RubyAIMessageMetadata }
+  | RubyAIMessageMetadata[];
+
 export interface RubyAIMessage {
   id: string;
   conversationId: string;
   role: RubyAIMessageRole;
   content: string;
   createdAt: string;
-  metadata: Record<string, string | number | boolean | null>;
+  metadata: RubyAIMessageMetadata;
 }
 
 export interface RubyAIConversation {
