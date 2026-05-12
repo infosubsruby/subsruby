@@ -158,6 +158,23 @@ export interface FinancialHealthScore {
   generatedAt: string;
 }
 
+export interface FinancialHealthSnapshotRecord {
+  id: string;
+  userId: string;
+  score: number;
+  status: HealthStatus;
+  savingsRateScore: number;
+  spendingControlScore: number;
+  subscriptionBurdenScore: number;
+  emergencyFundScore: number;
+  budgetDisciplineScore: number;
+  cashFlowStabilityScore: number;
+  goalProgressScore: number;
+  debtCreditRiskScore: number;
+  notes: string | null;
+  createdAt: string;
+}
+
 export interface MonthlyReport {
   id: string;
   userId: string;

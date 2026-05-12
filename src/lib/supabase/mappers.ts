@@ -1,5 +1,6 @@
 import type {
   AIInsight,
+  FinancialHealthSnapshotRecord,
   Goal,
   MonthlyReportGoalProgress,
   MonthlyReportRecord,
@@ -21,6 +22,8 @@ type TransactionRow = Database["public"]["Tables"]["transactions"]["Row"];
 type TransactionInsert = Database["public"]["Tables"]["transactions"]["Insert"];
 type SubscriptionRow = Database["public"]["Tables"]["subscriptions"]["Row"];
 type SubscriptionInsert = Database["public"]["Tables"]["subscriptions"]["Insert"];
+type FinancialHealthHistoryRow = Database["public"]["Tables"]["financial_health_history"]["Row"];
+type FinancialHealthHistoryInsert = Database["public"]["Tables"]["financial_health_history"]["Insert"];
 
 const toSafeNumber = (value: number | null | undefined): number => (Number.isFinite(value) ? Number(value) : 0);
 
@@ -545,5 +548,44 @@ export const mapRubyAIMessageToDbInsert = (input: {
   role: input.role,
   content: input.content,
   metadata: mapRubyAIMessageMetadataToJson(input.metadata),
+  created_at: input.createdAt,
+});
+
+export const mapDbFinancialHealthSnapshotToSnapshot = (row: FinancialHealthHistoryRow): FinancialHealthSnapshotRecord => ({
+  id: row.id,
+  userId: row.user_id,
+  score: toSafeNumber(row.score),
+  status:
+    row.status === "excellent" || row.status === "good" || row.status === "moderate" || row.status === "risky" || row.status === "critical"
+      ? row.status
+      : "moderate",
+  savingsRateScore: toSafeNumber(row.savings_rate_score),
+  spendingControlScore: toSafeNumber(row.spending_control_score),
+  subscriptionBurdenScore: toSafeNumber(row.subscription_burden_score),
+  emergencyFundScore: toSafeNumber(row.emergency_fund_score),
+  budgetDisciplineScore: toSafeNumber(row.budget_discipline_score),
+  cashFlowStabilityScore: toSafeNumber(row.cash_flow_stability_score),
+  goalProgressScore: toSafeNumber(row.goal_progress_score),
+  debtCreditRiskScore: toSafeNumber(row.debt_credit_risk_score),
+  notes: row.notes ?? null,
+  createdAt: row.created_at,
+});
+
+export const mapFinancialHealthSnapshotToDbInsert = (
+  input: Omit<FinancialHealthSnapshotRecord, "id"> & { id?: string }
+): FinancialHealthHistoryInsert => ({
+  id: input.id,
+  user_id: input.userId,
+  score: input.score,
+  status: input.status,
+  savings_rate_score: input.savingsRateScore,
+  spending_control_score: input.spendingControlScore,
+  subscription_burden_score: input.subscriptionBurdenScore,
+  emergency_fund_score: input.emergencyFundScore,
+  budget_discipline_score: input.budgetDisciplineScore,
+  cash_flow_stability_score: input.cashFlowStabilityScore,
+  goal_progress_score: input.goalProgressScore,
+  debt_credit_risk_score: input.debtCreditRiskScore,
+  notes: input.notes,
   created_at: input.createdAt,
 });

@@ -9,7 +9,7 @@ import { OverviewHero } from "@/components/overview/OverviewHero";
 import { OverviewBentoGrid } from "@/components/overview/OverviewBentoGrid";
 import { OverviewAIInsightsEngine } from "@/components/overview/OverviewAIInsightsEngine";
 import { buildMockAIInsights, type AIInsight as DisplayAIInsight, type AIInsightType } from "@/lib/aiInsights";
-import { calculateFinancialHealthScore } from "@/lib/financialHealthScore";
+import { calculateFinancialHealthScore, type FinancialHealthResult } from "@/lib/financialHealthScore";
 import { FinancialHealthSection } from "@/components/overview/FinancialHealthSection";
 import { buildRubyAIContext } from "@/lib/rubyAI";
 import { RubyAIWidget } from "@/components/ruby-ai/RubyAIWidget";
@@ -42,6 +42,7 @@ import { UpgradeModal } from "@/components/monetization/UpgradeModal";
 import type { AIInsight as SupabaseAIInsight } from "@/domain/financeModels";
 import { isSupabaseMode } from "@/lib/config/dataMode";
 import { fetchAIInsightsSafe } from "@/services/core/aiInsightService";
+import { fetchLatestFinancialHealthSnapshotSafe } from "@/services/core/financialHealthService";
 
 const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 const pct = (value: number) => `${safeNumber(value).toFixed(1)}%`;
@@ -119,6 +120,8 @@ const Overview = () => {
   const { transactions, budgets } = useFinance();
   const { subscriptions } = useSubscriptions();
   const [supabaseInsights, setSupabaseInsights] = useState<SupabaseAIInsight[]>([]);
+  const [latestHealthSnapshotScore, setLatestHealthSnapshotScore] = useState<number | null>(null);
+  const [latestHealthSnapshotStatus, setLatestHealthSnapshotStatus] = useState<FinancialHealthResult["status"] | null>(null);
 
   const now = new Date();
   const currentKey = monthKey(now);
@@ -126,6 +129,7 @@ const Overview = () => {
   const previousKey = monthKey(previous);
 
   const usingSupabaseInsights = isSupabaseMode() && Boolean(user?.id) && !isMockMode;
+  const usingSupabaseHealthHistory = isSupabaseMode() && Boolean(user?.id) && !isMockMode;
 
   const loadSupabaseInsights = useCallback(async () => {
     if (!usingSupabaseInsights || !user?.id) {
@@ -146,6 +150,33 @@ const Overview = () => {
     if (authLoading) return;
     void loadSupabaseInsights();
   }, [authLoading, loadSupabaseInsights]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!usingSupabaseHealthHistory || !user?.id) {
+      setLatestHealthSnapshotScore(null);
+      setLatestHealthSnapshotStatus(null);
+      return;
+    }
+
+    fetchLatestFinancialHealthSnapshotSafe(user.id).then((result) => {
+      if (result.error) {
+        if (import.meta.env.DEV) console.error("[Overview][FinancialHealth] Failed to fetch latest snapshot", { error: result.error });
+        setLatestHealthSnapshotScore(null);
+        setLatestHealthSnapshotStatus(null);
+        return;
+      }
+      const snapshot = result.data;
+      if (!snapshot) {
+        setLatestHealthSnapshotScore(null);
+        setLatestHealthSnapshotStatus(null);
+        return;
+      }
+      const score = snapshot.score;
+      setLatestHealthSnapshotScore(score);
+      setLatestHealthSnapshotStatus(score >= 90 ? "Excellent" : score >= 75 ? "Good" : score >= 60 ? "Moderate" : score >= 40 ? "Risky" : "Critical");
+    });
+  }, [authLoading, usingSupabaseHealthHistory, user?.id]);
 
   const { monthlyIncomeSeries, monthlyExpenseSeries } = useMemo(() => {
     const monthStarts = [5, 4, 3, 2, 1, 0].map((offset) => {
@@ -563,8 +594,8 @@ const Overview = () => {
       <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       <OverviewHero
         greeting={greeting}
-        healthScore={health.score}
-        healthLevel={health.status}
+        healthScore={latestHealthSnapshotScore ?? health.score}
+        healthLevel={latestHealthSnapshotStatus ?? health.status}
         topPositiveFactor={health.topPositiveFactor}
         topNegativeFactor={health.topNegativeFactor}
         monthlyScoreChange={health.monthlyScoreChange}
