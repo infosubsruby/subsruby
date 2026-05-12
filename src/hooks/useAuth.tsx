@@ -258,9 +258,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const snapshot = getStoredDemoSnapshot();
-    if (isDemoModeEnabled() && snapshot) {
+    let cancelled = false;
+    let authSubscription: { unsubscribe: () => void } | null = null;
+
+    const startSupabaseListener = () => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        setIsMockMode(false);
+        setSession(session);
+        setUser(
+          session?.user
+            ? createDisplayUser({
+                id: session.user.id,
+                email: session.user.email,
+                fullName: session.user.user_metadata?.full_name,
+                avatarUrl: session.user.user_metadata?.avatar_url,
+              })
+            : null
+        );
+
+        if (session?.user) {
+          setTimeout(() => fetchProfile(session.user.id, session), 0);
+        } else {
+          setProfile(null);
+          setAuthProfile(null);
+          setIsAdmin(false);
+        }
+        setIsLoading(false);
+      });
+      authSubscription = subscription;
+    };
+
+    const enableDemoFromSnapshot = (snapshot: ReturnType<typeof getStoredDemoSnapshot>) => {
+      if (!snapshot) return;
       setIsMockMode(true);
+      setSession(null);
       setUser(snapshot.user);
       setProfile({
         id: snapshot.user.id,
@@ -280,62 +311,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setStoredOnboardingCompletion(snapshot.user.id, snapshot.profile.onboardingCompleted);
       setCurrentPlanState(snapshot.currentPlan);
       setIsLoading(false);
-      return;
-    }
+    };
 
-    if (!hasSupabaseEnv) {
-      setIsLoading(false);
-      return;
-    }
+    const init = async () => {
+      const snapshot = getStoredDemoSnapshot();
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setIsMockMode(false);
-        setSession(session);
-        setUser(
-          session?.user
-            ? createDisplayUser({
-                id: session.user.id,
-                email: session.user.email,
-                fullName: session.user.user_metadata?.full_name,
-                avatarUrl: session.user.user_metadata?.avatar_url,
-              })
-            : null
-        );
-        
+      if (hasSupabaseEnv) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (cancelled) return;
+
         if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock
-          setTimeout(() => fetchProfile(session.user.id, session), 0);
-        } else {
-          setProfile(null);
-          setAuthProfile(null);
-          setIsAdmin(false);
-        }
-        setIsLoading(false);
-      }
-    );
-
-    // Then get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(
-        session?.user
-          ? createDisplayUser({
+          clearDemoSnapshot();
+          setIsMockMode(false);
+          setSession(session);
+          setUser(
+            createDisplayUser({
               id: session.user.id,
               email: session.user.email,
               fullName: session.user.user_metadata?.full_name,
               avatarUrl: session.user.user_metadata?.avatar_url,
             })
-          : null
-      );
-      if (session?.user) {
-        fetchProfile(session.user.id, session);
+          );
+          fetchProfile(session.user.id, session);
+          setIsLoading(false);
+          startSupabaseListener();
+          return;
+        }
       }
-      setIsLoading(false);
-    });
 
-    return () => subscription.unsubscribe();
+      if (isDemoModeEnabled() && snapshot) {
+        enableDemoFromSnapshot(snapshot);
+        return;
+      }
+
+      if (!hasSupabaseEnv) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsMockMode(false);
+      startSupabaseListener();
+      setIsLoading(false);
+    };
+
+    void init();
+
+    return () => {
+      cancelled = true;
+      authSubscription?.unsubscribe();
+    };
   }, []);
 
   const signUp = async (
